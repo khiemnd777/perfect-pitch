@@ -5,6 +5,7 @@ Last updated: 2026-04-18
 ## Implemented
 - Boot flow preloads all piano assets before the main game UI is shown.
 - The app now supports bilingual `en` / `vi` copy across shell UI, generated prompts/helper text, choice meta, and progression notices.
+- Both the boot screen and the main app shell now render the same footer signature in both languages: `For Son. By Father`, with a GitHub link under the slogan pointing to the current repository.
 - English is the default language, and the selected language is persisted separately from gameplay progress in local storage.
 - A header-level `EN/VI` language switcher is available on the boot screen, home screen, and in-game screen.
 - The app supports 6 training modes: `single`, `double`, `melody`, `interval`, `arpeggio`, and `chord`.
@@ -39,7 +40,7 @@ Last updated: 2026-04-18
 
 ## Known Gaps
 - There is no persisted agent memory workflow in the codebase beyond `AGENTS.md`. This file and `memory.md` are now the canonical lightweight memory layer.
-- Manual verification for first-play audio, replay, next-question reset, and live EN/VI switching in all 6 modes still needs to be rerun after this UX/content change.
+- Manual verification for first-play audio, replay, next-question reset, footer placement, and live EN/VI switching in all 6 modes still needs to be rerun after this UX/content change.
 - The production deploy path still depends on working GitHub repository secrets; live VPS reachability, Docker bootstrap, and HTTPS issuance have now been verified against real infrastructure.
 
 ## Recommended Next Focus

@@ -52,6 +52,7 @@ interface AppCopy {
   languageLabel: string
   languageEnglish: string
   languageVietnamese: string
+  footerSignature: string
 }
 
 const MODE_COPY: Record<Language, Record<GameMode, ModeCopy>> = {
@@ -399,6 +400,7 @@ const APP_COPY: Record<Language, AppCopy> = {
     languageLabel: 'Language',
     languageEnglish: 'English',
     languageVietnamese: 'Vietnamese',
+    footerSignature: 'For Son. By Father',
   },
   vi: {
     bootLoadingTitle: 'Đang nạp piano',
@@ -430,6 +432,7 @@ const APP_COPY: Record<Language, AppCopy> = {
     languageLabel: 'Ngôn ngữ',
     languageEnglish: 'Tiếng Anh',
     languageVietnamese: 'Tiếng Việt',
+    footerSignature: 'For Son. By Father',
   },
 }
 

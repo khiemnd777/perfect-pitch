@@ -126,6 +126,34 @@ function LanguageSwitcher({
   )
 }
 
+function FooterSignature({ language }: { language: Language }) {
+  const copy = getAppCopy(language)
+
+  return (
+    <footer className="app-footer">
+      <div>{copy.footerSignature}</div>
+      <a
+        className="app-footer__link"
+        href="https://github.com/khiemnd777/perfect-pitch"
+        rel="noreferrer"
+        target="_blank"
+      >
+        <svg
+          aria-hidden="true"
+          className="app-footer__icon"
+          viewBox="0 0 24 24"
+        >
+          <path
+            d="M12 2C6.477 2 2 6.589 2 12.248c0 4.527 2.865 8.366 6.839 9.721.5.096.682-.223.682-.496 0-.245-.009-.894-.014-1.754-2.782.62-3.369-1.389-3.369-1.389-.455-1.183-1.11-1.498-1.11-1.498-.908-.637.069-.624.069-.624 1.004.073 1.532 1.055 1.532 1.055.892 1.564 2.341 1.112 2.91.85.091-.664.349-1.112.635-1.368-2.221-.259-4.556-1.14-4.556-5.074 0-1.121.39-2.037 1.029-2.755-.103-.259-.446-1.301.098-2.712 0 0 .84-.276 2.75 1.052A9.303 9.303 0 0 1 12 6.839a9.27 9.27 0 0 1 2.504.349c1.909-1.328 2.748-1.052 2.748-1.052.546 1.411.203 2.453.1 2.712.64.718 1.027 1.634 1.027 2.755 0 3.944-2.338 4.812-4.566 5.066.359.319.679.949.679 1.913 0 1.381-.012 2.495-.012 2.834 0 .275.18.596.688.495C19.138 20.61 22 16.773 22 12.248 22 6.589 17.523 2 12 2Z"
+            fill="currentColor"
+          />
+        </svg>
+        GitHub
+      </a>
+    </footer>
+  )
+}
+
 export function PerfectPitchApp({
   audioEngine: providedAudioEngine,
   questionFactory: providedQuestionFactory,
@@ -368,188 +396,198 @@ export function PerfectPitchApp({
   if (assetStatus !== 'ready') {
     return (
       <main className="shell shell--boot">
-        <section className="boot-panel" aria-live="polite">
-          <div className="boot-toolbar">
-            <div className="eyebrow">Perfect Pitch</div>
-            <LanguageSwitcher language={language} onChange={setLanguage} />
-          </div>
-          <h1>{assetStatus === 'loading' ? copy.bootLoadingTitle : copy.bootErrorTitle}</h1>
-          <p className="hero-copy">
-            {assetStatus === 'loading' ? copy.bootLoadingBody : assetError ? copy.bootLoadError : null}
-          </p>
-          <div className="boot-status">
-            <span className="boot-spinner" aria-hidden="true" />
-            <strong>
-              {assetStatus === 'loading' ? copy.bootLoadingStatus : copy.bootRetryStatus}
-            </strong>
-          </div>
-          {assetStatus === 'error' && (
-            <button className="play-button" onClick={retryAssetPreload} type="button">
-              {copy.bootRetryButton}
-            </button>
-          )}
-        </section>
+        <div className="shell__content">
+          <section className="boot-panel" aria-live="polite">
+            <div className="boot-toolbar">
+              <div className="eyebrow">Perfect Pitch</div>
+              <LanguageSwitcher language={language} onChange={setLanguage} />
+            </div>
+            <h1>{assetStatus === 'loading' ? copy.bootLoadingTitle : copy.bootErrorTitle}</h1>
+            <p className="hero-copy">
+              {assetStatus === 'loading'
+                ? copy.bootLoadingBody
+                : assetError
+                  ? copy.bootLoadError
+                  : null}
+            </p>
+            <div className="boot-status">
+              <span className="boot-spinner" aria-hidden="true" />
+              <strong>
+                {assetStatus === 'loading' ? copy.bootLoadingStatus : copy.bootRetryStatus}
+              </strong>
+            </div>
+            {assetStatus === 'error' && (
+              <button className="play-button" onClick={retryAssetPreload} type="button">
+                {copy.bootRetryButton}
+              </button>
+            )}
+          </section>
+          <FooterSignature language={language} />
+        </div>
       </main>
     )
   }
 
   return (
     <main className="shell shell--ready">
-      {!mode && (
-        <section className="hero-panel">
-          <div className="hero-panel__top">
-            <div className="eyebrow">Perfect Pitch</div>
-            <LanguageSwitcher language={language} onChange={setLanguage} />
-          </div>
-          <h1>{copy.heroTitle}</h1>
-          <p className="hero-copy">{copy.heroBody}</p>
-          <div className="hero-stats">
-            <span>{copy.heroModesStat}</span>
-            <span>{copy.heroLevelsStat}</span>
-            <span>{copy.heroPianoStat}</span>
-          </div>
-        </section>
-      )}
+      <div className="shell__content">
+        {!mode && (
+          <section className="hero-panel">
+            <div className="hero-panel__top">
+              <div className="eyebrow">Perfect Pitch</div>
+              <LanguageSwitcher language={language} onChange={setLanguage} />
+            </div>
+            <h1>{copy.heroTitle}</h1>
+            <p className="hero-copy">{copy.heroBody}</p>
+            <div className="hero-stats">
+              <span>{copy.heroModesStat}</span>
+              <span>{copy.heroLevelsStat}</span>
+              <span>{copy.heroPianoStat}</span>
+            </div>
+          </section>
+        )}
 
-      {!mode && (
-        <section className="mode-grid" aria-label={copy.modeGridAriaLabel}>
-          {GAME_MODES.map((gameMode) => {
-            const progress = modeProgress[gameMode]
-            const modeCopy = getModeCopy(language, gameMode)
+        {!mode && (
+          <section className="mode-grid" aria-label={copy.modeGridAriaLabel}>
+            {GAME_MODES.map((gameMode) => {
+              const progress = modeProgress[gameMode]
+              const modeCopy = getModeCopy(language, gameMode)
 
-            return (
-              <button
-                key={gameMode}
-                aria-label={modeCopy.label}
-                className="mode-card"
-                onClick={() => activateMode(gameMode)}
-                type="button"
-              >
-                <div className="mode-card__header">
-                  <span className="mode-card__tag">{copy.modeTag}</span>
+              return (
+                <button
+                  key={gameMode}
+                  aria-label={modeCopy.label}
+                  className="mode-card"
+                  onClick={() => activateMode(gameMode)}
+                  type="button"
+                >
+                  <div className="mode-card__header">
+                    <span className="mode-card__tag">{copy.modeTag}</span>
+                    <span className="difficulty-pill">
+                      {getDifficultyLabel(language, progress.currentDifficulty)}
+                    </span>
+                  </div>
+                  <strong>{modeCopy.label}</strong>
+                  <span>{modeCopy.description}</span>
+                </button>
+              )
+            })}
+          </section>
+        )}
+
+        {mode && question && displayQuestion && (
+          <section className="game-layout">
+            <header className="game-header">
+              <div className="mode-header">
+                <div className="game-header__top">
+                  <button className="ghost-button" onClick={goBackToModes} type="button">
+                    {copy.switchMode}
+                  </button>
+                  <LanguageSwitcher language={language} onChange={setLanguage} />
+                </div>
+                <p className="mode-name">{getModeCopy(language, mode).label}</p>
+                <div className="mode-badges">
                   <span className="difficulty-pill">
-                    {getDifficultyLabel(language, progress.currentDifficulty)}
+                    {getDifficultyLabel(language, question.difficulty)}
+                  </span>
+                  <span className="difficulty-pill difficulty-pill--muted">
+                    {getDifficultyCopy(language, mode, question.difficulty).shortLabel}
                   </span>
                 </div>
-                <strong>{modeCopy.label}</strong>
-                <span>{modeCopy.description}</span>
-              </button>
-            )
-          })}
-        </section>
-      )}
+              </div>
+              <div className="stats-card" aria-label={copy.sessionStatsLabel}>
+                {sessionStats.map((item) => (
+                  <span key={item}>{item}</span>
+                ))}
+              </div>
+            </header>
 
-      {mode && question && displayQuestion && (
-        <section className="game-layout">
-          <header className="game-header">
-            <div className="mode-header">
-              <div className="game-header__top">
-                <button className="ghost-button" onClick={goBackToModes} type="button">
-                  {copy.switchMode}
+            <div className="question-panel">
+              <div className="question-heading">
+                <p className="question-kicker">{copy.currentQuestion}</p>
+                <h2>{displayQuestion.prompt}</h2>
+                <p>{displayQuestion.helperText}</p>
+              </div>
+
+              {progressNotice && <p className="progress-banner">{progressNotice}</p>}
+
+              <div className="control-row">
+                <button className="play-button" onClick={playQuestion} type="button">
+                  {audioStatus === 'loading'
+                    ? copy.loadingAudio
+                    : hasPlayedCurrent
+                      ? copy.replayQuestion
+                      : copy.playQuestion}
                 </button>
-                <LanguageSwitcher language={language} onChange={setLanguage} />
               </div>
-              <p className="mode-name">{getModeCopy(language, mode).label}</p>
-              <div className="mode-badges">
-                <span className="difficulty-pill">
-                  {getDifficultyLabel(language, question.difficulty)}
-                </span>
-                <span className="difficulty-pill difficulty-pill--muted">
-                  {getDifficultyCopy(language, mode, question.difficulty).shortLabel}
-                </span>
+
+              {audioError && <p className="status-message error">{audioError}</p>}
+              {!hasPlayedCurrent && !audioError && (
+                <p className="status-message">{copy.audioTip}</p>
+              )}
+
+              <div className="choices-grid">
+                {displayQuestion.choices.map((choice) => {
+                  const isSelected = evaluation?.selectedChoiceId === choice.id
+                  const isCorrect = choice.id === question.correctChoiceId
+                  const isChoiceDisabled = !hasPlayedCurrent || Boolean(evaluation)
+
+                  const stateClass = evaluation
+                    ? isCorrect
+                      ? 'choice-card correct'
+                      : isSelected
+                        ? 'choice-card wrong'
+                        : 'choice-card muted'
+                    : 'choice-card'
+
+                  return (
+                    <button
+                      key={choice.id}
+                      className={stateClass}
+                      data-testid={`choice-${choice.id}`}
+                      disabled={isChoiceDisabled}
+                      onClick={() => chooseAnswer(choice.id)}
+                      type="button"
+                    >
+                      <span className="choice-label">{choice.label}</span>
+                      <span className="choice-meta">{choice.meta}</span>
+                    </button>
+                  )
+                })}
               </div>
-            </div>
-            <div className="stats-card" aria-label={copy.sessionStatsLabel}>
-              {sessionStats.map((item) => (
-                <span key={item}>{item}</span>
-              ))}
-            </div>
-          </header>
 
-          <div className="question-panel">
-            <div className="question-heading">
-              <p className="question-kicker">{copy.currentQuestion}</p>
-              <h2>{displayQuestion.prompt}</h2>
-              <p>{displayQuestion.helperText}</p>
-            </div>
-
-            {progressNotice && <p className="progress-banner">{progressNotice}</p>}
-
-            <div className="control-row">
-              <button className="play-button" onClick={playQuestion} type="button">
-                {audioStatus === 'loading'
-                  ? copy.loadingAudio
-                  : hasPlayedCurrent
-                    ? copy.replayQuestion
-                    : copy.playQuestion}
-              </button>
-            </div>
-
-            {audioError && <p className="status-message error">{audioError}</p>}
-            {!hasPlayedCurrent && !audioError && (
-              <p className="status-message">{copy.audioTip}</p>
-            )}
-
-            <div className="choices-grid">
-              {displayQuestion.choices.map((choice) => {
-                const isSelected = evaluation?.selectedChoiceId === choice.id
-                const isCorrect = choice.id === question.correctChoiceId
-                const isChoiceDisabled = !hasPlayedCurrent || Boolean(evaluation)
-
-                const stateClass = evaluation
-                  ? isCorrect
-                    ? 'choice-card correct'
-                    : isSelected
-                      ? 'choice-card wrong'
-                      : 'choice-card muted'
-                  : 'choice-card'
-
-                return (
-                  <button
-                    key={choice.id}
-                    className={stateClass}
-                    data-testid={`choice-${choice.id}`}
-                    disabled={isChoiceDisabled}
-                    onClick={() => chooseAnswer(choice.id)}
-                    type="button"
-                  >
-                    <span className="choice-label">{choice.label}</span>
-                    <span className="choice-meta">{choice.meta}</span>
+              {evaluation && (
+                <div
+                  className={`feedback-panel ${
+                    evaluation.status === 'correct' ? 'success' : 'danger'
+                  }`}
+                >
+                  <div>
+                    <p className="feedback-title">
+                      {evaluation.status === 'correct' ? copy.correct : copy.incorrect}
+                    </p>
+                    <p>
+                      {copy.correctAnswerPrefix}{' '}
+                      <strong>
+                        {
+                          displayQuestion.choices.find(
+                            (choice) => choice.id === question.correctChoiceId,
+                          )?.label
+                        }
+                      </strong>
+                      .
+                    </p>
+                  </div>
+                  <button className="next-button" onClick={goToNextQuestion} type="button">
+                    {copy.nextQuestion}
                   </button>
-                )
-              })}
-            </div>
-
-            {evaluation && (
-              <div
-                className={`feedback-panel ${
-                  evaluation.status === 'correct' ? 'success' : 'danger'
-                }`}
-              >
-                <div>
-                  <p className="feedback-title">
-                    {evaluation.status === 'correct' ? copy.correct : copy.incorrect}
-                  </p>
-                  <p>
-                    {copy.correctAnswerPrefix}{' '}
-                    <strong>
-                      {
-                        displayQuestion.choices.find(
-                          (choice) => choice.id === question.correctChoiceId,
-                        )?.label
-                      }
-                    </strong>
-                    .
-                  </p>
                 </div>
-                <button className="next-button" onClick={goToNextQuestion} type="button">
-                  {copy.nextQuestion}
-                </button>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
+              )}
+            </div>
+          </section>
+        )}
+        <FooterSignature language={language} />
+      </div>
     </main>
   )
 }
