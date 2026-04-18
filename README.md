@@ -68,6 +68,9 @@ bun run build
 bun run lint
 bun run test:run
 bun run build
+bash -n scripts/deploy/bootstrap-github-secrets.sh scripts/deploy/remote-bootstrap.sh
+docker compose config
+docker build -t perfect-pitch-ci-local .
 ```
 
 Manual verification is also recommended for:
@@ -93,6 +96,7 @@ This repo now includes GitHub Actions workflows for CI and production deploys, p
 - `.github/workflows/deploy-production.yml`: deploys automatically after CI succeeds on `main`.
 - `Dockerfile`: multi-stage image build for the static Vite app.
 - `compose.yml`: production stack with the app container and a public Caddy reverse proxy.
+- `deploy/Caddyfile`: checked-in default Caddy config for local Docker validation and startup.
 - `scripts/deploy/remote-bootstrap.sh`: idempotent VPS bootstrap for Docker and Compose.
 - `scripts/deploy/bootstrap-github-secrets.sh`: local helper to base64-encode the SSH key and push deploy secrets to GitHub.
 

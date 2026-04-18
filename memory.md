@@ -38,8 +38,9 @@
 - Session stats track answered count, correct count, current streak, and best streak.
 - `src/features/audio/audioEngine.ts` caches the current question for replay and uses layered `Tone.Sampler` instances mapped from local piano samples.
 - `src/features/question-bank/questionFactory.ts` supports deterministic generation by `mode + difficulty` with an optional seed.
-- `.github/workflows/ci.yml` runs lint, tests, and production builds on pushes and pull requests.
+- `.github/workflows/ci.yml` runs lint, tests, production builds, deploy-script syntax checks, `docker compose config`, image builds, and default Caddy validation on pushes and pull requests.
 - `.github/workflows/deploy-production.yml` deploys successful `main` builds to a VPS by shipping the repo context over SSH, bootstrapping Docker if needed, and serving the app via Docker + Caddy.
+- `deploy/Caddyfile` is a checked-in local/default HTTP reverse-proxy config, while `deploy/Caddyfile.template` is rendered with the production domain on the VPS before rollout.
 - `scripts/deploy/bootstrap-github-secrets.sh` pushes deployment secrets to GitHub from the local machine via `gh secret set`.
 
 ## Working Commands

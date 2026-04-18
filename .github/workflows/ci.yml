@@ -31,6 +31,22 @@ jobs:
       - name: Build production bundle
         run: bun run build
 
+      - name: Check deploy scripts syntax
+        run: bash -n scripts/deploy/bootstrap-github-secrets.sh scripts/deploy/remote-bootstrap.sh
+
+      - name: Check Docker Compose config
+        run: docker compose config
+
+      - name: Build production image
+        run: docker build -t perfect-pitch-ci-local .
+
+      - name: Validate default Caddy config
+        run: |
+          docker run --rm \
+            -v "${PWD}/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:2.10-alpine \
+            caddy validate --config /etc/caddy/Caddyfile
+
       - name: Upload dist artifact
         if: success()
         uses: actions/upload-artifact@v4

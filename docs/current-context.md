@@ -11,9 +11,10 @@ Last updated: 2026-04-18
 - Replay behavior is implemented in the audio engine by replaying the cached `currentQuestion`.
 - Every mode now runs on fixed `easy` / `medium` / `hard` levels with automatic up/down progression based on two-answer streaks.
 - Per-mode difficulty progress is persisted in local storage and restored when the player returns.
-- CI now runs on GitHub Actions for pushes and pull requests, covering `bun install --frozen-lockfile`, lint, tests, and production build.
+- CI now runs on GitHub Actions for pushes and pull requests, covering `bun install --frozen-lockfile`, lint, tests, production build, deploy script syntax, `docker compose config`, production image build, and default Caddy validation.
 - Production deploy now runs through a GitHub Actions workflow triggered by successful CI on `main`, shipping the repo context to the VPS and bootstrapping Docker + Caddy remotely.
 - Local deploy setup is now driven by `scripts/deploy/bootstrap-github-secrets.sh`, which prepares and uploads repository secrets through `gh`.
+- `deploy/Caddyfile` now exists as the default local/runtime config so Docker Compose can be validated locally without depending on a generated file.
 
 ## Important Files
 - `src/app/App.tsx`: main flow, mode selection, playback actions, grading state, and session stats.
@@ -25,12 +26,13 @@ Last updated: 2026-04-18
 - `src/shared/gameTypes.ts`: shared domain types used across the app.
 - `.github/workflows/ci.yml`: validation workflow for pushes and pull requests.
 - `.github/workflows/deploy-production.yml`: production deploy workflow for `main`.
+- `deploy/Caddyfile`: checked-in default Caddy config for local validation and container startup.
 - `scripts/deploy/remote-bootstrap.sh`: idempotent VPS bootstrap and deploy entrypoint.
 
 ## Known Gaps
 - There is no persisted agent memory workflow in the codebase beyond `AGENTS.md`. This file and `memory.md` are now the canonical lightweight memory layer.
 - Manual verification for first-play audio and all 5 per-mode flows still needs to be rerun after any audio or gameplay change.
-- The production deploy path still depends on valid DNS pointing and working GitHub repository secrets; these cannot be verified locally without real infrastructure.
+- The production deploy path still depends on valid DNS pointing and working GitHub repository secrets; these cannot be fully verified locally without real infrastructure.
 
 ## Recommended Next Focus
 - If touching deploy infra, verify first live deploy against a real VPS and domain before relying on automatic production releases.

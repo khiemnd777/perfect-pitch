@@ -107,6 +107,17 @@ render_runtime_files() {
     }' "$template_path" > "$caddyfile_path"
 }
 
+validate_runtime_files() {
+  log "Validating Docker Compose config"
+  docker compose --project-name "$COMPOSE_PROJECT_NAME" config >/dev/null
+
+  log "Validating rendered Caddy config"
+  docker run --rm \
+    -v "$RELEASE_DIR/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+    caddy:2.10-alpine \
+    caddy validate --config /etc/caddy/Caddyfile >/dev/null
+}
+
 wait_for_local_app() {
   local attempts=20
   local delay_seconds=3
@@ -137,8 +148,8 @@ install_docker_if_missing
 ensure_docker_running
 ensure_compose_plugin
 render_runtime_files
-
 cd "$RELEASE_DIR"
+validate_runtime_files
 
 log "Pulling base images"
 docker compose --project-name "$COMPOSE_PROJECT_NAME" pull caddy
