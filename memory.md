@@ -10,6 +10,7 @@
 - Audio layer: `tone`.
 - Assets: local piano samples under `public/audio/piano/`.
 - Deployment: `GitHub Actions`, `Docker`, `Caddy`.
+- Hosted analytics can be enabled with Google Analytics 4 via the optional build-time env var `VITE_GA_MEASUREMENT_ID`.
 
 ## Architecture
 - App wiring lives in `src/app`.
@@ -38,6 +39,7 @@
 
 ## Current Implementation Snapshot
 - `src/app/App.tsx` preloads piano assets on boot, lets the user pick a mode, restores per-mode difficulty and language from local storage, exposes an `EN/VI` switcher on home and game screens, and auto-adjusts level progression during play.
+- `src/app/analytics.ts` injects Google Analytics 4 only when `VITE_GA_MEASUREMENT_ID` is present and tracks page views plus core quiz interactions.
 - Session stats track answered count, correct count, current streak, and best streak.
 - `src/features/audio/audioEngine.ts` caches the current question for replay and uses layered `Tone.Sampler` instances mapped from local piano samples.
 - `src/features/question-bank/questionFactory.ts` supports deterministic generation by `mode + difficulty` with an optional seed and bound language, including harmonic chord questions.

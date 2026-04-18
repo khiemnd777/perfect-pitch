@@ -111,6 +111,7 @@ This repo now includes GitHub Actions workflows for CI and production deploys, p
 - `DEPLOY_DOMAIN`
 - `DEPLOY_APP_DIR` default `/opt/perfect-pitch`
 - `ACME_EMAIL` optional
+- `VITE_GA_MEASUREMENT_ID` optional Google Analytics 4 measurement id such as `G-XXXXXXXXXX`
 
 ### Local setup for first deploy
 
@@ -124,5 +125,7 @@ bash scripts/deploy/bootstrap-github-secrets.sh
 If you want the whole flow to be one shell command with no separate `gh auth login`, set `GH_TOKEN` in `.env.deploy`. The script will authenticate `gh` automatically before uploading secrets.
 
 If you only have the VPS password, set `VPS_PASSWORD` in `.env.deploy` and leave `SSH_KEY_PATH` commented out. The helper will generate a dedicated deploy key, install it on the server, and then upload the GitHub secrets.
+
+To enable a hosted analytics dashboard without touching the VPS, create a Google Analytics 4 web data stream for your production domain and set `VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX` in `.env.deploy` before running `bash scripts/deploy/bootstrap-github-secrets.sh`. Production builds will then send page views plus quiz events such as mode selection, play/replay, next question, audio errors, and answer correctness to the GA UI.
 
 Before the first production deploy succeeds, point the domain A record to the VPS IP.

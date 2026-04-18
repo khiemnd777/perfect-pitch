@@ -26,6 +26,7 @@ jobs:
       VPS_PORT: ${{ secrets.VPS_PORT != '' && secrets.VPS_PORT || '22' }}
       VPS_USER: ${{ secrets.VPS_USER != '' && secrets.VPS_USER || 'root' }}
       ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
+      VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
 
     steps:
       - name: Check out repository at validated commit

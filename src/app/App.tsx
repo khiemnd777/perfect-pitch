@@ -36,6 +36,7 @@ import {
   loadLanguagePreference,
   saveLanguagePreference,
 } from './languagePreference'
+import { initAnalytics, trackEvent, trackPageView } from './analytics'
 
 const DEFAULT_STATS: SessionStats = {
   answered: 0,
@@ -196,6 +197,7 @@ export function PerfectPitchApp({
     arpeggio: new Set(),
     chord: new Set(),
   })
+  const pageViewRef = useRef<string | null>(null)
   const copy = getAppCopy(language)
 
   const accuracy = useMemo(() => {
@@ -213,6 +215,28 @@ export function PerfectPitchApp({
   useEffect(() => {
     saveLanguagePreference(language, storage)
   }, [language, storage])
+
+  useEffect(() => {
+    initAnalytics()
+  }, [])
+
+  useEffect(() => {
+    if (assetStatus !== 'ready') {
+      return
+    }
+
+    const pagePath = mode ? `/mode/${mode}` : '/'
+    if (pageViewRef.current === `${pagePath}:${language}`) {
+      return
+    }
+
+    const pageTitle = mode
+      ? `Perfect Pitch - ${getModeCopy(language, mode).label}`
+      : 'Perfect Pitch'
+
+    trackPageView(pagePath, pageTitle, language)
+    pageViewRef.current = `${pagePath}:${language}`
+  }, [assetStatus, language, mode])
 
   useEffect(() => {
     let cancelled = false
@@ -314,6 +338,11 @@ export function PerfectPitchApp({
     setHasPlayedCurrent(false)
     setAudioError(null)
     setProgressNotice(null)
+    trackEvent('select_mode', {
+      mode: nextMode,
+      difficulty: modeProgress[nextMode].currentDifficulty,
+      language,
+    })
   }
 
   const playQuestion = async () => {
@@ -321,6 +350,7 @@ export function PerfectPitchApp({
       return
     }
 
+    const isReplay = hasPlayedCurrent
     setAudioError(null)
 
     try {
@@ -329,6 +359,12 @@ export function PerfectPitchApp({
       setAudioStatus('ready')
       await audioEngine.playQuestion(question)
       setHasPlayedCurrent(true)
+      trackEvent('play_question', {
+        mode: question.mode,
+        difficulty: question.difficulty,
+        replay: isReplay,
+        language,
+      })
     } catch (error) {
       setAudioStatus('error')
       setAudioError(
@@ -336,6 +372,12 @@ export function PerfectPitchApp({
           ? 'Unable to initialize audio in this browser.'
           : 'Không thể khởi tạo âm thanh trên trình duyệt này.',
       )
+      trackEvent('audio_error', {
+        mode: question.mode,
+        difficulty: question.difficulty,
+        replay: isReplay,
+        language,
+      })
       console.error(error)
     }
   }
@@ -349,6 +391,11 @@ export function PerfectPitchApp({
     if (result === evaluation) {
       return
     }
+
+    const selectedChoice = question.choices.find((choice) => choice.id === choiceId)
+    const correctChoice = question.choices.find(
+      (choice) => choice.id === question.correctChoiceId,
+    )
 
     setEvaluation(result)
     setStats((current) => {
@@ -368,6 +415,15 @@ export function PerfectPitchApp({
       ...current,
       [question.mode]: progression.nextProgress,
     }))
+    trackEvent('answer_question', {
+      mode: question.mode,
+      difficulty: question.difficulty,
+      result: result.status,
+      selected_choice: selectedChoice?.label,
+      correct_choice: correctChoice?.label,
+      replayed_before_answer: hasPlayedCurrent,
+      language,
+    })
   }
 
   const goToNextQuestion = () => {
@@ -379,6 +435,11 @@ export function PerfectPitchApp({
     setEvaluation(null)
     setHasPlayedCurrent(false)
     setAudioError(null)
+    trackEvent('next_question', {
+      mode,
+      difficulty: modeProgress[mode].currentDifficulty,
+      language,
+    })
   }
 
   const goBackToModes = () => {
@@ -389,6 +450,7 @@ export function PerfectPitchApp({
     setHasPlayedCurrent(false)
     setAudioError(null)
     setProgressNotice(null)
+    trackEvent('return_home', { language })
   }
 
   const sessionStats = formatSessionStats(language, stats, accuracy)

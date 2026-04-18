@@ -23,6 +23,7 @@ Environment file variables:
   VPS_USER       Optional SSH user. Defaults to root.
   DEPLOY_APP_DIR Optional deploy root on the VPS. Defaults to /opt/perfect-pitch.
   ACME_EMAIL     Optional contact email for Let's Encrypt registration.
+  VITE_GA_MEASUREMENT_ID Optional Google Analytics 4 measurement id like G-XXXXXXXXXX.
 EOF
 }
 
@@ -116,6 +117,7 @@ VPS_PORT=22
 VPS_USER=root
 DEPLOY_APP_DIR=/opt/perfect-pitch
 ACME_EMAIL=
+VITE_GA_MEASUREMENT_ID=
 DEPLOY_DOMAIN=
 VPS_HOST=
 SSH_KEY_PATH=
@@ -168,6 +170,10 @@ set_secret DEPLOY_APP_DIR "$DEPLOY_APP_DIR"
 
 if [[ -n "$ACME_EMAIL" ]]; then
   set_secret ACME_EMAIL "$ACME_EMAIL"
+fi
+
+if [[ -n "$VITE_GA_MEASUREMENT_ID" ]]; then
+  set_secret VITE_GA_MEASUREMENT_ID "$VITE_GA_MEASUREMENT_ID"
 fi
 
 printf '\nGitHub repository secrets updated for %s.\n' "$REPO"

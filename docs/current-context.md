@@ -3,6 +3,7 @@
 Last updated: 2026-04-18
 
 ## Implemented
+- Google Analytics 4 can now be enabled by setting `VITE_GA_MEASUREMENT_ID` in deploy secrets; the app emits page views plus events for mode selection, play/replay, answers, next-question, return-home, and audio errors.
 - `index.html` now includes production SEO/social metadata: descriptive page title, meta description, canonical URL, robots, Open Graph, and Twitter summary tags for `https://andy.dailyturning.com/`.
 - Boot flow preloads all piano assets before the main game UI is shown.
 - The app now supports bilingual `en` / `vi` copy across shell UI, generated prompts/helper text, choice meta, and progression notices.
