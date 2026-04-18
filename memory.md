@@ -1,0 +1,49 @@
+# Project Memory
+
+## Purpose
+- Perfect Pitch is a client-side ear-training web app for 5 modes: `single`, `double`, `melody`, `interval`, and `arpeggio`.
+- The product goal is instant feedback: selecting an answer grades immediately and reveals the correct choice.
+- The app should sound like a sampled piano rather than a synthesized oscillator.
+
+## Stack
+- Runtime and tooling: `Bun`, `Vite`, `React 19`, `TypeScript`, `Vitest`, `ESLint`.
+- Audio layer: `tone`.
+- Assets: local piano samples under `public/audio/piano/`.
+
+## Architecture
+- App wiring lives in `src/app`.
+- Feature logic is split under `src/features/audio`, `src/features/game`, and `src/features/question-bank`.
+- Shared public types live in `src/shared/gameTypes.ts`.
+- Music helpers and deterministic random utilities live in `src/shared/music.ts` and `src/shared/random.ts`.
+- Mode progression and difficulty persistence live in `src/features/game/progression.ts`.
+
+## Product Rules
+- UI copy is Vietnamese unless a task explicitly expands localization.
+- `single` mode answers identify pitch class only, not octave.
+- `double` mode choices must remain unambiguous and use sorted note labels.
+- `melody` mode choices must match playback length and avoid visually duplicate distractors.
+- All modes use fixed levels `easy` / `medium` / `hard`, and the app can auto-raise or lower the active level based on streaks.
+- Every generated question must contain exactly 4 unique choices with exactly 1 correct answer.
+
+## Audio Rules
+- Piano playback must stay sample-based.
+- Sample assets should only be loaded from `public/audio/piano/` unless the audio library is intentionally replaced.
+- Sample coverage must continue to support `C4-B5` after any sample-map change.
+- Audio initialization must stay behind a user gesture to avoid autoplay failures.
+- Replay must reuse the current question payload instead of generating a new one.
+
+## Current Implementation Snapshot
+- `src/app/App.tsx` preloads piano assets on boot, lets the user pick a mode, restores per-mode difficulty from local storage, and auto-adjusts level progression during play.
+- Session stats track answered count, correct count, current streak, and best streak.
+- `src/features/audio/audioEngine.ts` caches the current question for replay and uses layered `Tone.Sampler` instances mapped from local piano samples.
+- `src/features/question-bank/questionFactory.ts` supports deterministic generation by `mode + difficulty` with an optional seed.
+
+## Working Commands
+- `bun run dev`
+- `bun run lint`
+- `bun run test:run`
+- `bun run build`
+
+## Source Of Truth
+- Durable facts belong in this file.
+- Short-lived implementation status belongs in `docs/current-context.md`.
