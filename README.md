@@ -126,6 +126,6 @@ If you want the whole flow to be one shell command with no separate `gh auth log
 
 If you only have the VPS password, set `VPS_PASSWORD` in `.env.deploy` and leave `SSH_KEY_PATH` commented out. The helper will generate a dedicated deploy key, install it on the server, and then upload the GitHub secrets.
 
-To enable a hosted analytics dashboard without touching the VPS, create a Google Analytics 4 web data stream for your production domain and set `VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX` in `.env.deploy` before running `bash scripts/deploy/bootstrap-github-secrets.sh`. Production builds will then send page views plus quiz events such as mode selection, play/replay, next question, audio errors, and answer correctness to the GA UI.
+To enable a hosted analytics dashboard without touching the VPS, create a Google Analytics 4 web data stream for your production domain and set `VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX` in `.env.deploy` before running `bash scripts/deploy/bootstrap-github-secrets.sh`. The production deploy now forwards that secret into the Docker build on the VPS, so live bundles will send page views plus quiz events such as mode selection, play/replay, next question, audio errors, and answer correctness to the GA UI.
 
 Before the first production deploy succeeds, point the domain A record to the VPS IP.

@@ -2,6 +2,9 @@ FROM oven/bun:1 AS build
 
 WORKDIR /app
 
+ARG VITE_GA_MEASUREMENT_ID=""
+ENV VITE_GA_MEASUREMENT_ID=$VITE_GA_MEASUREMENT_ID
+
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
