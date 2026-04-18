@@ -3,6 +3,7 @@
 Last updated: 2026-04-18
 
 ## Implemented
+- `index.html` now includes production SEO/social metadata: descriptive page title, meta description, canonical URL, robots, Open Graph, and Twitter summary tags for `https://andy.dailyturning.com/`.
 - Boot flow preloads all piano assets before the main game UI is shown.
 - The app now supports bilingual `en` / `vi` copy across shell UI, generated prompts/helper text, choice meta, and progression notices.
 - Both the boot screen and the main app shell now render the same footer signature in both languages: `For Son. By Father`, with a GitHub link under the slogan pointing to the current repository.
