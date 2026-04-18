@@ -16,14 +16,26 @@ import {
   type QuestionFactory,
 } from '../features/question-bank/questionFactory'
 import {
-  DIFFICULTY_LABELS,
-  GAME_MODE_CONFIGS,
+  formatSessionStats,
+  getAppCopy,
+  getDifficultyCopy,
+  getDifficultyLabel,
+  getModeCopy,
+  formatChoiceMeta,
+  translateIntervalLabel,
+  type Language,
+} from '../shared/localization'
+import {
   GAME_MODES,
   type GameMode,
   type Question,
   type QuestionEvaluation,
   type SessionStats,
 } from '../shared/gameTypes'
+import {
+  loadLanguagePreference,
+  saveLanguagePreference,
+} from './languagePreference'
 
 const DEFAULT_STATS: SessionStats = {
   answered: 0,
@@ -53,6 +65,67 @@ export interface PerfectPitchAppProps {
   storage?: Storage | null
 }
 
+function localizeQuestion(question: Question, language: Language): Question {
+  const modeCopy = getModeCopy(language, question.mode)
+  const localizedChoices = question.choices.map((choice) => {
+    const label =
+      question.mode === 'interval'
+        ? translateIntervalLabel(choice.label, language)
+        : choice.label
+
+    return {
+      ...choice,
+      label,
+      meta: formatChoiceMeta(language, question.mode, label),
+    }
+  })
+
+  return {
+    ...question,
+    prompt: modeCopy.prompt,
+    helperText: getDifficultyCopy(language, question.mode, question.difficulty).helperText,
+    choices: localizedChoices,
+  }
+}
+
+function LanguageSwitcher({
+  language,
+  onChange,
+}: {
+  language: Language
+  onChange: (nextLanguage: Language) => void
+}) {
+  const copy = getAppCopy(language)
+
+  return (
+    <div className="language-switcher" aria-label={copy.languageLabel}>
+      <span className="language-switcher__label">{copy.languageLabel}</span>
+      <div className="language-switcher__options">
+        <button
+          aria-pressed={language === 'en'}
+          className={`language-switcher__button ${
+            language === 'en' ? 'language-switcher__button--active' : ''
+          }`}
+          onClick={() => onChange('en')}
+          type="button"
+        >
+          EN
+        </button>
+        <button
+          aria-pressed={language === 'vi'}
+          className={`language-switcher__button ${
+            language === 'vi' ? 'language-switcher__button--active' : ''
+          }`}
+          onClick={() => onChange('vi')}
+          type="button"
+        >
+          VI
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export function PerfectPitchApp({
   audioEngine: providedAudioEngine,
   questionFactory: providedQuestionFactory,
@@ -62,15 +135,20 @@ export function PerfectPitchApp({
     () => providedAudioEngine ?? createAudioEngine(),
     [providedAudioEngine],
   )
-  const questionFactory = useMemo(
-    () => providedQuestionFactory ?? createQuestionFactory(),
-    [providedQuestionFactory],
-  )
   const storage = useMemo(() => resolveStorage(providedStorage), [providedStorage])
+  const [language, setLanguage] = useState<Language>(() => loadLanguagePreference(storage))
+  const questionFactory = useMemo(
+    () => providedQuestionFactory ?? createQuestionFactory(language),
+    [language, providedQuestionFactory],
+  )
   const [assetStatus, setAssetStatus] = useState<'loading' | 'ready' | 'error'>('loading')
-  const [assetError, setAssetError] = useState<string | null>(null)
+  const [assetError, setAssetError] = useState<boolean>(false)
   const [mode, setMode] = useState<GameMode | null>(null)
   const [question, setQuestion] = useState<Question | null>(null)
+  const displayQuestion = useMemo(
+    () => (question ? localizeQuestion(question, language) : null),
+    [language, question],
+  )
   const [evaluation, setEvaluation] = useState<QuestionEvaluation | null>(null)
   const [stats, setStats] = useState<SessionStats>(DEFAULT_STATS)
   const [audioStatus, setAudioStatus] = useState<
@@ -90,6 +168,7 @@ export function PerfectPitchApp({
     arpeggio: new Set(),
     chord: new Set(),
   })
+  const copy = getAppCopy(language)
 
   const accuracy = useMemo(() => {
     if (stats.answered === 0) {
@@ -104,12 +183,16 @@ export function PerfectPitchApp({
   }, [modeProgress, storage])
 
   useEffect(() => {
+    saveLanguagePreference(language, storage)
+  }, [language, storage])
+
+  useEffect(() => {
     let cancelled = false
 
     const preloadAssets = async () => {
       const startedAt = performance.now()
       setAssetStatus('loading')
-      setAssetError(null)
+      setAssetError(false)
 
       try {
         await audioEngine.preload()
@@ -128,7 +211,7 @@ export function PerfectPitchApp({
       } catch (error) {
         if (!cancelled) {
           setAssetStatus('error')
-          setAssetError('Không thể nạp piano. Hãy thử lại.')
+          setAssetError(true)
         }
 
         console.error(error)
@@ -145,14 +228,14 @@ export function PerfectPitchApp({
 
   const retryAssetPreload = async () => {
     setAssetStatus('loading')
-    setAssetError(null)
+    setAssetError(false)
 
     try {
       await audioEngine.preload()
       setAssetStatus('ready')
     } catch (error) {
       setAssetStatus('error')
-      setAssetError('Không thể nạp piano. Hãy thử lại.')
+      setAssetError(true)
       console.error(error)
     }
   }
@@ -220,7 +303,11 @@ export function PerfectPitchApp({
       setHasPlayedCurrent(true)
     } catch (error) {
       setAudioStatus('error')
-      setAudioError('Không thể khởi tạo âm thanh trên trình duyệt này.')
+      setAudioError(
+        language === 'en'
+          ? 'Unable to initialize audio in this browser.'
+          : 'Không thể khởi tạo âm thanh trên trình duyệt này.',
+      )
       console.error(error)
     }
   }
@@ -247,7 +334,7 @@ export function PerfectPitchApp({
         bestStreak: Math.max(current.bestStreak, streak),
       }
     })
-    const progression = applyProgression(modeProgress[question.mode], result.status)
+    const progression = applyProgression(modeProgress[question.mode], result.status, language)
     setProgressNotice(progression.notice)
     setModeProgress((current) => ({
       ...current,
@@ -276,28 +363,29 @@ export function PerfectPitchApp({
     setProgressNotice(null)
   }
 
+  const sessionStats = formatSessionStats(language, stats, accuracy)
+
   if (assetStatus !== 'ready') {
     return (
       <main className="shell shell--boot">
         <section className="boot-panel" aria-live="polite">
-          <div className="eyebrow">Perfect Pitch</div>
-          <h1>{assetStatus === 'loading' ? 'Đang nạp piano' : 'Nạp piano thất bại'}</h1>
+          <div className="boot-toolbar">
+            <div className="eyebrow">Perfect Pitch</div>
+            <LanguageSwitcher language={language} onChange={setLanguage} />
+          </div>
+          <h1>{assetStatus === 'loading' ? copy.bootLoadingTitle : copy.bootErrorTitle}</h1>
           <p className="hero-copy">
-            {assetStatus === 'loading'
-              ? 'Ứng dụng đang preload toàn bộ asset piano trước khi mở màn chơi.'
-              : assetError}
+            {assetStatus === 'loading' ? copy.bootLoadingBody : assetError ? copy.bootLoadError : null}
           </p>
           <div className="boot-status">
             <span className="boot-spinner" aria-hidden="true" />
             <strong>
-              {assetStatus === 'loading'
-                ? 'Vui lòng chờ, trang sẽ mở sau khi nạp xong.'
-                : 'Bạn có thể thử preload lại asset piano.'}
+              {assetStatus === 'loading' ? copy.bootLoadingStatus : copy.bootRetryStatus}
             </strong>
           </div>
           {assetStatus === 'error' && (
             <button className="play-button" onClick={retryAssetPreload} type="button">
-              Thử nạp lại
+              {copy.bootRetryButton}
             </button>
           )}
         </section>
@@ -309,76 +397,80 @@ export function PerfectPitchApp({
     <main className="shell shell--ready">
       {!mode && (
         <section className="hero-panel">
-          <div className="eyebrow">Perfect Pitch</div>
-          <h1>Kiểm tra tai nghe nốt bằng piano thật</h1>
-          <p className="hero-copy">
-            Luyện cảm âm với 6 mode nghe: nốt đơn, cặp nốt, giai điệu, quãng, arpeggio và chord.
-            Mỗi câu có 4 đáp án, chấm ngay sau khi bấm và tự tăng độ khó theo phong độ.
-          </p>
+          <div className="hero-panel__top">
+            <div className="eyebrow">Perfect Pitch</div>
+            <LanguageSwitcher language={language} onChange={setLanguage} />
+          </div>
+          <h1>{copy.heroTitle}</h1>
+          <p className="hero-copy">{copy.heroBody}</p>
           <div className="hero-stats">
-            <span>{GAME_MODES.length} chế độ</span>
-            <span>3 cấp độ</span>
-            <span>Piano Salamander</span>
+            <span>{copy.heroModesStat}</span>
+            <span>{copy.heroLevelsStat}</span>
+            <span>{copy.heroPianoStat}</span>
           </div>
         </section>
       )}
 
       {!mode && (
-        <section className="mode-grid" aria-label="Chọn chế độ chơi">
+        <section className="mode-grid" aria-label={copy.modeGridAriaLabel}>
           {GAME_MODES.map((gameMode) => {
             const progress = modeProgress[gameMode]
+            const modeCopy = getModeCopy(language, gameMode)
 
             return (
               <button
                 key={gameMode}
-                aria-label={GAME_MODE_CONFIGS[gameMode].label}
+                aria-label={modeCopy.label}
                 className="mode-card"
                 onClick={() => activateMode(gameMode)}
                 type="button"
               >
                 <div className="mode-card__header">
-                  <span className="mode-card__tag">Mode</span>
+                  <span className="mode-card__tag">{copy.modeTag}</span>
                   <span className="difficulty-pill">
-                    {DIFFICULTY_LABELS[progress.currentDifficulty]}
+                    {getDifficultyLabel(language, progress.currentDifficulty)}
                   </span>
                 </div>
-                <strong>{GAME_MODE_CONFIGS[gameMode].label}</strong>
-                <span>{GAME_MODE_CONFIGS[gameMode].description}</span>
+                <strong>{modeCopy.label}</strong>
+                <span>{modeCopy.description}</span>
               </button>
             )
           })}
         </section>
       )}
 
-      {mode && question && (
+      {mode && question && displayQuestion && (
         <section className="game-layout">
           <header className="game-header">
             <div className="mode-header">
-              <button className="ghost-button" onClick={goBackToModes} type="button">
-                Đổi mode
-              </button>
-              <p className="mode-name">{GAME_MODE_CONFIGS[mode].label}</p>
+              <div className="game-header__top">
+                <button className="ghost-button" onClick={goBackToModes} type="button">
+                  {copy.switchMode}
+                </button>
+                <LanguageSwitcher language={language} onChange={setLanguage} />
+              </div>
+              <p className="mode-name">{getModeCopy(language, mode).label}</p>
               <div className="mode-badges">
                 <span className="difficulty-pill">
-                  {DIFFICULTY_LABELS[question.difficulty]}
+                  {getDifficultyLabel(language, question.difficulty)}
                 </span>
                 <span className="difficulty-pill difficulty-pill--muted">
-                  {GAME_MODE_CONFIGS[mode].difficulty[question.difficulty].shortLabel}
+                  {getDifficultyCopy(language, mode, question.difficulty).shortLabel}
                 </span>
               </div>
             </div>
-            <div className="stats-card" aria-label="Thống kê phiên chơi">
-              <span>{stats.correct}/{stats.answered} đúng</span>
-              <span>{accuracy}% chính xác</span>
-              <span>Streak {stats.streak}</span>
+            <div className="stats-card" aria-label={copy.sessionStatsLabel}>
+              {sessionStats.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
             </div>
           </header>
 
           <div className="question-panel">
             <div className="question-heading">
-              <p className="question-kicker">Câu hiện tại</p>
-              <h2>{question.prompt}</h2>
-              <p>{question.helperText}</p>
+              <p className="question-kicker">{copy.currentQuestion}</p>
+              <h2>{displayQuestion.prompt}</h2>
+              <p>{displayQuestion.helperText}</p>
             </div>
 
             {progressNotice && <p className="progress-banner">{progressNotice}</p>}
@@ -386,22 +478,20 @@ export function PerfectPitchApp({
             <div className="control-row">
               <button className="play-button" onClick={playQuestion} type="button">
                 {audioStatus === 'loading'
-                  ? 'Đang nạp piano...'
+                  ? copy.loadingAudio
                   : hasPlayedCurrent
-                    ? 'Phát lại'
-                    : 'Bật piano và phát'}
+                    ? copy.replayQuestion
+                    : copy.playQuestion}
               </button>
             </div>
 
             {audioError && <p className="status-message error">{audioError}</p>}
             {!hasPlayedCurrent && !audioError && (
-              <p className="status-message">
-                Mẹo: lần phát đầu sẽ kích hoạt Web Audio theo thao tác người dùng.
-              </p>
+              <p className="status-message">{copy.audioTip}</p>
             )}
 
             <div className="choices-grid">
-              {question.choices.map((choice) => {
+              {displayQuestion.choices.map((choice) => {
                 const isSelected = evaluation?.selectedChoiceId === choice.id
                 const isCorrect = choice.id === question.correctChoiceId
                 const isChoiceDisabled = !hasPlayedCurrent || Boolean(evaluation)
@@ -438,17 +528,22 @@ export function PerfectPitchApp({
               >
                 <div>
                   <p className="feedback-title">
-                    {evaluation.status === 'correct'
-                      ? 'Chính xác'
-                      : 'Chưa đúng'}
+                    {evaluation.status === 'correct' ? copy.correct : copy.incorrect}
                   </p>
                   <p>
-                    Đáp án đúng là{' '}
-                    <strong>{question.choices.find((choice) => choice.id === question.correctChoiceId)?.label}</strong>.
+                    {copy.correctAnswerPrefix}{' '}
+                    <strong>
+                      {
+                        displayQuestion.choices.find(
+                          (choice) => choice.id === question.correctChoiceId,
+                        )?.label
+                      }
+                    </strong>
+                    .
                   </p>
                 </div>
                 <button className="next-button" onClick={goToNextQuestion} type="button">
-                  Câu tiếp theo
+                  {copy.nextQuestion}
                 </button>
               </div>
             )}

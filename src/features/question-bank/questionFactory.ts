@@ -2,10 +2,6 @@ import {
   NOTE_NAMES,
   PITCHES,
   createPitchPoolByNoteName,
-  formatArpeggioLabel,
-  formatChordLabel,
-  formatChoiceMeta,
-  formatIntervalLabel,
   formatMelodyLabel,
   formatPairLabel,
   getRandomPitchForNoteName,
@@ -15,7 +11,16 @@ import {
   type PitchName,
 } from '../../shared/music'
 import {
-  GAME_MODE_CONFIGS,
+  formatArpeggioLabel,
+  formatChoiceMeta,
+  formatChordLabel,
+  getDifficultyCopy,
+  getIntervalLabel,
+  getModeCopy,
+  type Language,
+  type TriadQuality,
+} from '../../shared/localization'
+import {
   type Choice,
   type DifficultyLevel,
   type GameMode,
@@ -34,17 +39,16 @@ export interface QuestionFactory {
 }
 
 interface IntervalSpec {
-  label: string
   semitones: number
 }
 
 interface ArpeggioSpec {
-  label: string
+  quality: TriadQuality
   intervals: [number, number, number]
 }
 
 interface ChordSpec {
-  label: string
+  quality: TriadQuality
   intervals: [number, number, number]
 }
 
@@ -59,75 +63,75 @@ const HARD_SINGLE_CLUSTERS: NoteName[][] = [
 
 const INTERVAL_SPECS: Record<DifficultyLevel, IntervalSpec[]> = {
   easy: [
-    { label: 'Đồng âm', semitones: 0 },
-    { label: 'Quãng 2 thứ', semitones: 1 },
-    { label: 'Quãng 2 trưởng', semitones: 2 },
-    { label: 'Quãng 3 thứ', semitones: 3 },
-    { label: 'Quãng 3 trưởng', semitones: 4 },
-    { label: 'Quãng 4 đúng', semitones: 5 },
-    { label: 'Quãng 5 đúng', semitones: 7 },
+    { semitones: 0 },
+    { semitones: 1 },
+    { semitones: 2 },
+    { semitones: 3 },
+    { semitones: 4 },
+    { semitones: 5 },
+    { semitones: 7 },
   ],
   medium: [
-    { label: 'Đồng âm', semitones: 0 },
-    { label: 'Quãng 2 thứ', semitones: 1 },
-    { label: 'Quãng 2 trưởng', semitones: 2 },
-    { label: 'Quãng 3 thứ', semitones: 3 },
-    { label: 'Quãng 3 trưởng', semitones: 4 },
-    { label: 'Quãng 4 đúng', semitones: 5 },
-    { label: 'Quãng 5 đúng', semitones: 7 },
-    { label: 'Quãng 6 thứ', semitones: 8 },
-    { label: 'Quãng 6 trưởng', semitones: 9 },
-    { label: 'Quãng 7 thứ', semitones: 10 },
-    { label: 'Quãng 7 trưởng', semitones: 11 },
-    { label: 'Quãng 8 đúng', semitones: 12 },
+    { semitones: 0 },
+    { semitones: 1 },
+    { semitones: 2 },
+    { semitones: 3 },
+    { semitones: 4 },
+    { semitones: 5 },
+    { semitones: 7 },
+    { semitones: 8 },
+    { semitones: 9 },
+    { semitones: 10 },
+    { semitones: 11 },
+    { semitones: 12 },
   ],
   hard: [
-    { label: 'Đồng âm', semitones: 0 },
-    { label: 'Quãng 2 thứ', semitones: 1 },
-    { label: 'Quãng 2 trưởng', semitones: 2 },
-    { label: 'Quãng 3 thứ', semitones: 3 },
-    { label: 'Quãng 3 trưởng', semitones: 4 },
-    { label: 'Quãng 4 đúng', semitones: 5 },
-    { label: 'Quãng 5 đúng', semitones: 7 },
-    { label: 'Quãng 6 thứ', semitones: 8 },
-    { label: 'Quãng 6 trưởng', semitones: 9 },
-    { label: 'Quãng 7 thứ', semitones: 10 },
-    { label: 'Quãng 7 trưởng', semitones: 11 },
-    { label: 'Quãng 8 đúng', semitones: 12 },
+    { semitones: 0 },
+    { semitones: 1 },
+    { semitones: 2 },
+    { semitones: 3 },
+    { semitones: 4 },
+    { semitones: 5 },
+    { semitones: 7 },
+    { semitones: 8 },
+    { semitones: 9 },
+    { semitones: 10 },
+    { semitones: 11 },
+    { semitones: 12 },
   ],
 }
 
 const ARPEGGIO_SPECS: Record<DifficultyLevel, ArpeggioSpec[]> = {
   easy: [
-    { label: 'trưởng', intervals: [0, 4, 7] },
-    { label: 'thứ', intervals: [0, 3, 7] },
+    { quality: 'major', intervals: [0, 4, 7] },
+    { quality: 'minor', intervals: [0, 3, 7] },
   ],
   medium: [
-    { label: 'trưởng', intervals: [0, 4, 7] },
-    { label: 'thứ', intervals: [0, 3, 7] },
+    { quality: 'major', intervals: [0, 4, 7] },
+    { quality: 'minor', intervals: [0, 3, 7] },
   ],
   hard: [
-    { label: 'trưởng', intervals: [0, 4, 7] },
-    { label: 'thứ', intervals: [0, 3, 7] },
-    { label: 'giảm', intervals: [0, 3, 6] },
-    { label: 'tăng', intervals: [0, 4, 8] },
+    { quality: 'major', intervals: [0, 4, 7] },
+    { quality: 'minor', intervals: [0, 3, 7] },
+    { quality: 'diminished', intervals: [0, 3, 6] },
+    { quality: 'augmented', intervals: [0, 4, 8] },
   ],
 }
 
 const CHORD_SPECS: Record<DifficultyLevel, ChordSpec[]> = {
   easy: [
-    { label: 'trưởng', intervals: [0, 4, 7] },
-    { label: 'thứ', intervals: [0, 3, 7] },
+    { quality: 'major', intervals: [0, 4, 7] },
+    { quality: 'minor', intervals: [0, 3, 7] },
   ],
   medium: [
-    { label: 'trưởng', intervals: [0, 4, 7] },
-    { label: 'thứ', intervals: [0, 3, 7] },
+    { quality: 'major', intervals: [0, 4, 7] },
+    { quality: 'minor', intervals: [0, 3, 7] },
   ],
   hard: [
-    { label: 'trưởng', intervals: [0, 4, 7] },
-    { label: 'thứ', intervals: [0, 3, 7] },
-    { label: 'giảm', intervals: [0, 3, 6] },
-    { label: 'tăng', intervals: [0, 4, 8] },
+    { quality: 'major', intervals: [0, 4, 7] },
+    { quality: 'minor', intervals: [0, 3, 7] },
+    { quality: 'diminished', intervals: [0, 3, 6] },
+    { quality: 'augmented', intervals: [0, 4, 8] },
   ],
 }
 
@@ -146,12 +150,17 @@ function withCorrectChoice(choices: Choice[], correctChoiceId: string): Choice[]
   }))
 }
 
-function createChoiceSet(mode: GameMode, labels: string[], correctChoiceId: string): Choice[] {
+function createChoiceSet(
+  language: Language,
+  mode: GameMode,
+  labels: string[],
+  correctChoiceId: string,
+): Choice[] {
   return withCorrectChoice(
     labels.map((label) => ({
       id: uniqueChoiceId(label),
       label,
-      meta: formatChoiceMeta(mode, label),
+      meta: formatChoiceMeta(language, mode, label),
       isCorrect: false,
     })),
     correctChoiceId,
@@ -190,7 +199,11 @@ function sampleUniqueByFilter(
   return sampleWithoutReplacement(source, count, random)
 }
 
-function createSingleQuestion(difficulty: DifficultyLevel, random: () => number): Question {
+function createSingleQuestion(
+  language: Language,
+  difficulty: DifficultyLevel,
+  random: () => number,
+): Question {
   const notePool = difficulty === 'easy' ? BASIC_SINGLE_NOTES : NOTE_NAMES
   const correctNote =
     difficulty === 'hard'
@@ -218,10 +231,10 @@ function createSingleQuestion(difficulty: DifficultyLevel, random: () => number)
     id: createId('single', random),
     mode: 'single',
     difficulty,
-    prompt: 'Nghe một nốt và chọn đúng tên nốt',
-    helperText: GAME_MODE_CONFIGS.single.difficulty[difficulty].helperText,
+    prompt: getModeCopy(language, 'single').prompt,
+    helperText: getDifficultyCopy(language, 'single', difficulty).helperText,
     correctChoiceId,
-    choices: createChoiceSet('single', labels, correctChoiceId),
+    choices: createChoiceSet(language, 'single', labels, correctChoiceId),
     playback: [
       {
         notes: [correctPitch],
@@ -256,7 +269,11 @@ const DOUBLE_PAIR_POOLS: Record<DifficultyLevel, NoteName[][]> = {
   hard: createNotePairs(1, 3),
 }
 
-function createDoubleQuestion(difficulty: DifficultyLevel, random: () => number): Question {
+function createDoubleQuestion(
+  language: Language,
+  difficulty: DifficultyLevel,
+  random: () => number,
+): Question {
   const pairPool = DOUBLE_PAIR_POOLS[difficulty]
   const pair = sortNoteNames(pickOne(pairPool, random))
   const correctChoiceLabel = formatPairLabel(pair)
@@ -279,10 +296,10 @@ function createDoubleQuestion(difficulty: DifficultyLevel, random: () => number)
     id: createId('double', random),
     mode: 'double',
     difficulty,
-    prompt: 'Nghe hai nốt vang cùng lúc và chọn đúng cặp nốt',
-    helperText: GAME_MODE_CONFIGS.double.difficulty[difficulty].helperText,
+    prompt: getModeCopy(language, 'double').prompt,
+    helperText: getDifficultyCopy(language, 'double', difficulty).helperText,
     correctChoiceId,
-    choices: createChoiceSet('double', labels, correctChoiceId),
+    choices: createChoiceSet(language, 'double', labels, correctChoiceId),
     playback: [
       {
         notes: pitches,
@@ -294,7 +311,11 @@ function createDoubleQuestion(difficulty: DifficultyLevel, random: () => number)
   }
 }
 
-function createMelodyQuestion(difficulty: DifficultyLevel, random: () => number): Question {
+function createMelodyQuestion(
+  language: Language,
+  difficulty: DifficultyLevel,
+  random: () => number,
+): Question {
   const lengthByDifficulty: Record<DifficultyLevel, number> = {
     easy: 3,
     medium: 4,
@@ -322,10 +343,10 @@ function createMelodyQuestion(difficulty: DifficultyLevel, random: () => number)
     id: createId('melody', random),
     mode: 'melody',
     difficulty,
-    prompt: 'Nghe motif ngắn và chọn đúng chuỗi nốt',
-    helperText: GAME_MODE_CONFIGS.melody.difficulty[difficulty].helperText,
+    prompt: getModeCopy(language, 'melody').prompt,
+    helperText: getDifficultyCopy(language, 'melody', difficulty).helperText,
     correctChoiceId,
-    choices: createChoiceSet('melody', labels, correctChoiceId),
+    choices: createChoiceSet(language, 'melody', labels, correctChoiceId),
     playback: createPlayback(
       pitches,
       difficulty === 'hard' ? 760 : 820,
@@ -368,13 +389,17 @@ function createIntervalPlayback(
   return createPlayback(interval.semitones === 0 ? [root] : [root, target], 760, 620, 0.72)
 }
 
-function createIntervalQuestion(difficulty: DifficultyLevel, random: () => number): Question {
+function createIntervalQuestion(
+  language: Language,
+  difficulty: DifficultyLevel,
+  random: () => number,
+): Question {
   const specs = INTERVAL_SPECS[difficulty]
   const correctSpec = pickOne(specs, random)
-  const correctChoiceLabel = formatIntervalLabel(correctSpec.label)
+  const correctChoiceLabel = getIntervalLabel(language, correctSpec.semitones)
   const distractors = sampleWithoutReplacement(
     specs
-      .map((spec) => formatIntervalLabel(spec.label))
+      .map((spec) => getIntervalLabel(language, spec.semitones))
       .filter((label) => label !== correctChoiceLabel),
     3,
     random,
@@ -386,10 +411,10 @@ function createIntervalQuestion(difficulty: DifficultyLevel, random: () => numbe
     id: createId('interval', random),
     mode: 'interval',
     difficulty,
-    prompt: 'Nghe quãng và chọn đúng tên quãng',
-    helperText: GAME_MODE_CONFIGS.interval.difficulty[difficulty].helperText,
+    prompt: getModeCopy(language, 'interval').prompt,
+    helperText: getDifficultyCopy(language, 'interval', difficulty).helperText,
     correctChoiceId,
-    choices: createChoiceSet('interval', labels, correctChoiceId),
+    choices: createChoiceSet(language, 'interval', labels, correctChoiceId),
     playback: createIntervalPlayback(difficulty, correctSpec, random),
   }
 }
@@ -453,15 +478,22 @@ function createArpeggioPlayback(
   return createPlayback(playbackPitches, 580, 640, 0.72)
 }
 
-function createArpeggioQuestion(difficulty: DifficultyLevel, random: () => number): Question {
+function createArpeggioQuestion(
+  language: Language,
+  difficulty: DifficultyLevel,
+  random: () => number,
+): Question {
   const specs = ARPEGGIO_SPECS[difficulty]
   const correctRoot = pickOne(NOTE_NAMES, random)
   const correctSpec = pickOne(specs, random)
-  const correctChoiceLabel = formatArpeggioLabel(correctRoot, correctSpec.label)
+  const correctChoiceLabel = formatArpeggioLabel(correctRoot, correctSpec.quality)
   const distractors = new Set<string>()
 
   while (distractors.size < 3) {
-    const nextLabel = formatArpeggioLabel(pickOne(NOTE_NAMES, random), pickOne(specs, random).label)
+    const nextLabel = formatArpeggioLabel(
+      pickOne(NOTE_NAMES, random),
+      pickOne(specs, random).quality,
+    )
     if (nextLabel !== correctChoiceLabel) {
       distractors.add(nextLabel)
     }
@@ -474,10 +506,10 @@ function createArpeggioQuestion(difficulty: DifficultyLevel, random: () => numbe
     id: createId('arpeggio', random),
     mode: 'arpeggio',
     difficulty,
-    prompt: 'Nghe mẫu rải hợp âm và chọn đúng màu hợp âm',
-    helperText: GAME_MODE_CONFIGS.arpeggio.difficulty[difficulty].helperText,
+    prompt: getModeCopy(language, 'arpeggio').prompt,
+    helperText: getDifficultyCopy(language, 'arpeggio', difficulty).helperText,
     correctChoiceId,
-    choices: createChoiceSet('arpeggio', labels, correctChoiceId),
+    choices: createChoiceSet(language, 'arpeggio', labels, correctChoiceId),
     playback: createArpeggioPlayback(difficulty, correctRoot, correctSpec, random),
   }
 }
@@ -538,9 +570,7 @@ function createChordPlayback(
   const inversion =
     difficulty === 'easy'
       ? 'root'
-      : difficulty === 'medium'
-        ? pickOne(['root', 'first', 'second'] as const, random)
-        : pickOne(['root', 'first', 'second'] as const, random)
+      : pickOne(['root', 'first', 'second'] as const, random)
   const playbackPitches = invertChordUp(basePitches, inversion)
 
   return [
@@ -553,17 +583,21 @@ function createChordPlayback(
   ]
 }
 
-function createChordQuestion(difficulty: DifficultyLevel, random: () => number): Question {
+function createChordQuestion(
+  language: Language,
+  difficulty: DifficultyLevel,
+  random: () => number,
+): Question {
   const specs = CHORD_SPECS[difficulty]
   const correctRoot = pickOne(NOTE_NAMES, random)
   const correctSpec = pickOne(specs, random)
-  const correctChoiceLabel = formatChordLabel(correctRoot, correctSpec.label)
+  const correctChoiceLabel = formatChordLabel(correctRoot, correctSpec.quality)
   const distractors = new Set<string>()
 
   while (distractors.size < 3) {
     const nextLabel = formatChordLabel(
       pickOne(NOTE_NAMES, random),
-      pickOne(specs, random).label,
+      pickOne(specs, random).quality,
     )
     if (nextLabel !== correctChoiceLabel) {
       distractors.add(nextLabel)
@@ -577,32 +611,32 @@ function createChordQuestion(difficulty: DifficultyLevel, random: () => number):
     id: createId('chord', random),
     mode: 'chord',
     difficulty,
-    prompt: 'Nghe hợp âm đánh cùng lúc và chọn đúng tên hợp âm',
-    helperText: GAME_MODE_CONFIGS.chord.difficulty[difficulty].helperText,
+    prompt: getModeCopy(language, 'chord').prompt,
+    helperText: getDifficultyCopy(language, 'chord', difficulty).helperText,
     correctChoiceId,
-    choices: createChoiceSet('chord', labels, correctChoiceId),
+    choices: createChoiceSet(language, 'chord', labels, correctChoiceId),
     playback: createChordPlayback(difficulty, correctRoot, correctSpec, random),
   }
 }
 
-export function createQuestionFactory(): QuestionFactory {
+export function createQuestionFactory(language: Language = 'en'): QuestionFactory {
   return {
     createQuestion(mode, difficulty, seed) {
       const random = createSeededRandom(seed ?? `${mode}-${difficulty}-${crypto.randomUUID()}`)
 
       switch (mode) {
         case 'single':
-          return createSingleQuestion(difficulty, random)
+          return createSingleQuestion(language, difficulty, random)
         case 'double':
-          return createDoubleQuestion(difficulty, random)
+          return createDoubleQuestion(language, difficulty, random)
         case 'melody':
-          return createMelodyQuestion(difficulty, random)
+          return createMelodyQuestion(language, difficulty, random)
         case 'interval':
-          return createIntervalQuestion(difficulty, random)
+          return createIntervalQuestion(language, difficulty, random)
         case 'arpeggio':
-          return createArpeggioQuestion(difficulty, random)
+          return createArpeggioQuestion(language, difficulty, random)
         case 'chord':
-          return createChordQuestion(difficulty, random)
+          return createChordQuestion(language, difficulty, random)
       }
     },
   }

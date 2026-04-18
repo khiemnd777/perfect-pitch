@@ -1,11 +1,15 @@
 import {
-  DIFFICULTY_LABELS,
   DIFFICULTY_LEVELS,
   GAME_MODES,
   type DifficultyLevel,
   type GameMode,
   type ModeProgress,
 } from '../../shared/gameTypes'
+import {
+  getLevelDownNotice,
+  getLevelUpNotice,
+  type Language,
+} from '../../shared/localization'
 
 const STORAGE_KEY = 'perfect-pitch-mode-progress'
 const STREAK_TARGET = 2
@@ -67,7 +71,7 @@ function sanitizeModeProgress(value: unknown): ModeProgress {
         ? candidate.correctAnswersTowardsLevelUp
         : typeof candidate.correctStreak === 'number' && candidate.correctStreak >= 0
           ? candidate.correctStreak
-        : 0,
+          : 0,
     incorrectStreak:
       typeof candidate.incorrectStreak === 'number' && candidate.incorrectStreak >= 0
         ? candidate.incorrectStreak
@@ -129,6 +133,7 @@ function getAdjacentDifficulty(
 export function applyProgression(
   progress: ModeProgress,
   status: 'correct' | 'incorrect',
+  language: Language = 'en',
 ): ProgressionResult {
   if (status === 'correct') {
     const correctAnswersTowardsLevelUp = progress.correctAnswersTowardsLevelUp + 1
@@ -148,7 +153,7 @@ export function applyProgression(
           correctAnswersTowardsLevelUp: 0,
           incorrectStreak: 0,
         },
-        notice: changed ? `Đã tăng lên mức ${DIFFICULTY_LABELS[nextDifficulty]}.` : null,
+        notice: changed ? getLevelUpNotice(language, nextDifficulty) : null,
       }
     }
 
@@ -174,7 +179,7 @@ export function applyProgression(
         correctAnswersTowardsLevelUp: 0,
         incorrectStreak: 0,
       },
-      notice: changed ? `Hạ về mức ${DIFFICULTY_LABELS[nextDifficulty]} để ổn định lại.` : null,
+      notice: changed ? getLevelDownNotice(language, nextDifficulty) : null,
     }
   }
 

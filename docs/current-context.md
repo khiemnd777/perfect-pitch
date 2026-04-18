@@ -4,6 +4,9 @@ Last updated: 2026-04-18
 
 ## Implemented
 - Boot flow preloads all piano assets before the main game UI is shown.
+- The app now supports bilingual `en` / `vi` copy across shell UI, generated prompts/helper text, choice meta, and progression notices.
+- English is the default language, and the selected language is persisted separately from gameplay progress in local storage.
+- A header-level `EN/VI` language switcher is available on the boot screen, home screen, and in-game screen.
 - The app supports 6 training modes: `single`, `double`, `melody`, `interval`, `arpeggio`, and `chord`.
 - Playback is generated from question payloads and routed through the `AudioEngine`.
 - Answering a choice is graded immediately through `evaluateSelection`.
@@ -21,12 +24,14 @@ Last updated: 2026-04-18
 
 ## Important Files
 - `src/app/App.tsx`: main flow, mode selection, playback actions, grading state, and session stats.
+- `src/app/languagePreference.ts`: local-storage load/save helpers for selected language.
 - `src/features/audio/audioEngine.ts`: Tone startup, sample preload, playback scheduling, replay, and cleanup.
 - `src/features/audio/pianoSamples.ts`: local piano sample mapping and velocity layers.
 - `src/features/question-bank/questionFactory.ts`: question generation rules for all 6 modes across all difficulty levels.
 - `src/features/game/evaluation.ts`: answer grading logic.
 - `src/features/game/progression.ts`: difficulty streak rules and local-storage persistence helpers.
 - `src/shared/gameTypes.ts`: shared domain types used across the app.
+- `src/shared/localization.ts`: shared English/Vietnamese copy, label formatters, and progression text helpers.
 - `.github/workflows/ci.yml`: validation workflow for pushes and pull requests.
 - `.github/workflows/deploy-production.yml`: production deploy workflow for `main`.
 - `deploy/Caddyfile`: checked-in default Caddy config for local validation and container startup.
@@ -34,12 +39,12 @@ Last updated: 2026-04-18
 
 ## Known Gaps
 - There is no persisted agent memory workflow in the codebase beyond `AGENTS.md`. This file and `memory.md` are now the canonical lightweight memory layer.
-- Manual verification for first-play audio and all 6 per-mode flows still needs to be rerun after any audio or gameplay change.
+- Manual verification for first-play audio, replay, next-question reset, and live EN/VI switching in all 6 modes still needs to be rerun after this UX/content change.
 - The production deploy path still depends on working GitHub repository secrets; live VPS reachability, Docker bootstrap, and HTTPS issuance have now been verified against real infrastructure.
 
 ## Recommended Next Focus
 - If touching deploy infra, verify first live deploy against a real VPS and domain before relying on automatic production releases.
-- If touching UX, verify mode switching, replay, next-question reset, and progression messaging in all 6 modes.
+- If touching UX, verify mode switching, replay, next-question reset, progression messaging, and live EN/VI switching in all 6 modes.
 - If touching audio, verify first user gesture still unlocks playback and sample coverage remains correct across `C4-B5`.
 
 ## Update Rule

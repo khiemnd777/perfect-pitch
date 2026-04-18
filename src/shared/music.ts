@@ -1,5 +1,3 @@
-import type { GameMode } from './gameTypes'
-
 export const NOTE_NAMES = [
   'C',
   'C#',
@@ -65,50 +63,6 @@ export function formatPairLabel(noteNames: NoteName[]) {
 
 export function formatMelodyLabel(noteNames: NoteName[]) {
   return noteNames.join(' - ')
-}
-
-export function formatIntervalLabel(label: string) {
-  return label
-}
-
-function formatTriadQualitySuffix(quality: string) {
-  switch (quality) {
-    case 'trưởng':
-      return ''
-    case 'thứ':
-      return 'm'
-    case 'giảm':
-      return 'dim'
-    case 'tăng':
-      return 'aug'
-    default:
-      return ` ${quality}`
-  }
-}
-
-export function formatArpeggioLabel(root: NoteName, quality: string) {
-  return `${root}${formatTriadQualitySuffix(quality)}`
-}
-
-export function formatChordLabel(root: NoteName, quality: string) {
-  return `${root}${formatTriadQualitySuffix(quality)}`
-}
-
-export function formatChoiceMeta(mode: GameMode, label: string) {
-  switch (mode) {
-    case 'single':
-      return `Tên nốt: ${label}`
-    case 'double':
-      return `Cặp nốt: ${label}`
-    case 'melody':
-      return `Motif: ${label}`
-    case 'interval':
-      return `Quãng: ${label}`
-    case 'arpeggio':
-      return `Mẫu rải: ${label}`
-    case 'chord':
-      return `Hợp âm: ${label}`
-  }
 }
 
 export function createPitchPoolByNoteName(pitches: PitchName[]) {
