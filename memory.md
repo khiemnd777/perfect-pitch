@@ -41,6 +41,8 @@
 - `.github/workflows/ci.yml` runs lint, tests, production builds, deploy-script syntax checks, `docker compose config`, image builds, and default Caddy validation on pushes and pull requests.
 - `.github/workflows/deploy-production.yml` deploys successful `main` builds to a VPS by shipping the repo context over SSH, bootstrapping Docker if needed, and serving the app via Docker + Caddy.
 - `deploy/Caddyfile` is a checked-in local/default HTTP reverse-proxy config, while `deploy/Caddyfile.template` is rendered with the production domain on the VPS before rollout.
+- `scripts/deploy/bootstrap-github-secrets.sh` reads deploy inputs from a repo-root `.env.deploy` file by default and can bootstrap from either an existing SSH key or a one-time VPS password by generating and installing a dedicated deploy key automatically.
+- `compose.yml` runs the public Caddy container in host-network mode and proxies to `127.0.0.1:8080`, which avoids broken ACME DNS resolution from the Docker bridge on the production VPS.
 - `scripts/deploy/bootstrap-github-secrets.sh` pushes deployment secrets to GitHub from the local machine via `gh secret set`.
 
 ## Working Commands

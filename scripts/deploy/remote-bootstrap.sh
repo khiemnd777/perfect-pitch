@@ -88,6 +88,34 @@ ensure_compose_plugin() {
   docker compose version >/dev/null 2>&1 || fail "Docker Compose plugin is not available after bootstrap."
 }
 
+free_public_http_ports() {
+  local service_name
+  local occupied_ports
+
+  if command -v systemctl >/dev/null 2>&1; then
+    for service_name in nginx apache2 httpd caddy; do
+      if systemctl is-active --quiet "$service_name"; then
+        log "Stopping host service $service_name to free ports 80/443"
+        run_root systemctl stop "$service_name"
+        run_root systemctl disable "$service_name" >/dev/null 2>&1 || true
+      fi
+    done
+  elif command -v service >/dev/null 2>&1; then
+    for service_name in nginx apache2 httpd caddy; do
+      if service "$service_name" status >/dev/null 2>&1; then
+        log "Stopping host service $service_name to free ports 80/443"
+        run_root service "$service_name" stop || true
+      fi
+    done
+  fi
+
+  occupied_ports="$(ss -H -ltnp '( sport = :80 or sport = :443 )' 2>/dev/null || true)"
+  if [[ -n "$occupied_ports" ]]; then
+    printf '%s\n' "$occupied_ports" >&2
+    fail "Ports 80/443 are still occupied on the VPS."
+  fi
+}
+
 render_runtime_files() {
   local template_path="$RELEASE_DIR/deploy/Caddyfile.template"
   local caddyfile_path="$RELEASE_DIR/deploy/Caddyfile"
@@ -147,6 +175,7 @@ APP_PORT="${APP_PORT:-8080}"
 install_docker_if_missing
 ensure_docker_running
 ensure_compose_plugin
+free_public_http_ports
 render_runtime_files
 cd "$RELEASE_DIR"
 validate_runtime_files

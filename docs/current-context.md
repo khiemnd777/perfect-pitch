@@ -13,8 +13,11 @@ Last updated: 2026-04-18
 - Per-mode difficulty progress is persisted in local storage and restored when the player returns.
 - CI now runs on GitHub Actions for pushes and pull requests, covering `bun install --frozen-lockfile`, lint, tests, production build, deploy script syntax, `docker compose config`, production image build, and default Caddy validation.
 - Production deploy now runs through a GitHub Actions workflow triggered by successful CI on `main`, shipping the repo context to the VPS and bootstrapping Docker + Caddy remotely.
-- Local deploy setup is now driven by `scripts/deploy/bootstrap-github-secrets.sh`, which prepares and uploads repository secrets through `gh`.
+- Local deploy setup is now driven by `scripts/deploy/bootstrap-github-secrets.sh`, which reads `.env.deploy`, prepares the deploy key if needed, and uploads repository secrets through `gh`.
 - `deploy/Caddyfile` now exists as the default local/runtime config so Docker Compose can be validated locally without depending on a generated file.
+- The local deploy bootstrap now supports password-only VPS access by generating a dedicated deploy SSH key, installing it on the server, and then storing that key in GitHub secrets for future zero-touch deploys.
+- The production VPS for `andy.dailyturning.com` is now reachable over the generated deploy key, and the app has been deployed live once successfully.
+- Caddy now runs with host networking and proxies to `127.0.0.1:8080` because ACME DNS resolution failed from the Docker bridge on this VPS while host-networked Caddy succeeded.
 
 ## Important Files
 - `src/app/App.tsx`: main flow, mode selection, playback actions, grading state, and session stats.
@@ -32,7 +35,7 @@ Last updated: 2026-04-18
 ## Known Gaps
 - There is no persisted agent memory workflow in the codebase beyond `AGENTS.md`. This file and `memory.md` are now the canonical lightweight memory layer.
 - Manual verification for first-play audio and all 5 per-mode flows still needs to be rerun after any audio or gameplay change.
-- The production deploy path still depends on valid DNS pointing and working GitHub repository secrets; these cannot be fully verified locally without real infrastructure.
+- The production deploy path still depends on working GitHub repository secrets; live VPS reachability, Docker bootstrap, and HTTPS issuance have now been verified against real infrastructure.
 
 ## Recommended Next Focus
 - If touching deploy infra, verify first live deploy against a real VPS and domain before relying on automatic production releases.

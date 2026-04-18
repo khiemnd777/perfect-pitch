@@ -112,14 +112,15 @@ This repo now includes GitHub Actions workflows for CI and production deploys, p
 
 ### Local setup for first deploy
 
-Run the helper script from your local machine after `gh auth login`:
+Create `.env.deploy` in the repo root from [deploy/bootstrap.env.example](/Users/khiemnguyen/Works/andy/pp/deploy/bootstrap.env.example:1), then run the helper script from your local machine after `gh auth login`:
 
 ```bash
-bash scripts/deploy/bootstrap-github-secrets.sh \
-  --domain app.example.com \
-  --host 203.0.113.10 \
-  --ssh-key ~/.ssh/vps_root_ed25519 \
-  --acme-email ops@example.com
+cp deploy/bootstrap.env.example .env.deploy
+bash scripts/deploy/bootstrap-github-secrets.sh
 ```
+
+If you want the whole flow to be one shell command with no separate `gh auth login`, set `GH_TOKEN` in `.env.deploy`. The script will authenticate `gh` automatically before uploading secrets.
+
+If you only have the VPS password, set `VPS_PASSWORD` in `.env.deploy` and leave `SSH_KEY_PATH` commented out. The helper will generate a dedicated deploy key, install it on the server, and then upload the GitHub secrets.
 
 Before the first production deploy succeeds, point the domain A record to the VPS IP.
