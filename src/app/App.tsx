@@ -88,6 +88,7 @@ export function PerfectPitchApp({
     melody: new Set(),
     interval: new Set(),
     arpeggio: new Set(),
+    chord: new Set(),
   })
 
   const accuracy = useMemo(() => {
@@ -311,7 +312,7 @@ export function PerfectPitchApp({
           <div className="eyebrow">Perfect Pitch</div>
           <h1>Kiểm tra tai nghe nốt bằng piano thật</h1>
           <p className="hero-copy">
-            Luyện cảm âm với 5 mode nghe: nốt đơn, cặp nốt, giai điệu, quãng và arpeggio.
+            Luyện cảm âm với 6 mode nghe: nốt đơn, cặp nốt, giai điệu, quãng, arpeggio và chord.
             Mỗi câu có 4 đáp án, chấm ngay sau khi bấm và tự tăng độ khó theo phong độ.
           </p>
           <div className="hero-stats">

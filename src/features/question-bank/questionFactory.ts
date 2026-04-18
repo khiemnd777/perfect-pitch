@@ -3,6 +3,7 @@ import {
   PITCHES,
   createPitchPoolByNoteName,
   formatArpeggioLabel,
+  formatChordLabel,
   formatChoiceMeta,
   formatIntervalLabel,
   formatMelodyLabel,
@@ -38,6 +39,11 @@ interface IntervalSpec {
 }
 
 interface ArpeggioSpec {
+  label: string
+  intervals: [number, number, number]
+}
+
+interface ChordSpec {
   label: string
   intervals: [number, number, number]
 }
@@ -92,6 +98,23 @@ const INTERVAL_SPECS: Record<DifficultyLevel, IntervalSpec[]> = {
 }
 
 const ARPEGGIO_SPECS: Record<DifficultyLevel, ArpeggioSpec[]> = {
+  easy: [
+    { label: 'trưởng', intervals: [0, 4, 7] },
+    { label: 'thứ', intervals: [0, 3, 7] },
+  ],
+  medium: [
+    { label: 'trưởng', intervals: [0, 4, 7] },
+    { label: 'thứ', intervals: [0, 3, 7] },
+  ],
+  hard: [
+    { label: 'trưởng', intervals: [0, 4, 7] },
+    { label: 'thứ', intervals: [0, 3, 7] },
+    { label: 'giảm', intervals: [0, 3, 6] },
+    { label: 'tăng', intervals: [0, 4, 8] },
+  ],
+}
+
+const CHORD_SPECS: Record<DifficultyLevel, ChordSpec[]> = {
   easy: [
     { label: 'trưởng', intervals: [0, 4, 7] },
     { label: 'thứ', intervals: [0, 3, 7] },
@@ -459,6 +482,109 @@ function createArpeggioQuestion(difficulty: DifficultyLevel, random: () => numbe
   }
 }
 
+function invertChordUp(
+  pitches: [PitchName, PitchName, PitchName],
+  inversion: 'root' | 'first' | 'second',
+) {
+  if (inversion === 'root') {
+    return pitches
+  }
+
+  const indices = pitches.map((pitch) => PITCHES.indexOf(pitch))
+
+  if (inversion === 'first') {
+    const raisedRoot = indices[0] + 12
+
+    if (raisedRoot >= PITCHES.length) {
+      return pitches
+    }
+
+    return [PITCHES[indices[1]], PITCHES[indices[2]], PITCHES[raisedRoot]] as [
+      PitchName,
+      PitchName,
+      PitchName,
+    ]
+  }
+
+  const raisedRoot = indices[0] + 12
+  const raisedThird = indices[1] + 12
+
+  if (raisedRoot >= PITCHES.length || raisedThird >= PITCHES.length) {
+    return pitches
+  }
+
+  return [PITCHES[indices[2]], PITCHES[raisedRoot], PITCHES[raisedThird]] as [
+    PitchName,
+    PitchName,
+    PitchName,
+  ]
+}
+
+function createChordPlayback(
+  difficulty: DifficultyLevel,
+  root: NoteName,
+  spec: ChordSpec,
+  random: () => number,
+): PlaybackEvent[] {
+  const rootCandidates = pitchPoolByNoteName[root]
+    .map((pitch) => PITCHES.indexOf(pitch))
+    .filter((index) => fitsPitchRange(index, spec.intervals))
+  const rootIndex = pickOne(rootCandidates, random)
+  const basePitches = spec.intervals.map((offset) => PITCHES[rootIndex + offset]) as [
+    PitchName,
+    PitchName,
+    PitchName,
+  ]
+  const inversion =
+    difficulty === 'easy'
+      ? 'root'
+      : difficulty === 'medium'
+        ? pickOne(['root', 'first', 'second'] as const, random)
+        : pickOne(['root', 'first', 'second'] as const, random)
+  const playbackPitches = invertChordUp(basePitches, inversion)
+
+  return [
+    {
+      notes: playbackPitches,
+      offsetMs: 0,
+      durationMs: difficulty === 'hard' ? 1850 : 1950,
+      velocity: 0.76,
+    },
+  ]
+}
+
+function createChordQuestion(difficulty: DifficultyLevel, random: () => number): Question {
+  const specs = CHORD_SPECS[difficulty]
+  const correctRoot = pickOne(NOTE_NAMES, random)
+  const correctSpec = pickOne(specs, random)
+  const correctChoiceLabel = formatChordLabel(correctRoot, correctSpec.label)
+  const distractors = new Set<string>()
+
+  while (distractors.size < 3) {
+    const nextLabel = formatChordLabel(
+      pickOne(NOTE_NAMES, random),
+      pickOne(specs, random).label,
+    )
+    if (nextLabel !== correctChoiceLabel) {
+      distractors.add(nextLabel)
+    }
+  }
+
+  const labels = shuffle([correctChoiceLabel, ...Array.from(distractors)], random)
+  const correctChoiceId = uniqueChoiceId(correctChoiceLabel)
+
+  return {
+    id: createId('chord', random),
+    mode: 'chord',
+    difficulty,
+    prompt: 'Nghe hợp âm đánh cùng lúc và chọn đúng tên hợp âm',
+    helperText: GAME_MODE_CONFIGS.chord.difficulty[difficulty].helperText,
+    correctChoiceId,
+    choices: createChoiceSet('chord', labels, correctChoiceId),
+    playback: createChordPlayback(difficulty, correctRoot, correctSpec, random),
+  }
+}
+
 export function createQuestionFactory(): QuestionFactory {
   return {
     createQuestion(mode, difficulty, seed) {
@@ -475,6 +601,8 @@ export function createQuestionFactory(): QuestionFactory {
           return createIntervalQuestion(difficulty, random)
         case 'arpeggio':
           return createArpeggioQuestion(difficulty, random)
+        case 'chord':
+          return createChordQuestion(difficulty, random)
       }
     },
   }

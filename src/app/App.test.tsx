@@ -100,7 +100,7 @@ describe('PerfectPitchApp', () => {
     })
   })
 
-  it('shows all 5 modes on the home screen', async () => {
+  it('shows all 6 modes on the home screen', async () => {
     const audioEngine = createMockAudioEngine()
     const questionFactory = createTrackingQuestionFactory()
 
@@ -114,6 +114,7 @@ describe('PerfectPitchApp', () => {
     expect(screen.getByRole('button', { name: 'Melody' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Interval' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Arpeggio' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Chord' })).toBeInTheDocument()
   })
 
   it('disables answer choices until the current question has been played', async () => {
@@ -204,6 +205,32 @@ describe('PerfectPitchApp', () => {
     expect(screen.getByText('Vừa')).toBeInTheDocument()
   })
 
+  it('raises difficulty based on cumulative correct answers, not total answered questions', async () => {
+    const user = userEvent.setup()
+    const audioEngine = createMockAudioEngine()
+    const questionFactory = createTrackingQuestionFactory()
+
+    render(
+      <PerfectPitchApp audioEngine={audioEngine} questionFactory={questionFactory.factory} />,
+    )
+
+    await screen.findByRole('button', { name: 'Single Note' })
+    await user.click(screen.getByRole('button', { name: 'Single Note' }))
+
+    await user.click(screen.getByRole('button', { name: 'Bật piano và phát' }))
+    await user.click(screen.getByTestId('choice-c'))
+    await user.click(screen.getByRole('button', { name: 'Câu tiếp theo' }))
+
+    await user.click(screen.getByRole('button', { name: 'Bật piano và phát' }))
+    await user.click(screen.getByTestId('choice-a'))
+    await user.click(screen.getByRole('button', { name: 'Câu tiếp theo' }))
+
+    await user.click(screen.getByRole('button', { name: 'Bật piano và phát' }))
+    await user.click(screen.getByTestId('choice-c'))
+
+    expect(screen.getByText('Đã tăng lên mức Vừa.')).toBeInTheDocument()
+  })
+
   it('plays the current question again after the first playback', async () => {
     const user = userEvent.setup()
     const audioEngine = createMockAudioEngine()
@@ -229,7 +256,7 @@ describe('PerfectPitchApp', () => {
         single: {
           currentDifficulty: 'medium',
           highestUnlockedDifficulty: 'hard',
-          correctStreak: 1,
+          correctAnswersTowardsLevelUp: 1,
           incorrectStreak: 0,
         },
       }),

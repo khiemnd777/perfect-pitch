@@ -68,4 +68,20 @@ describe('questionFactory', () => {
 
     expect(question.playback.flatMap((event) => event.notes).every((note) => PITCHES.includes(note))).toBe(true)
   })
+
+  it.each(DIFFICULTY_LEVELS)('keeps chord playback inside C4-B5 for %s', (difficulty) => {
+    const question = factory.createQuestion('chord', difficulty, `chord-${difficulty}`)
+
+    expect(question.playback).toHaveLength(1)
+    expect(question.playback[0]?.notes).toHaveLength(3)
+    expect(question.playback.flatMap((event) => event.notes).every((note) => PITCHES.includes(note))).toBe(true)
+  })
+
+  it('renders compact chord-style labels for triads', () => {
+    const chord = factory.createQuestion('chord', 'easy', 'chord-minor-label')
+    const arpeggio = factory.createQuestion('arpeggio', 'hard', 'arpeggio-dim-label')
+
+    expect(chord.choices.some((choice) => /^[A-G]#?m$/.test(choice.label) || /^[A-G]#?$/.test(choice.label))).toBe(true)
+    expect(arpeggio.choices.some((choice) => /^(?:[A-G]#?m|[A-G]#?dim|[A-G]#?aug|[A-G]#?)$/.test(choice.label))).toBe(true)
+  })
 })

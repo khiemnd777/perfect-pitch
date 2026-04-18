@@ -21,7 +21,7 @@ function createDefaultModeProgress(): ModeProgress {
   return {
     currentDifficulty: 'easy',
     highestUnlockedDifficulty: 'easy',
-    correctStreak: 0,
+    correctAnswersTowardsLevelUp: 0,
     incorrectStreak: 0,
   }
 }
@@ -51,7 +51,7 @@ function sanitizeModeProgress(value: unknown): ModeProgress {
     return createDefaultModeProgress()
   }
 
-  const candidate = value as Partial<ModeProgress>
+  const candidate = value as Partial<ModeProgress> & { correctStreak?: unknown }
   const currentDifficulty = sanitizeDifficultyLevel(candidate.currentDifficulty)
   const highestUnlockedDifficulty = clampUnlockedDifficulty(
     currentDifficulty,
@@ -61,9 +61,12 @@ function sanitizeModeProgress(value: unknown): ModeProgress {
   return {
     currentDifficulty,
     highestUnlockedDifficulty,
-    correctStreak:
-      typeof candidate.correctStreak === 'number' && candidate.correctStreak >= 0
-        ? candidate.correctStreak
+    correctAnswersTowardsLevelUp:
+      typeof candidate.correctAnswersTowardsLevelUp === 'number' &&
+      candidate.correctAnswersTowardsLevelUp >= 0
+        ? candidate.correctAnswersTowardsLevelUp
+        : typeof candidate.correctStreak === 'number' && candidate.correctStreak >= 0
+          ? candidate.correctStreak
         : 0,
     incorrectStreak:
       typeof candidate.incorrectStreak === 'number' && candidate.incorrectStreak >= 0
@@ -128,9 +131,9 @@ export function applyProgression(
   status: 'correct' | 'incorrect',
 ): ProgressionResult {
   if (status === 'correct') {
-    const correctStreak = progress.correctStreak + 1
+    const correctAnswersTowardsLevelUp = progress.correctAnswersTowardsLevelUp + 1
 
-    if (correctStreak >= STREAK_TARGET) {
+    if (correctAnswersTowardsLevelUp >= STREAK_TARGET) {
       const nextDifficulty = getAdjacentDifficulty(progress.currentDifficulty, 1)
       const changed = nextDifficulty !== progress.currentDifficulty
 
@@ -142,7 +145,7 @@ export function applyProgression(
             DIFFICULTY_LEVELS.indexOf(progress.highestUnlockedDifficulty)
               ? nextDifficulty
               : progress.highestUnlockedDifficulty,
-          correctStreak: 0,
+          correctAnswersTowardsLevelUp: 0,
           incorrectStreak: 0,
         },
         notice: changed ? `Đã tăng lên mức ${DIFFICULTY_LABELS[nextDifficulty]}.` : null,
@@ -152,7 +155,7 @@ export function applyProgression(
     return {
       nextProgress: {
         ...progress,
-        correctStreak,
+        correctAnswersTowardsLevelUp,
         incorrectStreak: 0,
       },
       notice: null,
@@ -168,7 +171,7 @@ export function applyProgression(
       nextProgress: {
         ...progress,
         currentDifficulty: nextDifficulty,
-        correctStreak: 0,
+        correctAnswersTowardsLevelUp: 0,
         incorrectStreak: 0,
       },
       notice: changed ? `Hạ về mức ${DIFFICULTY_LABELS[nextDifficulty]} để ổn định lại.` : null,
@@ -178,7 +181,7 @@ export function applyProgression(
   return {
     nextProgress: {
       ...progress,
-      correctStreak: 0,
+      correctAnswersTowardsLevelUp: progress.correctAnswersTowardsLevelUp,
       incorrectStreak,
     },
     notice: null,

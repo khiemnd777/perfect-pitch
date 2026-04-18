@@ -71,8 +71,27 @@ export function formatIntervalLabel(label: string) {
   return label
 }
 
+function formatTriadQualitySuffix(quality: string) {
+  switch (quality) {
+    case 'trưởng':
+      return ''
+    case 'thứ':
+      return 'm'
+    case 'giảm':
+      return 'dim'
+    case 'tăng':
+      return 'aug'
+    default:
+      return ` ${quality}`
+  }
+}
+
 export function formatArpeggioLabel(root: NoteName, quality: string) {
-  return `${root} ${quality}`
+  return `${root}${formatTriadQualitySuffix(quality)}`
+}
+
+export function formatChordLabel(root: NoteName, quality: string) {
+  return `${root}${formatTriadQualitySuffix(quality)}`
 }
 
 export function formatChoiceMeta(mode: GameMode, label: string) {
@@ -87,6 +106,8 @@ export function formatChoiceMeta(mode: GameMode, label: string) {
       return `Quãng: ${label}`
     case 'arpeggio':
       return `Mẫu rải: ${label}`
+    case 'chord':
+      return `Hợp âm: ${label}`
   }
 }
 

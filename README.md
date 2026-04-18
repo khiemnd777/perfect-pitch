@@ -1,6 +1,6 @@
 # Perfect Pitch
 
-Perfect Pitch is a fully client-side ear-training web app built for practicing single notes, double notes, short melodies, intervals, and arpeggios with local piano samples.
+Perfect Pitch is a fully client-side ear-training web app built for practicing single notes, double notes, short melodies, intervals, arpeggios, and chords with local piano samples.
 
 ## Product Goal
 
@@ -10,7 +10,7 @@ Perfect Pitch is a fully client-side ear-training web app built for practicing s
 
 ## Current Features
 
-- 5 training modes: `single`, `double`, `melody`, `interval`, `arpeggio`.
+- 6 training modes: `single`, `double`, `melody`, `interval`, `arpeggio`, `chord`.
 - 3 fixed difficulty levels: `easy`, `medium`, `hard`.
 - Automatic difficulty progression up or down based on correct and incorrect streaks.
 - Per-mode progress persisted in local storage.
@@ -50,7 +50,7 @@ bun run build
 - `src/app`: app shell, mode flow, preload logic, grading state, and session stats.
 - `src/features/audio`: Tone startup, sample preload, playback, replay, and cleanup.
 - `src/features/game`: grading logic and streak-based progression.
-- `src/features/question-bank`: question generation for all 5 modes across 3 difficulty levels.
+- `src/features/question-bank`: question generation for all 6 modes across 3 difficulty levels.
 - `src/shared`: public types, music helpers, and random utilities.
 - `public/audio/piano`: piano samples used for playback.
 
@@ -76,7 +76,7 @@ docker build -t perfect-pitch-ci-local .
 Manual verification is also recommended for:
 
 - first-play audio after the first user gesture
-- replay behavior in all 5 modes
+- replay behavior in all 6 modes
 - immediate grading
 - next-question reset
 

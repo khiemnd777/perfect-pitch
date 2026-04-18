@@ -1,6 +1,12 @@
 import type { PitchName } from './music'
 
-export type GameMode = 'single' | 'double' | 'melody' | 'interval' | 'arpeggio'
+export type GameMode =
+  | 'single'
+  | 'double'
+  | 'melody'
+  | 'interval'
+  | 'arpeggio'
+  | 'chord'
 export type DifficultyLevel = 'easy' | 'medium' | 'hard'
 
 export type QuestionId = string
@@ -20,7 +26,7 @@ export interface GameModeConfig {
 export interface ModeProgress {
   currentDifficulty: DifficultyLevel
   highestUnlockedDifficulty: DifficultyLevel
-  correctStreak: number
+  correctAnswersTowardsLevelUp: number
   incorrectStreak: number
 }
 
@@ -38,6 +44,7 @@ export const GAME_MODES: GameMode[] = [
   'melody',
   'interval',
   'arpeggio',
+  'chord',
 ]
 
 export interface Choice {
@@ -187,6 +194,27 @@ export const GAME_MODE_CONFIGS: Record<GameMode, GameModeConfig> = {
         label: 'Khó',
         shortLabel: '4 màu hợp âm',
         helperText: 'Thêm diminished và augmented, có thể đổi octave nhưng vẫn nằm trong dải piano hiện có.',
+      },
+    },
+  },
+  chord: {
+    label: 'Chord',
+    description: 'Nghe hợp âm đánh cùng lúc và chọn đúng tên hợp âm.',
+    difficulty: {
+      easy: {
+        label: 'Dễ',
+        shortLabel: 'Major / Minor',
+        helperText: 'Nghe triad ở root position để phân biệt trưởng và thứ theo màu hợp âm.',
+      },
+      medium: {
+        label: 'Vừa',
+        shortLabel: 'Có đảo hợp âm',
+        helperText: 'Vẫn là major và minor nhưng có thể đảo thế để bớt phụ thuộc vào hình quen.',
+      },
+      hard: {
+        label: 'Khó',
+        shortLabel: '4 màu hợp âm',
+        helperText: 'Thêm diminished và augmented, đồng thời trộn root position với các thế đảo.',
       },
     },
   },

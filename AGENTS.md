@@ -1,7 +1,7 @@
 # Perfect Pitch Agents Guide
 
 ## Product Goal
-- Build a client-side ear-training web app for single notes, double notes, short melodies, intervals, and arpeggios.
+- Build a client-side ear-training web app for single notes, double notes, short melodies, intervals, arpeggios, and chords.
 - Preserve instant feedback: answer selection must grade immediately and reveal the correct choice.
 - Keep the experience musical rather than synthetic; piano playback should stay sample-based.
 
@@ -36,7 +36,7 @@
 - Run `bun run lint`.
 - Run `bun run test:run`.
 - Run `bun run build`.
-- Manually verify first-play audio, replay, immediate grading, and next-question reset in all 5 modes.
+- Manually verify first-play audio, replay, immediate grading, and next-question reset in all 6 modes.
 - For CI/CD work, also run `bash -n scripts/deploy/bootstrap-github-secrets.sh scripts/deploy/remote-bootstrap.sh`, `docker compose config`, and a local `docker build`.
 
 ## Memory Workflow

@@ -1,7 +1,7 @@
 # Project Memory
 
 ## Purpose
-- Perfect Pitch is a client-side ear-training web app for 5 modes: `single`, `double`, `melody`, `interval`, and `arpeggio`.
+- Perfect Pitch is a client-side ear-training web app for 6 modes: `single`, `double`, `melody`, `interval`, `arpeggio`, and `chord`.
 - The product goal is instant feedback: selecting an answer grades immediately and reveals the correct choice.
 - The app should sound like a sampled piano rather than a synthesized oscillator.
 
@@ -23,7 +23,8 @@
 - `single` mode answers identify pitch class only, not octave.
 - `double` mode choices must remain unambiguous and use sorted note labels.
 - `melody` mode choices must match playback length and avoid visually duplicate distractors.
-- All modes use fixed levels `easy` / `medium` / `hard`, and the app can auto-raise or lower the active level based on streaks.
+- `chord` mode identifies harmonically stacked triads played together; `arpeggio` remains the broken-chord mode.
+- All modes use fixed levels `easy` / `medium` / `hard`; level-up now depends on accumulated correct answers at the current level, while level-down still reacts to incorrect streaks.
 - Every generated question must contain exactly 4 unique choices with exactly 1 correct answer.
 
 ## Audio Rules
@@ -37,7 +38,7 @@
 - `src/app/App.tsx` preloads piano assets on boot, lets the user pick a mode, restores per-mode difficulty from local storage, and auto-adjusts level progression during play.
 - Session stats track answered count, correct count, current streak, and best streak.
 - `src/features/audio/audioEngine.ts` caches the current question for replay and uses layered `Tone.Sampler` instances mapped from local piano samples.
-- `src/features/question-bank/questionFactory.ts` supports deterministic generation by `mode + difficulty` with an optional seed.
+- `src/features/question-bank/questionFactory.ts` supports deterministic generation by `mode + difficulty` with an optional seed, including harmonic chord questions.
 - `.github/workflows/ci.yml` runs lint, tests, production builds, deploy-script syntax checks, `docker compose config`, image builds, and default Caddy validation on pushes and pull requests.
 - `.github/workflows/deploy-production.yml` deploys successful `main` builds to a VPS by shipping the repo context over SSH, bootstrapping Docker if needed, and serving the app via Docker + Caddy.
 - `deploy/Caddyfile` is a checked-in local/default HTTP reverse-proxy config, while `deploy/Caddyfile.template` is rendered with the production domain on the VPS before rollout.
