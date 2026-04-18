@@ -82,3 +82,40 @@ Manual verification is also recommended for:
 - `AGENTS.md`: workflow rules for agents operating in this repo.
 - `memory.md`: durable project context.
 - `docs/current-context.md`: current implementation state and next focus areas.
+
+## CI/CD And VPS Deployment
+
+This repo now includes GitHub Actions workflows for CI and production deploys, plus a zero-touch VPS bootstrap flow using Docker and Caddy.
+
+### What is included
+
+- `.github/workflows/ci.yml`: runs lint, tests, and production build on pull requests and pushes.
+- `.github/workflows/deploy-production.yml`: deploys automatically after CI succeeds on `main`.
+- `Dockerfile`: multi-stage image build for the static Vite app.
+- `compose.yml`: production stack with the app container and a public Caddy reverse proxy.
+- `scripts/deploy/remote-bootstrap.sh`: idempotent VPS bootstrap for Docker and Compose.
+- `scripts/deploy/bootstrap-github-secrets.sh`: local helper to base64-encode the SSH key and push deploy secrets to GitHub.
+
+### Required GitHub secrets
+
+- `VPS_HOST`
+- `VPS_PORT` default `22`
+- `VPS_USER` default `root`
+- `VPS_SSH_PRIVATE_KEY_B64`
+- `DEPLOY_DOMAIN`
+- `DEPLOY_APP_DIR` default `/opt/perfect-pitch`
+- `ACME_EMAIL` optional
+
+### Local setup for first deploy
+
+Run the helper script from your local machine after `gh auth login`:
+
+```bash
+bash scripts/deploy/bootstrap-github-secrets.sh \
+  --domain app.example.com \
+  --host 203.0.113.10 \
+  --ssh-key ~/.ssh/vps_root_ed25519 \
+  --acme-email ops@example.com
+```
+
+Before the first production deploy succeeds, point the domain A record to the VPS IP.

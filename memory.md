@@ -9,6 +9,7 @@
 - Runtime and tooling: `Bun`, `Vite`, `React 19`, `TypeScript`, `Vitest`, `ESLint`.
 - Audio layer: `tone`.
 - Assets: local piano samples under `public/audio/piano/`.
+- Deployment: `GitHub Actions`, `Docker`, `Caddy`.
 
 ## Architecture
 - App wiring lives in `src/app`.
@@ -37,12 +38,16 @@
 - Session stats track answered count, correct count, current streak, and best streak.
 - `src/features/audio/audioEngine.ts` caches the current question for replay and uses layered `Tone.Sampler` instances mapped from local piano samples.
 - `src/features/question-bank/questionFactory.ts` supports deterministic generation by `mode + difficulty` with an optional seed.
+- `.github/workflows/ci.yml` runs lint, tests, and production builds on pushes and pull requests.
+- `.github/workflows/deploy-production.yml` deploys successful `main` builds to a VPS by shipping the repo context over SSH, bootstrapping Docker if needed, and serving the app via Docker + Caddy.
+- `scripts/deploy/bootstrap-github-secrets.sh` pushes deployment secrets to GitHub from the local machine via `gh secret set`.
 
 ## Working Commands
 - `bun run dev`
 - `bun run lint`
 - `bun run test:run`
 - `bun run build`
+- `bash scripts/deploy/bootstrap-github-secrets.sh --help`
 
 ## Source Of Truth
 - Durable facts belong in this file.

@@ -1,0 +1,11 @@
+__GLOBAL_OPTIONS__
+__DEPLOY_DOMAIN__ {
+	encode gzip zstd
+	reverse_proxy app:8080
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options SAMEORIGIN
+	}
+}

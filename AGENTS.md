@@ -12,6 +12,13 @@
 - Prefer deterministic generators for tests by accepting an optional seed.
 - UI copy stays Vietnamese unless a task explicitly changes localization scope.
 
+## Agent Skills
+- Use `.agents/skills/perfect-pitch-frontend/SKILL.md` when changing UI flow, app state, layout, or React architecture.
+- Use `.agents/skills/perfect-pitch-audio/SKILL.md` when changing playback, Tone.js integration, sample maps, replay, or browser audio startup behavior.
+- Use `.agents/skills/perfect-pitch-content/SKILL.md` when changing question generation, note naming, distractors, or answer semantics.
+- Use `.agents/skills/perfect-pitch-ci-cd/SKILL.md` when changing GitHub Actions, Docker/Caddy deploy files, VPS bootstrap scripts, or local GitHub secret bootstrap.
+- If a task crosses multiple areas, load every relevant skill before editing.
+
 ## Audio Rules
 - Use `tone` as the Web Audio layer.
 - Load piano assets only from `public/audio/piano/` unless a task explicitly replaces the library and updates this file.
@@ -30,6 +37,7 @@
 - Run `bun run test:run`.
 - Run `bun run build`.
 - Manually verify first-play audio, replay, immediate grading, and next-question reset in all 5 modes.
+- For CI/CD work, also run `bash -n scripts/deploy/bootstrap-github-secrets.sh scripts/deploy/remote-bootstrap.sh`, `docker compose config`, and a local `docker build`.
 
 ## Memory Workflow
 - Read `memory.md` before deep repo exploration to load durable project context quickly.

@@ -12,7 +12,7 @@ description: Use when working on the Perfect Pitch React frontend, including Vit
 1. Keep app-level composition in `src/app`.
 2. Keep reusable domain types in `src/shared`.
 3. Put game logic under `src/features/game` and question generation under `src/features/question-bank`.
-4. Preserve the product contract: 3 modes, 4 fixed choices, instant grading, next-question reset.
+4. Preserve the product contract: 5 modes, 4 fixed choices, instant grading, next-question reset.
 
 ## UI Rules
 - Default language is Vietnamese.

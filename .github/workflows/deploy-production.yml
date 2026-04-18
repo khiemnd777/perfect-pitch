@@ -1,0 +1,120 @@
+name: deploy-production
+
+on:
+  workflow_run:
+    workflows:
+      - ci
+    types:
+      - completed
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DEPLOY_DOMAIN: ${{ secrets.DEPLOY_DOMAIN }}
+      DEPLOY_APP_DIR: ${{ secrets.DEPLOY_APP_DIR != '' && secrets.DEPLOY_APP_DIR || '/opt/perfect-pitch' }}
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_PORT: ${{ secrets.VPS_PORT != '' && secrets.VPS_PORT || '22' }}
+      VPS_USER: ${{ secrets.VPS_USER != '' && secrets.VPS_USER || 'root' }}
+      ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
+
+    steps:
+      - name: Check out repository at validated commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Validate deploy secrets
+        run: |
+          test -n "$VPS_HOST" || { echo "Missing VPS_HOST secret"; exit 1; }
+          test -n "${{ secrets.VPS_SSH_PRIVATE_KEY_B64 }}" || { echo "Missing VPS_SSH_PRIVATE_KEY_B64 secret"; exit 1; }
+          test -n "$DEPLOY_DOMAIN" || { echo "Missing DEPLOY_DOMAIN secret"; exit 1; }
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build production bundle
+        run: bun run build
+
+      - name: Prepare SSH key
+        env:
+          VPS_SSH_PRIVATE_KEY_B64: ${{ secrets.VPS_SSH_PRIVATE_KEY_B64 }}
+        run: |
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s' "$VPS_SSH_PRIVATE_KEY_B64" | base64 --decode > "$HOME/.ssh/id_deploy"
+          chmod 600 "$HOME/.ssh/id_deploy"
+          ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Package deployment context
+        run: |
+          tar \
+            --exclude=.git \
+            --exclude=.github \
+            --exclude=.agents \
+            --exclude=node_modules \
+            --exclude=dist \
+            --exclude=coverage \
+            --exclude=docs \
+            --exclude=memory.md \
+            --exclude=AGENTS.md \
+            --exclude=README.md \
+            -czf deploy-context.tar.gz .
+
+      - name: Upload deployment context
+        run: |
+          scp \
+            -i "$HOME/.ssh/id_deploy" \
+            -P "$VPS_PORT" \
+            deploy-context.tar.gz \
+            "$VPS_USER@$VPS_HOST:/tmp/perfect-pitch-deploy.tar.gz"
+
+      - name: Bootstrap VPS and deploy
+        run: |
+          ssh \
+            -i "$HOME/.ssh/id_deploy" \
+            -p "$VPS_PORT" \
+            "$VPS_USER@$VPS_HOST" \
+            DEPLOY_APP_DIR="$DEPLOY_APP_DIR" \
+            DEPLOY_DOMAIN="$DEPLOY_DOMAIN" \
+            ACME_EMAIL="$ACME_EMAIL" \
+            bash -s <<'EOF'
+          set -euo pipefail
+
+          APP_DIR="${DEPLOY_APP_DIR:-/opt/perfect-pitch}"
+          RELEASE_DIR="$APP_DIR/current"
+          ARCHIVE_PATH="/tmp/perfect-pitch-deploy.tar.gz"
+
+          mkdir -p "$APP_DIR"
+          rm -rf "$RELEASE_DIR"
+          mkdir -p "$RELEASE_DIR"
+          tar -xzf "$ARCHIVE_PATH" -C "$RELEASE_DIR"
+          cd "$RELEASE_DIR"
+          bash scripts/deploy/remote-bootstrap.sh
+          rm -f "$ARCHIVE_PATH"
+          EOF
+
+      - name: Verify public HTTPS endpoint
+        run: |
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --location \
+            --retry 10 \
+            --retry-delay 6 \
+            "https://${DEPLOY_DOMAIN}/"
