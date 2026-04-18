@@ -1,23 +1,23 @@
 # Perfect Pitch
 
-Perfect Pitch la ung dung web luyen cam am chay hoan toan o client, duoc xay dung de luyen nghe not don, hop am 2 not, melody ngan, quang, va arpeggio bang piano sample cuc bo.
+Perfect Pitch is a fully client-side ear-training web app built for practicing single notes, double notes, short melodies, intervals, and arpeggios with local piano samples.
 
-## Muc tieu san pham
+## Product Goal
 
-- Cham diem ngay khi nguoi choi chon dap an va hien dap an dung lap tuc.
-- Giu chat am tu nhien bang piano sample thay vi synth.
-- Ho tro luyen tap nhanh tren trinh duyet, khong can backend.
+- Grade answers immediately and reveal the correct choice as soon as the player selects one.
+- Preserve a natural musical character by using sampled piano audio instead of a synth.
+- Keep the experience fast and browser-based, with no backend required.
 
-## Tinh nang hien co
+## Current Features
 
-- 5 mode luyen tai: `single`, `double`, `melody`, `interval`, `arpeggio`.
-- 3 cap do kho co dinh: `easy`, `medium`, `hard`.
-- Tu dong tang/giam do kho theo streak dung/sai.
-- Luu tien do rieng theo tung mode trong local storage.
-- Replay phat lai dung payload cau hoi hien tai, khong sinh cau hoi moi.
-- Sinh cau hoi theo quy tac xac dinh, co the test voi seed khi can.
+- 5 training modes: `single`, `double`, `melody`, `interval`, `arpeggio`.
+- 3 fixed difficulty levels: `easy`, `medium`, `hard`.
+- Automatic difficulty progression up or down based on correct and incorrect streaks.
+- Per-mode progress persisted in local storage.
+- Replay always reuses the current question payload instead of generating a new one.
+- Deterministic question generation patterns, with optional seeds for testing when needed.
 
-## Cong nghe
+## Tech Stack
 
 - `Bun`
 - `Vite`
@@ -27,14 +27,14 @@ Perfect Pitch la ung dung web luyen cam am chay hoan toan o client, duoc xay dun
 - `Vitest`
 - `ESLint`
 
-## Cai dat va chay
+## Install And Run
 
 ```bash
 bun install
 bun run dev
 ```
 
-Ung dung mac dinh chay tren Vite dev server. Audio chi duoc mo sau user gesture dau tien de tranh autoplay restriction cua trinh duyet.
+The app runs on the Vite dev server by default. Audio is only unlocked after the first user gesture to avoid browser autoplay restrictions.
 
 ## Scripts
 
@@ -45,24 +45,24 @@ bun run test:run
 bun run build
 ```
 
-## Cau truc du an
+## Project Structure
 
-- `src/app`: app shell, mode flow, preload, grading state, session stats.
-- `src/features/audio`: Tone startup, sample preload, playback, replay, cleanup.
-- `src/features/game`: cham diem va progression theo streak.
-- `src/features/question-bank`: sinh cau hoi cho 5 mode va 3 muc do.
-- `src/shared`: public types, helper am nhac, random utility.
-- `public/audio/piano`: piano samples duoc su dung khi phat am.
+- `src/app`: app shell, mode flow, preload logic, grading state, and session stats.
+- `src/features/audio`: Tone startup, sample preload, playback, replay, and cleanup.
+- `src/features/game`: grading logic and streak-based progression.
+- `src/features/question-bank`: question generation for all 5 modes across 3 difficulty levels.
+- `src/shared`: public types, music helpers, and random utilities.
+- `public/audio/piano`: piano samples used for playback.
 
-## Quy tac nghiep vu
+## Domain Rules
 
-- `single`: chi doan pitch class, khong doan octave.
-- `double`: dap an phai ro rang va nhan cap not phai duoc sap xep tang dan.
-- `melody`: distractor phai cung do dai va tranh trung nhin.
-- Moi cau hoi phai co dung 4 lua chon duy nhat va chi 1 dap an dung.
-- Moi thay doi sample map phai giu du sample coverage trong dai `C4-B5`.
+- `single`: answers identify pitch class only, not octave.
+- `double`: choices must stay unambiguous and note-pair labels must be sorted.
+- `melody`: distractors must match playback length and avoid visual duplication.
+- Every question must contain exactly 4 unique choices and exactly 1 correct answer.
+- Any sample-map change must preserve sample coverage across the `C4-B5` range.
 
-## Kiem tra truoc khi publish
+## Verification Before Publishing
 
 ```bash
 bun run lint
@@ -70,15 +70,15 @@ bun run test:run
 bun run build
 ```
 
-Ngoai ra nen kiem tra thu cong:
+Manual verification is also recommended for:
 
-- first-play audio sau user gesture dau tien
-- replay trong ca 5 mode
+- first-play audio after the first user gesture
+- replay behavior in all 5 modes
 - immediate grading
 - next-question reset
 
-## Tai lieu noi bo
+## Internal Docs
 
-- `AGENTS.md`: quy uoc lam viec cho agent trong repo.
-- `memory.md`: thong tin ben vung cua du an.
-- `docs/current-context.md`: trang thai thuc thi hien tai va next focus.
+- `AGENTS.md`: workflow rules for agents operating in this repo.
+- `memory.md`: durable project context.
+- `docs/current-context.md`: current implementation state and next focus areas.
