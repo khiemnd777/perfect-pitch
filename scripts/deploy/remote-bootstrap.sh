@@ -116,6 +116,11 @@ free_public_http_ports() {
   fi
 }
 
+stop_existing_stack() {
+  log "Stopping existing project stack if present"
+  docker compose --project-name "$COMPOSE_PROJECT_NAME" down --remove-orphans >/dev/null 2>&1 || true
+}
+
 render_runtime_files() {
   local template_path="$RELEASE_DIR/deploy/Caddyfile.template"
   local caddyfile_path="$RELEASE_DIR/deploy/Caddyfile"
@@ -175,10 +180,11 @@ APP_PORT="${APP_PORT:-8080}"
 install_docker_if_missing
 ensure_docker_running
 ensure_compose_plugin
-free_public_http_ports
 render_runtime_files
 cd "$RELEASE_DIR"
 validate_runtime_files
+stop_existing_stack
+free_public_http_ports
 
 log "Pulling base images"
 docker compose --project-name "$COMPOSE_PROJECT_NAME" pull caddy
