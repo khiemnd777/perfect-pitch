@@ -365,6 +365,12 @@
 }
 
 .stats-card {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+.stats-card__values {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;

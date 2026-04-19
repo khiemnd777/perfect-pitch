@@ -3,6 +3,10 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { PerfectPitchApp } from './App'
 import { LANGUAGE_STORAGE_KEY } from './languagePreference'
+import {
+  DEFAULT_SESSION_STATS,
+  SCORE_STORAGE_KEY,
+} from './sessionStats'
 import type { AudioEngine } from '../features/audio/audioEngine'
 import type { QuestionFactory } from '../features/question-bank/questionFactory'
 import type {
@@ -381,5 +385,113 @@ describe('PerfectPitchApp', () => {
 
     expect(screen.getByText('medium-1')).toBeInTheDocument()
     expect(questionFactory.createQuestion).toHaveBeenCalledWith('single', 'medium')
+  })
+
+  it('restores saved session stats from local storage on load', async () => {
+    window.localStorage.setItem(
+      SCORE_STORAGE_KEY,
+      JSON.stringify({
+        answered: 4,
+        correct: 3,
+        streak: 2,
+        bestStreak: 2,
+      }),
+    )
+
+    const user = userEvent.setup()
+    const audioEngine = createMockAudioEngine()
+
+    render(<PerfectPitchApp audioEngine={audioEngine} storage={window.localStorage} />)
+
+    await screen.findByRole('button', { name: 'Single Note' })
+    await user.click(screen.getByRole('button', { name: 'Single Note' }))
+
+    expect(screen.getByText('3/4 correct')).toBeInTheDocument()
+    expect(screen.getByText('75% accuracy')).toBeInTheDocument()
+    expect(screen.getByText('Streak 2')).toBeInTheDocument()
+  })
+
+  it('persists updated session stats after answering a question', async () => {
+    const user = userEvent.setup()
+    const audioEngine = createMockAudioEngine()
+    const questionFactory = createTrackingQuestionFactory()
+
+    render(
+      <PerfectPitchApp
+        audioEngine={audioEngine}
+        questionFactory={questionFactory.factory}
+        storage={window.localStorage}
+      />,
+    )
+
+    await screen.findByRole('button', { name: 'Single Note' })
+    await user.click(screen.getByRole('button', { name: 'Single Note' }))
+    await user.click(screen.getByRole('button', { name: 'Enable piano and play' }))
+    await user.click(screen.getByTestId('choice-c'))
+
+    expect(JSON.parse(window.localStorage.getItem(SCORE_STORAGE_KEY) ?? 'null')).toEqual({
+      answered: 1,
+      correct: 1,
+      streak: 1,
+      bestStreak: 1,
+    })
+  })
+
+  it('resets session stats in UI and storage', async () => {
+    window.localStorage.setItem(
+      SCORE_STORAGE_KEY,
+      JSON.stringify({
+        answered: 5,
+        correct: 4,
+        streak: 3,
+        bestStreak: 4,
+      }),
+    )
+
+    const user = userEvent.setup()
+    const audioEngine = createMockAudioEngine()
+
+    render(<PerfectPitchApp audioEngine={audioEngine} storage={window.localStorage} />)
+
+    await screen.findByRole('button', { name: 'Single Note' })
+    await user.click(screen.getByRole('button', { name: 'Single Note' }))
+    await user.click(screen.getByRole('button', { name: 'Reset score' }))
+
+    expect(screen.getByText('0/0 correct')).toBeInTheDocument()
+    expect(screen.getByText('0% accuracy')).toBeInTheDocument()
+    expect(screen.getByText('Streak 0')).toBeInTheDocument()
+    expect(JSON.parse(window.localStorage.getItem(SCORE_STORAGE_KEY) ?? 'null')).toEqual(
+      DEFAULT_SESSION_STATS,
+    )
+  })
+
+  it('keeps session stats after remounting the app', async () => {
+    const user = userEvent.setup()
+    const audioEngine = createMockAudioEngine()
+    const questionFactory = createTrackingQuestionFactory()
+
+    const firstRender = render(
+      <PerfectPitchApp
+        audioEngine={audioEngine}
+        questionFactory={questionFactory.factory}
+        storage={window.localStorage}
+      />,
+    )
+
+    await screen.findByRole('button', { name: 'Single Note' })
+    await user.click(screen.getByRole('button', { name: 'Single Note' }))
+    await user.click(screen.getByRole('button', { name: 'Enable piano and play' }))
+    await user.click(screen.getByTestId('choice-c'))
+
+    firstRender.unmount()
+
+    render(<PerfectPitchApp audioEngine={audioEngine} storage={window.localStorage} />)
+
+    await screen.findByRole('button', { name: 'Single Note' })
+    await user.click(screen.getByRole('button', { name: 'Single Note' }))
+
+    expect(screen.getByText('1/1 correct')).toBeInTheDocument()
+    expect(screen.getByText('100% accuracy')).toBeInTheDocument()
+    expect(screen.getByText('Streak 1')).toBeInTheDocument()
   })
 })

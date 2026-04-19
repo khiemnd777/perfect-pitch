@@ -1,8 +1,10 @@
 # Current Context
 
-Last updated: 2026-04-18
+Last updated: 2026-04-19
 
 ## Implemented
+- Sau khi chọn đáp án, UI tự cuộn mượt tới khối feedback kết quả để người chơi thấy ngay đúng/sai và đáp án đúng mà không cần cuộn tay trên màn hình dài/mobile.
+- Session stats now persist in local storage across page refreshes, using the existing app storage pattern; the in-game stats card also includes a reset button that clears the persisted score back to zero without affecting mode progression.
 - Google Analytics 4 can now be enabled by setting `VITE_GA_MEASUREMENT_ID` in deploy secrets; the app emits page views plus events for mode selection, play/replay, answers, next-question, return-home, and audio errors, and the production deploy now forwards that env var into the Docker build on the VPS.
 - `index.html` now includes production SEO/social metadata: descriptive page title, meta description, canonical URL, robots, Open Graph, and Twitter summary tags for `https://andy.dailyturning.com/`.
 - Boot flow preloads all piano assets before the main game UI is shown.
@@ -42,12 +44,12 @@ Last updated: 2026-04-18
 
 ## Known Gaps
 - There is no persisted agent memory workflow in the codebase beyond `AGENTS.md`. This file and `memory.md` are now the canonical lightweight memory layer.
-- Manual verification for first-play audio, replay, next-question reset, footer placement, and live EN/VI switching in all 6 modes still needs to be rerun after this UX/content change.
+- Manual verification for first-play audio, replay, next-question reset, persisted score after refresh, reset-score behavior, footer placement, and live EN/VI switching in all 6 modes still needs to be rerun after this UX/content change.
 - The production deploy path still depends on working GitHub repository secrets; live VPS reachability, Docker bootstrap, and HTTPS issuance have now been verified against real infrastructure.
 
 ## Recommended Next Focus
 - If touching deploy infra, verify first live deploy against a real VPS and domain before relying on automatic production releases.
-- If touching UX, verify mode switching, replay, next-question reset, progression messaging, and live EN/VI switching in all 6 modes.
+- If touching UX, verify mode switching, replay, next-question reset, progression messaging, score persistence/reset, and live EN/VI switching in all 6 modes.
 - If touching audio, verify first user gesture still unlocks playback and sample coverage remains correct across `C4-B5`.
 
 ## Update Rule

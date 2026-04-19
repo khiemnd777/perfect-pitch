@@ -36,14 +36,13 @@ import {
   loadLanguagePreference,
   saveLanguagePreference,
 } from './languagePreference'
+import {
+  DEFAULT_SESSION_STATS,
+  loadSessionStats,
+  resetSessionStats,
+  saveSessionStats,
+} from './sessionStats'
 import { initAnalytics, trackEvent, trackPageView } from './analytics'
-
-const DEFAULT_STATS: SessionStats = {
-  answered: 0,
-  correct: 0,
-  streak: 0,
-  bestStreak: 0,
-}
 
 const MIN_BOOT_DURATION_MS = 700
 const QUESTION_DEDUP_MAX_ATTEMPTS = 24
@@ -179,7 +178,7 @@ export function PerfectPitchApp({
     [language, question],
   )
   const [evaluation, setEvaluation] = useState<QuestionEvaluation | null>(null)
-  const [stats, setStats] = useState<SessionStats>(DEFAULT_STATS)
+  const [stats, setStats] = useState<SessionStats>(() => loadSessionStats(storage))
   const [audioStatus, setAudioStatus] = useState<
     'idle' | 'loading' | 'ready' | 'error'
   >('idle')
@@ -198,6 +197,7 @@ export function PerfectPitchApp({
     chord: new Set(),
   })
   const pageViewRef = useRef<string | null>(null)
+  const feedbackPanelRef = useRef<HTMLDivElement | null>(null)
   const copy = getAppCopy(language)
 
   const accuracy = useMemo(() => {
@@ -211,6 +211,10 @@ export function PerfectPitchApp({
   useEffect(() => {
     saveProgressState(modeProgress, storage)
   }, [modeProgress, storage])
+
+  useEffect(() => {
+    saveSessionStats(stats, storage)
+  }, [stats, storage])
 
   useEffect(() => {
     saveLanguagePreference(language, storage)
@@ -237,6 +241,22 @@ export function PerfectPitchApp({
     trackPageView(pagePath, pageTitle, language)
     pageViewRef.current = `${pagePath}:${language}`
   }, [assetStatus, language, mode])
+
+  useEffect(() => {
+    if (!evaluation) {
+      return
+    }
+
+    const feedbackPanel = feedbackPanelRef.current
+    if (!feedbackPanel || typeof feedbackPanel.scrollIntoView !== 'function') {
+      return
+    }
+
+    feedbackPanel.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }, [evaluation])
 
   useEffect(() => {
     let cancelled = false
@@ -453,6 +473,11 @@ export function PerfectPitchApp({
     trackEvent('return_home', { language })
   }
 
+  const resetScore = () => {
+    setStats(DEFAULT_SESSION_STATS)
+    resetSessionStats(storage)
+  }
+
   const sessionStats = formatSessionStats(language, stats, accuracy)
 
   if (assetStatus !== 'ready') {
@@ -558,9 +583,14 @@ export function PerfectPitchApp({
                 </div>
               </div>
               <div className="stats-card" aria-label={copy.sessionStatsLabel}>
-                {sessionStats.map((item) => (
-                  <span key={item}>{item}</span>
-                ))}
+                <div className="stats-card__values">
+                  {sessionStats.map((item) => (
+                    <span key={item}>{item}</span>
+                  ))}
+                </div>
+                <button className="ghost-button" onClick={resetScore} type="button">
+                  {copy.resetScore}
+                </button>
               </div>
             </header>
 
@@ -620,6 +650,7 @@ export function PerfectPitchApp({
 
               {evaluation && (
                 <div
+                  ref={feedbackPanelRef}
                   className={`feedback-panel ${
                     evaluation.status === 'correct' ? 'success' : 'danger'
                   }`}

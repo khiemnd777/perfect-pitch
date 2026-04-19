@@ -40,6 +40,7 @@ interface AppCopy {
   modeTag: string
   switchMode: string
   sessionStatsLabel: string
+  resetScore: string
   currentQuestion: string
   loadingAudio: string
   playQuestion: string
@@ -388,6 +389,7 @@ const APP_COPY: Record<Language, AppCopy> = {
     modeTag: 'Mode',
     switchMode: 'Switch mode',
     sessionStatsLabel: 'Session stats',
+    resetScore: 'Reset score',
     currentQuestion: 'Current question',
     loadingAudio: 'Loading piano...',
     playQuestion: 'Enable piano and play',
@@ -420,6 +422,7 @@ const APP_COPY: Record<Language, AppCopy> = {
     modeTag: 'Mode',
     switchMode: 'Đổi mode',
     sessionStatsLabel: 'Thống kê phiên chơi',
+    resetScore: 'Reset điểm',
     currentQuestion: 'Câu hiện tại',
     loadingAudio: 'Đang nạp piano...',
     playQuestion: 'Bật piano và phát',
