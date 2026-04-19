@@ -46,6 +46,21 @@ import { initAnalytics, trackEvent, trackPageView } from './analytics'
 
 const MIN_BOOT_DURATION_MS = 700
 const QUESTION_DEDUP_MAX_ATTEMPTS = 24
+const PLAYBACK_START_DELAY_MS = 80
+const PLAYBACK_LOCK_BUFFER_MS = 40
+
+function getPlaybackDurationMs(question: Question) {
+  if (question.playback.length === 0) {
+    return 0
+  }
+
+  const playbackTailMs = question.playback.reduce(
+    (maxDuration, event) => Math.max(maxDuration, event.offsetMs + event.durationMs),
+    0,
+  )
+
+  return playbackTailMs + PLAYBACK_START_DELAY_MS + PLAYBACK_LOCK_BUFFER_MS
+}
 
 function resolveStorage(providedStorage?: Storage | null) {
   if (providedStorage !== undefined) {
@@ -184,6 +199,7 @@ export function PerfectPitchApp({
   >('idle')
   const [audioError, setAudioError] = useState<string | null>(null)
   const [hasPlayedCurrent, setHasPlayedCurrent] = useState(false)
+  const [isPlayingQuestion, setIsPlayingQuestion] = useState(false)
   const [progressNotice, setProgressNotice] = useState<string | null>(null)
   const [modeProgress, setModeProgress] = useState<ModeProgressState>(() =>
     loadProgressState(storage),
@@ -198,6 +214,7 @@ export function PerfectPitchApp({
   })
   const pageViewRef = useRef<string | null>(null)
   const feedbackPanelRef = useRef<HTMLDivElement | null>(null)
+  const playbackUnlockTimeoutRef = useRef<number | null>(null)
   const copy = getAppCopy(language)
 
   const accuracy = useMemo(() => {
@@ -258,6 +275,13 @@ export function PerfectPitchApp({
     })
   }, [evaluation])
 
+  const clearPlaybackUnlockTimeout = () => {
+    if (playbackUnlockTimeoutRef.current !== null) {
+      window.clearTimeout(playbackUnlockTimeoutRef.current)
+      playbackUnlockTimeoutRef.current = null
+    }
+  }
+
   useEffect(() => {
     let cancelled = false
 
@@ -294,6 +318,7 @@ export function PerfectPitchApp({
 
     return () => {
       cancelled = true
+      clearPlaybackUnlockTimeout()
       audioEngine.dispose()
     }
   }, [audioEngine])
@@ -351,11 +376,13 @@ export function PerfectPitchApp({
   }
 
   const activateMode = (nextMode: GameMode) => {
+    clearPlaybackUnlockTimeout()
     seenQuestionKeysRef.current[nextMode] = new Set()
     setMode(nextMode)
     setQuestion(createNextQuestion(nextMode, modeProgress))
     setEvaluation(null)
     setHasPlayedCurrent(false)
+    setIsPlayingQuestion(false)
     setAudioError(null)
     setProgressNotice(null)
     trackEvent('select_mode', {
@@ -366,7 +393,7 @@ export function PerfectPitchApp({
   }
 
   const playQuestion = async () => {
-    if (!question) {
+    if (!question || isPlayingQuestion || audioStatus === 'loading') {
       return
     }
 
@@ -378,6 +405,12 @@ export function PerfectPitchApp({
       await audioEngine.init()
       setAudioStatus('ready')
       await audioEngine.playQuestion(question)
+      clearPlaybackUnlockTimeout()
+      setIsPlayingQuestion(true)
+      playbackUnlockTimeoutRef.current = window.setTimeout(() => {
+        setIsPlayingQuestion(false)
+        playbackUnlockTimeoutRef.current = null
+      }, getPlaybackDurationMs(question))
       setHasPlayedCurrent(true)
       trackEvent('play_question', {
         mode: question.mode,
@@ -386,6 +419,8 @@ export function PerfectPitchApp({
         language,
       })
     } catch (error) {
+      clearPlaybackUnlockTimeout()
+      setIsPlayingQuestion(false)
       setAudioStatus('error')
       setAudioError(
         language === 'en'
@@ -451,9 +486,11 @@ export function PerfectPitchApp({
       return
     }
 
+    clearPlaybackUnlockTimeout()
     setQuestion(createNextQuestion(mode, modeProgress))
     setEvaluation(null)
     setHasPlayedCurrent(false)
+    setIsPlayingQuestion(false)
     setAudioError(null)
     trackEvent('next_question', {
       mode,
@@ -463,11 +500,13 @@ export function PerfectPitchApp({
   }
 
   const goBackToModes = () => {
+    clearPlaybackUnlockTimeout()
     audioEngine.stop()
     setMode(null)
     setQuestion(null)
     setEvaluation(null)
     setHasPlayedCurrent(false)
+    setIsPlayingQuestion(false)
     setAudioError(null)
     setProgressNotice(null)
     trackEvent('return_home', { language })
@@ -604,7 +643,12 @@ export function PerfectPitchApp({
               {progressNotice && <p className="progress-banner">{progressNotice}</p>}
 
               <div className="control-row">
-                <button className="play-button" onClick={playQuestion} type="button">
+                <button
+                  className="play-button"
+                  disabled={audioStatus === 'loading' || isPlayingQuestion}
+                  onClick={playQuestion}
+                  type="button"
+                >
                   {audioStatus === 'loading'
                     ? copy.loadingAudio
                     : hasPlayedCurrent

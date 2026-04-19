@@ -348,10 +348,44 @@ describe('PerfectPitchApp', () => {
     await screen.findByRole('button', { name: 'Single Note' })
     await user.click(screen.getByRole('button', { name: 'Single Note' }))
     await user.click(screen.getByRole('button', { name: 'Enable piano and play' }))
+    await waitFor(
+      () => {
+        expect(screen.getByRole('button', { name: 'Replay' })).toBeEnabled()
+      },
+      { timeout: 2_000 },
+    )
     await user.click(screen.getByRole('button', { name: 'Replay' }))
 
     expect(audioEngine.playQuestion).toHaveBeenCalledTimes(2)
     expect(audioEngine.replay).not.toHaveBeenCalled()
+  })
+
+  it('disables play button while the current question audio is still playing', async () => {
+    const user = userEvent.setup()
+    const audioEngine = createMockAudioEngine()
+    const questionFactory = createTrackingQuestionFactory()
+
+    render(
+      <PerfectPitchApp
+        audioEngine={audioEngine}
+        questionFactory={questionFactory.factory}
+      />,
+    )
+
+    await screen.findByRole('button', { name: 'Single Note' })
+    await user.click(screen.getByRole('button', { name: 'Single Note' }))
+
+    const playButton = screen.getByRole('button', { name: 'Enable piano and play' })
+    await user.click(playButton)
+
+    expect(playButton).toBeDisabled()
+
+    await waitFor(
+      () => {
+        expect(screen.getByRole('button', { name: 'Replay' })).toBeEnabled()
+      },
+      { timeout: 2_000 },
+    )
   })
 
   it('restores saved difficulty from local storage on reload', async () => {
