@@ -24,13 +24,6 @@ export interface ModeCopy {
 }
 
 interface AppCopy {
-  bootLoadingTitle: string
-  bootErrorTitle: string
-  bootLoadingBody: string
-  bootLoadingStatus: string
-  bootRetryStatus: string
-  bootRetryButton: string
-  bootLoadError: string
   heroTitle: string
   heroBody: string
   heroModesStat: string
@@ -372,13 +365,6 @@ const INTERVAL_LABELS: Record<Language, Record<number, string>> = {
 
 const APP_COPY: Record<Language, AppCopy> = {
   en: {
-    bootLoadingTitle: 'Loading piano',
-    bootErrorTitle: 'Piano failed to load',
-    bootLoadingBody: 'The app is preloading all piano assets before opening the training screen.',
-    bootLoadingStatus: 'Please wait. The page will open after loading finishes.',
-    bootRetryStatus: 'You can try preloading the piano assets again.',
-    bootRetryButton: 'Try again',
-    bootLoadError: 'Unable to load the piano. Please try again.',
     heroTitle: 'Train your ear with a real piano',
     heroBody:
       'Practice with 6 listening modes: single note, double note, melody, interval, arpeggio, and chord. Each round has 4 answers, grades instantly, and adjusts difficulty automatically.',
@@ -405,13 +391,6 @@ const APP_COPY: Record<Language, AppCopy> = {
     footerSignature: 'For Son. By Father',
   },
   vi: {
-    bootLoadingTitle: 'Đang nạp piano',
-    bootErrorTitle: 'Nạp piano thất bại',
-    bootLoadingBody: 'Ứng dụng đang preload toàn bộ asset piano trước khi mở màn chơi.',
-    bootLoadingStatus: 'Vui lòng chờ, trang sẽ mở sau khi nạp xong.',
-    bootRetryStatus: 'Bạn có thể thử preload lại asset piano.',
-    bootRetryButton: 'Thử nạp lại',
-    bootLoadError: 'Không thể nạp piano. Hãy thử lại.',
     heroTitle: 'Kiểm tra tai nghe nốt bằng piano thật',
     heroBody:
       'Luyện cảm âm với 6 mode nghe: nốt đơn, cặp nốt, giai điệu, quãng, arpeggio và chord. Mỗi câu có 4 đáp án, chấm ngay sau khi bấm và tự tăng độ khó theo phong độ.',

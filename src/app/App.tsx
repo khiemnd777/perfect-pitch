@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
-import {
-  createAudioEngine,
-  type AudioEngine,
-} from '../features/audio/audioEngine'
+import type { AudioEngine } from '../features/audio/audioEngine'
 import { evaluateSelection } from '../features/game/evaluation'
 import {
   applyProgression,
@@ -44,7 +41,6 @@ import {
 } from './sessionStats'
 import { initAnalytics, trackEvent, trackPageView } from './analytics'
 
-const MIN_BOOT_DURATION_MS = 700
 const QUESTION_DEDUP_MAX_ATTEMPTS = 24
 const PLAYBACK_START_DELAY_MS = 80
 const PLAYBACK_LOCK_BUFFER_MS = 40
@@ -174,18 +170,13 @@ export function PerfectPitchApp({
   questionFactory: providedQuestionFactory,
   storage: providedStorage,
 }: PerfectPitchAppProps) {
-  const audioEngine = useMemo(
-    () => providedAudioEngine ?? createAudioEngine(),
-    [providedAudioEngine],
-  )
+  const audioEngineRef = useRef<AudioEngine | null>(providedAudioEngine ?? null)
   const storage = useMemo(() => resolveStorage(providedStorage), [providedStorage])
   const [language, setLanguage] = useState<Language>(() => loadLanguagePreference(storage))
   const questionFactory = useMemo(
     () => providedQuestionFactory ?? createQuestionFactory(language),
     [language, providedQuestionFactory],
   )
-  const [assetStatus, setAssetStatus] = useState<'loading' | 'ready' | 'error'>('loading')
-  const [assetError, setAssetError] = useState<boolean>(false)
   const [mode, setMode] = useState<GameMode | null>(null)
   const [question, setQuestion] = useState<Question | null>(null)
   const displayQuestion = useMemo(
@@ -217,6 +208,16 @@ export function PerfectPitchApp({
   const playbackUnlockTimeoutRef = useRef<number | null>(null)
   const copy = getAppCopy(language)
 
+  const getAudioEngine = async () => {
+    if (audioEngineRef.current) {
+      return audioEngineRef.current
+    }
+
+    const { createAudioEngine } = await import('../features/audio/audioEngine')
+    audioEngineRef.current = createAudioEngine()
+    return audioEngineRef.current
+  }
+
   const accuracy = useMemo(() => {
     if (stats.answered === 0) {
       return 0
@@ -242,10 +243,6 @@ export function PerfectPitchApp({
   }, [])
 
   useEffect(() => {
-    if (assetStatus !== 'ready') {
-      return
-    }
-
     const pagePath = mode ? `/mode/${mode}` : '/'
     if (pageViewRef.current === `${pagePath}:${language}`) {
       return
@@ -257,7 +254,7 @@ export function PerfectPitchApp({
 
     trackPageView(pagePath, pageTitle, language)
     pageViewRef.current = `${pagePath}:${language}`
-  }, [assetStatus, language, mode])
+  }, [language, mode])
 
   useEffect(() => {
     if (!evaluation) {
@@ -282,60 +279,13 @@ export function PerfectPitchApp({
     }
   }
 
-  useEffect(() => {
-    let cancelled = false
-
-    const preloadAssets = async () => {
-      const startedAt = performance.now()
-      setAssetStatus('loading')
-      setAssetError(false)
-
-      try {
-        await audioEngine.preload()
-        const elapsedMs = performance.now() - startedAt
-        const remainingMs = Math.max(0, MIN_BOOT_DURATION_MS - elapsedMs)
-
-        if (remainingMs > 0) {
-          await new Promise((resolve) => {
-            window.setTimeout(resolve, remainingMs)
-          })
-        }
-
-        if (!cancelled) {
-          setAssetStatus('ready')
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setAssetStatus('error')
-          setAssetError(true)
-        }
-
-        console.error(error)
-      }
-    }
-
-    void preloadAssets()
-
-    return () => {
-      cancelled = true
+  useEffect(
+    () => () => {
       clearPlaybackUnlockTimeout()
-      audioEngine.dispose()
-    }
-  }, [audioEngine])
-
-  const retryAssetPreload = async () => {
-    setAssetStatus('loading')
-    setAssetError(false)
-
-    try {
-      await audioEngine.preload()
-      setAssetStatus('ready')
-    } catch (error) {
-      setAssetStatus('error')
-      setAssetError(true)
-      console.error(error)
-    }
-  }
+      audioEngineRef.current?.dispose()
+    },
+    [],
+  )
 
   const createQuestionKey = (nextQuestion: Question) =>
     JSON.stringify({
@@ -402,6 +352,7 @@ export function PerfectPitchApp({
 
     try {
       setAudioStatus((current) => (current === 'ready' ? 'ready' : 'loading'))
+      const audioEngine = await getAudioEngine()
       await audioEngine.init()
       setAudioStatus('ready')
       await audioEngine.playQuestion(question)
@@ -501,7 +452,7 @@ export function PerfectPitchApp({
 
   const goBackToModes = () => {
     clearPlaybackUnlockTimeout()
-    audioEngine.stop()
+    audioEngineRef.current?.stop()
     setMode(null)
     setQuestion(null)
     setEvaluation(null)
@@ -518,41 +469,6 @@ export function PerfectPitchApp({
   }
 
   const sessionStats = formatSessionStats(language, stats, accuracy)
-
-  if (assetStatus !== 'ready') {
-    return (
-      <main className="shell shell--boot">
-        <div className="shell__content">
-          <section className="boot-panel" aria-live="polite">
-            <div className="boot-toolbar">
-              <div className="eyebrow">Perfect Pitch</div>
-              <LanguageSwitcher language={language} onChange={setLanguage} />
-            </div>
-            <h1>{assetStatus === 'loading' ? copy.bootLoadingTitle : copy.bootErrorTitle}</h1>
-            <p className="hero-copy">
-              {assetStatus === 'loading'
-                ? copy.bootLoadingBody
-                : assetError
-                  ? copy.bootLoadError
-                  : null}
-            </p>
-            <div className="boot-status">
-              <span className="boot-spinner" aria-hidden="true" />
-              <strong>
-                {assetStatus === 'loading' ? copy.bootLoadingStatus : copy.bootRetryStatus}
-              </strong>
-            </div>
-            {assetStatus === 'error' && (
-              <button className="play-button" onClick={retryAssetPreload} type="button">
-                {copy.bootRetryButton}
-              </button>
-            )}
-          </section>
-          <FooterSignature language={language} />
-        </div>
-      </main>
-    )
-  }
 
   return (
     <main className="shell shell--ready">

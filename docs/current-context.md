@@ -9,11 +9,11 @@ Last updated: 2026-04-19
 - Google Analytics 4 can now be enabled by setting `VITE_GA_MEASUREMENT_ID` in deploy secrets; the app emits page views plus events for mode selection, play/replay, answers, next-question, return-home, and audio errors, and the production deploy now forwards that env var into the Docker build on the VPS.
 - `index.html` now includes English-first production SEO/social metadata for `https://andy.dailyturning.com/`: descriptive page title, meta description, canonical URL, robots, Open Graph, Twitter summary tags, WebApplication JSON-LD structured data, and a no-JavaScript crawlable fallback summary.
 - `public/robots.txt` allows crawlers and points to `https://andy.dailyturning.com/sitemap.xml`; `public/sitemap.xml` lists the canonical production homepage.
-- Boot flow preloads all piano assets before the main game UI is shown.
+- The home screen renders immediately without a piano preload gate; `Tone.js` and the piano audio engine are lazy-loaded only after the first Play click, reducing the initial production JS bundle from about 455 KB to about 223 KB and moving audio runtime code into a separate chunk.
 - The app now supports bilingual `en` / `vi` copy across shell UI, generated prompts/helper text, choice meta, and progression notices.
-- Both the boot screen and the main app shell now render the same footer signature in both languages: `For Son. By Father`, with a GitHub link under the slogan pointing to the current repository.
+- The main app shell renders the footer signature in both languages: `For Son. By Father`, with a GitHub link under the slogan pointing to the current repository.
 - English is the default language, and the selected language is persisted separately from gameplay progress in local storage.
-- A header-level `EN/VI` language switcher is available on the boot screen, home screen, and in-game screen.
+- A header-level `EN/VI` language switcher is available on the home screen and in-game screen.
 - The app supports 6 training modes: `single`, `double`, `melody`, `interval`, `arpeggio`, and `chord`.
 - Playback is generated from question payloads and routed through the `AudioEngine`.
 - Answering a choice is graded immediately through `evaluateSelection`.
@@ -46,7 +46,7 @@ Last updated: 2026-04-19
 
 ## Known Gaps
 - There is no persisted agent memory workflow in the codebase beyond `AGENTS.md`. This file and `memory.md` are now the canonical lightweight memory layer.
-- Manual verification for first-play audio, replay, next-question reset, persisted score after refresh, reset-score behavior, footer placement, and live EN/VI switching in all 6 modes still needs to be rerun after this UX/content change.
+- Manual verification for first-play audio, replay, next-question reset, persisted score after refresh, reset-score behavior, footer placement, and live EN/VI switching in all 6 modes still needs to be rerun after this performance change.
 - The production deploy path still depends on working GitHub repository secrets; live VPS reachability, Docker bootstrap, and HTTPS issuance have now been verified against real infrastructure.
 
 ## Recommended Next Focus

@@ -102,11 +102,8 @@ describe('PerfectPitchApp', () => {
 
     render(<PerfectPitchApp audioEngine={audioEngine} />)
 
-    expect(screen.getByText('Loading piano')).toBeInTheDocument()
-
-    await screen.findByRole('button', { name: 'Single Note' })
-
     expect(screen.getByText('Train your ear with a real piano')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Single Note' })).toBeInTheDocument()
     expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe('en')
   })
 
@@ -116,13 +113,10 @@ describe('PerfectPitchApp', () => {
 
     render(<PerfectPitchApp audioEngine={audioEngine} storage={window.localStorage} />)
 
-    expect(screen.getByText('Đang nạp piano')).toBeInTheDocument()
-
-    await screen.findByRole('button', { name: 'Single Note' })
-
     expect(
       await screen.findByText('Kiểm tra tai nghe nốt bằng piano thật'),
     ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Single Note' })).toBeInTheDocument()
   })
 
   it('toggles language immediately and persists the selection', async () => {
@@ -188,7 +182,8 @@ describe('PerfectPitchApp', () => {
     ).toBeInTheDocument()
   })
 
-  it('preloads piano samples before showing the home screen', async () => {
+  it('defers piano loading until the first playback gesture', async () => {
+    const user = userEvent.setup()
     const audioEngine = createMockAudioEngine()
     const questionFactory = createTrackingQuestionFactory()
 
@@ -196,13 +191,14 @@ describe('PerfectPitchApp', () => {
       <PerfectPitchApp audioEngine={audioEngine} questionFactory={questionFactory.factory} />,
     )
 
-    expect(screen.getByText('Loading piano')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Single Note' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Single Note' })).toBeInTheDocument()
+    expect(audioEngine.preload).not.toHaveBeenCalled()
+    expect(audioEngine.init).not.toHaveBeenCalled()
 
-    await waitFor(() => {
-      expect(audioEngine.preload).toHaveBeenCalledTimes(1)
-      expect(screen.getByRole('button', { name: 'Single Note' })).toBeInTheDocument()
-    })
+    await user.click(screen.getByRole('button', { name: 'Single Note' }))
+    await user.click(screen.getByRole('button', { name: 'Enable piano and play' }))
+
+    expect(audioEngine.init).toHaveBeenCalledTimes(1)
   })
 
   it('shows all 6 modes on the home screen', async () => {

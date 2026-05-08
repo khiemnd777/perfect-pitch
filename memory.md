@@ -35,10 +35,11 @@
 - Sample assets should only be loaded from `public/audio/piano/` unless the audio library is intentionally replaced.
 - Sample coverage must continue to support `C4-B5` after any sample-map change.
 - Audio initialization must stay behind a user gesture to avoid autoplay failures.
+- Initial page load should not preload Tone.js or piano samples; audio loading belongs behind the first playback gesture to keep Lighthouse Total Blocking Time low.
 - Replay must reuse the current question payload instead of generating a new one.
 
 ## Current Implementation Snapshot
-- `src/app/App.tsx` preloads piano assets on boot, lets the user pick a mode, restores per-mode difficulty and language from local storage, exposes an `EN/VI` switcher on home and game screens, and auto-adjusts level progression during play.
+- `src/app/App.tsx` lets the user pick a mode immediately, lazy-loads the audio engine on first playback, restores per-mode difficulty and language from local storage, exposes an `EN/VI` switcher on home and game screens, and auto-adjusts level progression during play.
 - `src/app/analytics.ts` injects Google Analytics 4 only when `VITE_GA_MEASUREMENT_ID` is present and tracks page views plus core quiz interactions.
 - Session stats track answered count, correct count, current streak, and best streak.
 - `src/features/audio/audioEngine.ts` caches the current question for replay and uses layered `Tone.Sampler` instances mapped from local piano samples.
