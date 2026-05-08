@@ -131,6 +131,10 @@
   text-transform: uppercase;
 }
 
+.eyebrow--link {
+  text-decoration: none;
+}
+
 .hero-copy {
   max-width: 58ch;
   color: rgba(77, 44, 25, 0.88);
@@ -190,6 +194,124 @@
   gap: 18px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 28px;
+}
+
+.seo-panel,
+.seo-page__body,
+.seo-page__faq {
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: rgba(255, 250, 240, 0.78);
+  box-shadow: var(--shadow-soft);
+}
+
+.seo-panel {
+  display: grid;
+  gap: 22px;
+  padding: 28px;
+}
+
+.seo-panel__header {
+  display: grid;
+  gap: 10px;
+  max-width: 760px;
+}
+
+.seo-panel__header p,
+.seo-page__body p,
+.seo-page__faq p {
+  color: var(--text-muted);
+}
+
+.seo-panel__grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.seo-panel article {
+  display: grid;
+  gap: 8px;
+}
+
+.seo-panel h3 {
+  margin: 0;
+  font-size: 1.08rem;
+}
+
+.seo-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.seo-links a {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(154, 92, 50, 0.16);
+  background: rgba(255, 251, 244, 0.72);
+  color: #7e431f;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.seo-links a:hover,
+.seo-links a:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 10px 20px rgba(154, 70, 34, 0.12);
+}
+
+.seo-page {
+  display: grid;
+  gap: 24px;
+}
+
+.seo-page__hero {
+  display: grid;
+  gap: 18px;
+  padding: 32px;
+  border: 1px solid rgba(214, 138, 72, 0.2);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 212, 116, 0.78), transparent 30%),
+    radial-gradient(circle at 18% 18%, rgba(255, 241, 199, 0.9), transparent 36%),
+    linear-gradient(135deg, #fff8eb 0%, #ffe7bf 48%, #ffc68d 100%);
+  box-shadow: 0 28px 52px rgba(162, 94, 39, 0.18);
+}
+
+.seo-page__hero h1 {
+  max-width: 13ch;
+  color: #4b2414;
+  text-wrap: balance;
+}
+
+.seo-page__body,
+.seo-page__faq {
+  display: grid;
+  gap: 18px;
+  padding: 28px;
+}
+
+.seo-page__body section {
+  display: grid;
+  gap: 8px;
+}
+
+.seo-page__faq details {
+  padding: 16px 0;
+  border-top: 1px solid rgba(86, 55, 31, 0.1);
+}
+
+.seo-page__faq summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.seo-page__faq details p {
+  margin-top: 8px;
 }
 
 .mode-card,
@@ -352,11 +474,15 @@
 }
 
 .ghost-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 14px 18px;
   border-radius: 18px;
   border: 1px solid var(--border-strong);
   background: rgba(255, 251, 245, 0.72);
   color: var(--text-strong);
+  text-decoration: none;
 }
 
 .play-button:disabled,
@@ -444,7 +570,8 @@
 
 @media (max-width: 940px) {
   .mode-grid,
-  .choices-grid {
+  .choices-grid,
+  .seo-panel__grid {
     grid-template-columns: 1fr;
   }
 
@@ -464,7 +591,6 @@
     padding: 18px 14px 36px;
   }
 
-  .boot-toolbar,
   .hero-panel__top,
   .game-header__top {
     flex-wrap: nowrap;

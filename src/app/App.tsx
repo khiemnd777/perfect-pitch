@@ -45,6 +45,249 @@ const QUESTION_DEDUP_MAX_ATTEMPTS = 24
 const PLAYBACK_START_DELAY_MS = 80
 const PLAYBACK_LOCK_BUFFER_MS = 40
 
+interface SeoPageContent {
+  path: string
+  title: string
+  description: string
+  eyebrow: string
+  heading: string
+  intro: string
+  sections: Array<{
+    heading: string
+    body: string
+  }>
+  faqs: Array<{
+    question: string
+    answer: string
+  }>
+}
+
+const SEO_PAGES: SeoPageContent[] = [
+  {
+    path: '/ear-training',
+    title: 'Ear Training Online | Perfect Pitch',
+    description:
+      'Practice ear training online with real piano sounds, instant feedback, and focused modes for notes, intervals, melodies, arpeggios, and chords.',
+    eyebrow: 'Ear training online',
+    heading: 'Ear training online with real piano sounds',
+    intro:
+      'Perfect Pitch helps musicians practice listening skills with short, repeatable piano exercises. Each round plays a musical prompt, offers four choices, and grades the answer immediately.',
+    sections: [
+      {
+        heading: 'What you can practice',
+        body:
+          'Start with single notes, then move into double notes, short melodies, intervals, arpeggios, and chords. The exercises stay compact so you can train for a few minutes without setting up a full lesson.',
+      },
+      {
+        heading: 'Why piano samples matter',
+        body:
+          'The app uses sample-based piano playback instead of a basic oscillator. That gives each note a more natural attack and decay, which is closer to how musicians hear pitch in real practice.',
+      },
+    ],
+    faqs: [
+      {
+        question: 'Is this ear training app free?',
+        answer:
+          'Yes. The web app runs in the browser and lets you practice the available listening modes without creating an account.',
+      },
+      {
+        question: 'Should beginners start with single notes or intervals?',
+        answer:
+          'Beginners usually do best with single notes first, then intervals once individual pitch colors feel more familiar.',
+      },
+    ],
+  },
+  {
+    path: '/perfect-pitch-training',
+    title: 'Perfect Pitch Training | Practice Notes by Ear',
+    description:
+      'Train perfect pitch by identifying single notes and related listening patterns with real piano playback and instant feedback.',
+    eyebrow: 'Perfect pitch training',
+    heading: 'Perfect pitch training for note recognition',
+    intro:
+      'Perfect pitch training is about building reliable note recognition. This app keeps the exercise simple: hear a piano note, choose an answer, and see the result right away.',
+    sections: [
+      {
+        heading: 'Start with pitch class',
+        body:
+          'Single-note rounds identify pitch class rather than octave. That keeps attention on the note name itself, which is the foundation for stronger absolute pitch recognition.',
+      },
+      {
+        heading: 'Use short sessions',
+        body:
+          'Short daily sessions are easier to sustain than long unfocused practice. The app adjusts difficulty across easy, medium, and hard levels as your answers improve.',
+      },
+    ],
+    faqs: [
+      {
+        question: 'Can adults train perfect pitch?',
+        answer:
+          'Adults can still improve pitch recognition and relative listening skills. Results vary, but structured note-identification practice can make pitch memory more consistent.',
+      },
+      {
+        question: 'Does the app test octave?',
+        answer:
+          'Single-note answers focus on pitch class only, not octave, so C4 and C5 are treated as the same note name.',
+      },
+    ],
+  },
+  {
+    path: '/interval-ear-training',
+    title: 'Interval Ear Training | Learn Intervals by Ear',
+    description:
+      'Practice interval ear training with piano playback, instant grading, and focused exercises from core intervals to octave-wide listening.',
+    eyebrow: 'Interval ear training',
+    heading: 'Interval ear training for cleaner musical listening',
+    intro:
+      'Intervals are the distance between two notes. Training them by ear helps with singing, transcription, improvisation, and recognizing melodies faster.',
+    sections: [
+      {
+        heading: 'Melodic and harmonic intervals',
+        body:
+          'The interval mode can train both separated notes and stacked sounds depending on difficulty, helping you recognize distance whether notes are played one after another or together.',
+      },
+      {
+        heading: 'Build from simple distances',
+        body:
+          'Easy practice starts with core intervals. Higher levels add wider and more confusing options so you learn to separate similar distances by sound.',
+      },
+    ],
+    faqs: [
+      {
+        question: 'Why train intervals?',
+        answer:
+          'Intervals are a practical bridge between raw pitch recognition and real music. They help you hear movement, tension, and resolution.',
+      },
+      {
+        question: 'Is interval training different from perfect pitch?',
+        answer:
+          'Yes. Interval training is relative: it focuses on the distance between notes. Perfect pitch training focuses on naming a note without a reference.',
+      },
+    ],
+  },
+  {
+    path: '/chord-ear-training',
+    title: 'Chord Ear Training | Identify Chords by Ear',
+    description:
+      'Practice chord ear training by identifying piano chords, triad colors, inversions, and harmonic qualities with immediate feedback.',
+    eyebrow: 'Chord ear training',
+    heading: 'Chord ear training for triads and harmonic color',
+    intro:
+      'Chord ear training helps you hear harmony as a color instead of guessing individual notes. Perfect Pitch includes a chord mode for identifying triads played together.',
+    sections: [
+      {
+        heading: 'Hear chords as one sound',
+        body:
+          'Chord mode plays notes together so you can focus on harmonic quality. Easy levels separate major and minor; harder levels add diminished and augmented colors.',
+      },
+      {
+        heading: 'Connect chords and arpeggios',
+        body:
+          'Arpeggio mode breaks chord tones apart, while chord mode stacks them. Practicing both helps connect melodic memory with harmonic recognition.',
+      },
+    ],
+    faqs: [
+      {
+        question: 'What chord types are included?',
+        answer:
+          'The app includes major, minor, diminished, and augmented triad colors across the harder chord and arpeggio exercises.',
+      },
+      {
+        question: 'Should I practice chords before intervals?',
+        answer:
+          'Intervals usually come first for beginners. Chords become easier once you can hear the relationships between individual notes.',
+      },
+    ],
+  },
+  {
+    path: '/piano-ear-training',
+    title: 'Piano Ear Training | Train with Sample-Based Piano',
+    description:
+      'Use piano ear training exercises with realistic sample-based playback for notes, intervals, melodies, arpeggios, and chords.',
+    eyebrow: 'Piano ear training',
+    heading: 'Piano ear training with sampled piano playback',
+    intro:
+      'Many ear training tools use synthetic tones. Perfect Pitch uses local piano samples so practice feels closer to a real instrument.',
+    sections: [
+      {
+        heading: 'Realistic note attacks',
+        body:
+          'Piano notes have a clear attack, body, and decay. Training with that shape makes the listening experience more musical than a plain sine wave.',
+      },
+      {
+        heading: 'Browser-based practice',
+        body:
+          'The app runs in the browser and loads audio only when you start playback. That keeps the page fast while preserving sample-based sound during practice.',
+      },
+    ],
+    faqs: [
+      {
+        question: 'Do I need a piano?',
+        answer:
+          'No. The exercises use built-in piano samples, so you can practice directly in the browser.',
+      },
+      {
+        question: 'Does piano sound help ear training?',
+        answer:
+          'It can help if your musical context is piano, composition, or general music study because the sound is closer to what you will hear in real use.',
+      },
+    ],
+  },
+  {
+    path: '/what-is-perfect-pitch',
+    title: 'What Is Perfect Pitch? | Absolute Pitch Explained',
+    description:
+      'Learn what perfect pitch means, how it differs from relative pitch, and how note-recognition practice can support ear training.',
+    eyebrow: 'Absolute pitch explained',
+    heading: 'What is perfect pitch?',
+    intro:
+      'Perfect pitch, also called absolute pitch, is the ability to identify or produce a note without being given a reference note first.',
+    sections: [
+      {
+        heading: 'Perfect pitch vs relative pitch',
+        body:
+          'Perfect pitch names a note directly. Relative pitch compares notes and recognizes distance, chord color, or movement. Musicians often benefit from training both.',
+      },
+      {
+        heading: 'How this app helps',
+        body:
+          'Single-note mode supports note recognition, while interval, melody, arpeggio, and chord modes build broader musical hearing around that foundation.',
+      },
+    ],
+    faqs: [
+      {
+        question: 'Is perfect pitch required to be a good musician?',
+        answer:
+          'No. Many strong musicians rely on relative pitch. Perfect pitch can be useful, but it is not required for musicianship.',
+      },
+      {
+        question: 'What should I practice first?',
+        answer:
+          'Start with single-note recognition and simple intervals. Add chords and melodies as your listening becomes more stable.',
+      },
+    ],
+  },
+]
+
+const SEO_PAGE_BY_PATH = new Map(SEO_PAGES.map((page) => [page.path, page]))
+const SITE_URL = 'https://andy.dailyturning.com'
+
+function getCurrentPath() {
+  if (typeof window === 'undefined') {
+    return '/'
+  }
+
+  return window.location.pathname
+}
+
+function setMetaContent(selector: string, content: string) {
+  document.querySelector(selector)?.setAttribute('content', content)
+}
+
+function setCanonicalUrl(url: string) {
+  document.querySelector('link[rel="canonical"]')?.setAttribute('href', url)
+}
+
 function getPlaybackDurationMs(question: Question) {
   if (question.playback.length === 0) {
     return 0
@@ -165,11 +408,113 @@ function FooterSignature({ language }: { language: Language }) {
   )
 }
 
+function SeoLinks() {
+  return (
+    <nav className="seo-links" aria-label="Ear training topics">
+      {SEO_PAGES.map((page) => (
+        <a key={page.path} href={page.path}>
+          {page.eyebrow}
+        </a>
+      ))}
+    </nav>
+  )
+}
+
+function SeoHomeContent() {
+  return (
+    <section className="seo-panel" aria-labelledby="seo-home-heading">
+      <div className="seo-panel__header">
+        <p className="question-kicker">Ear training guide</p>
+        <h2 id="seo-home-heading">Practice ear training with focused piano exercises</h2>
+        <p>
+          Perfect Pitch is an online ear training app for musicians who want short,
+          practical listening drills. You can practice single notes, double notes,
+          melodies, intervals, arpeggios, and chords with real piano sounds and
+          instant feedback after each answer.
+        </p>
+      </div>
+      <div className="seo-panel__grid">
+        <article>
+          <h3>For note recognition</h3>
+          <p>
+            Single-note practice helps you identify pitch classes by ear. The app keeps
+            the answer focused on the note name, not octave, so each round trains a
+            clear listening target.
+          </p>
+        </article>
+        <article>
+          <h3>For musical context</h3>
+          <p>
+            Interval, melody, arpeggio, and chord modes connect note recognition to
+            musical patterns. That makes the training useful for singing, playing,
+            transcription, and composition.
+          </p>
+        </article>
+      </div>
+      <SeoLinks />
+    </section>
+  )
+}
+
+function SeoContentPage({ page }: { page: SeoPageContent }) {
+  return (
+    <main className="shell shell--ready">
+      <div className="shell__content">
+        <article className="seo-page">
+          <header className="seo-page__hero">
+            <div className="hero-panel__top">
+              <a className="eyebrow eyebrow--link" href="/">
+                Perfect Pitch
+              </a>
+              <a className="ghost-button" href="/#practice">
+                Start practice
+              </a>
+            </div>
+            <p className="question-kicker">{page.eyebrow}</p>
+            <h1>{page.heading}</h1>
+            <p className="hero-copy">{page.intro}</p>
+          </header>
+
+          <section className="seo-page__body" aria-label={`${page.eyebrow} guide`}>
+            {page.sections.map((section) => (
+              <section key={section.heading}>
+                <h2>{section.heading}</h2>
+                <p>{section.body}</p>
+              </section>
+            ))}
+          </section>
+
+          <section className="seo-page__faq" aria-labelledby="seo-faq-heading">
+            <h2 id="seo-faq-heading">Frequently asked questions</h2>
+            {page.faqs.map((faq) => (
+              <details key={faq.question}>
+                <summary>{faq.question}</summary>
+                <p>{faq.answer}</p>
+              </details>
+            ))}
+          </section>
+
+          <section className="seo-panel" aria-labelledby="seo-more-heading">
+            <div className="seo-panel__header">
+              <p className="question-kicker">More ear training topics</p>
+              <h2 id="seo-more-heading">Keep exploring</h2>
+            </div>
+            <SeoLinks />
+          </section>
+        </article>
+        <FooterSignature language="en" />
+      </div>
+    </main>
+  )
+}
+
 export function PerfectPitchApp({
   audioEngine: providedAudioEngine,
   questionFactory: providedQuestionFactory,
   storage: providedStorage,
 }: PerfectPitchAppProps) {
+  const [currentPath] = useState(() => getCurrentPath())
+  const seoPage = SEO_PAGE_BY_PATH.get(currentPath) ?? null
   const audioEngineRef = useRef<AudioEngine | null>(providedAudioEngine ?? null)
   const storage = useMemo(() => resolveStorage(providedStorage), [providedStorage])
   const [language, setLanguage] = useState<Language>(() => loadLanguagePreference(storage))
@@ -241,6 +586,32 @@ export function PerfectPitchApp({
   useEffect(() => {
     initAnalytics()
   }, [])
+
+  useEffect(() => {
+    if (!seoPage) {
+      document.title = 'Perfect Pitch | Ear Training with Real Piano Sounds'
+      const description =
+        'Perfect Pitch is an ear training web app for notes, intervals, melodies, arpeggios, and chords with instant feedback and sample-based piano sounds.'
+      setMetaContent('meta[name="description"]', description)
+      setMetaContent('meta[property="og:title"]', document.title)
+      setMetaContent('meta[property="og:description"]', description)
+      setMetaContent('meta[property="og:url"]', `${SITE_URL}/`)
+      setMetaContent('meta[name="twitter:title"]', document.title)
+      setMetaContent('meta[name="twitter:description"]', description)
+      setCanonicalUrl(`${SITE_URL}/`)
+      return
+    }
+
+    const url = `${SITE_URL}${seoPage.path}`
+    document.title = seoPage.title
+    setMetaContent('meta[name="description"]', seoPage.description)
+    setMetaContent('meta[property="og:title"]', seoPage.title)
+    setMetaContent('meta[property="og:description"]', seoPage.description)
+    setMetaContent('meta[property="og:url"]', url)
+    setMetaContent('meta[name="twitter:title"]', seoPage.title)
+    setMetaContent('meta[name="twitter:description"]', seoPage.description)
+    setCanonicalUrl(url)
+  }, [seoPage])
 
   useEffect(() => {
     const pagePath = mode ? `/mode/${mode}` : '/'
@@ -470,6 +841,10 @@ export function PerfectPitchApp({
 
   const sessionStats = formatSessionStats(language, stats, accuracy)
 
+  if (seoPage) {
+    return <SeoContentPage page={seoPage} />
+  }
+
   return (
     <main className="shell shell--ready">
       <div className="shell__content">
@@ -490,7 +865,7 @@ export function PerfectPitchApp({
         )}
 
         {!mode && (
-          <section className="mode-grid" aria-label={copy.modeGridAriaLabel}>
+          <section id="practice" className="mode-grid" aria-label={copy.modeGridAriaLabel}>
             {GAME_MODES.map((gameMode) => {
               const progress = modeProgress[gameMode]
               const modeCopy = getModeCopy(language, gameMode)
@@ -516,6 +891,8 @@ export function PerfectPitchApp({
             })}
           </section>
         )}
+
+        {!mode && <SeoHomeContent />}
 
         {mode && question && displayQuestion && (
           <section className="game-layout">

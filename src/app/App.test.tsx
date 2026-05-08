@@ -95,6 +95,7 @@ function createDedupQuestionFactory() {
 describe('PerfectPitchApp', () => {
   beforeEach(() => {
     window.localStorage.clear()
+    window.history.pushState({}, '', '/')
   })
 
   it('defaults to English when no saved language preference exists', async () => {
@@ -216,6 +217,39 @@ describe('PerfectPitchApp', () => {
     expect(screen.getByRole('button', { name: 'Interval' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Arpeggio' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Chord' })).toBeInTheDocument()
+  })
+
+  it('renders crawlable SEO topic content on the home screen', async () => {
+    const audioEngine = createMockAudioEngine()
+
+    render(<PerfectPitchApp audioEngine={audioEngine} />)
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Practice ear training with focused piano exercises',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'Perfect pitch training' }),
+    ).toHaveAttribute('href', '/perfect-pitch-training')
+  })
+
+  it('renders an SEO landing page for direct route visits', async () => {
+    window.history.pushState({}, '', '/interval-ear-training')
+    const audioEngine = createMockAudioEngine()
+
+    render(<PerfectPitchApp audioEngine={audioEngine} />)
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Interval ear training for cleaner musical listening',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Melodic and harmonic intervals')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Start practice' })).toHaveAttribute(
+      'href',
+      '/#practice',
+    )
   })
 
   it('disables answer choices until the current question has been played', async () => {
