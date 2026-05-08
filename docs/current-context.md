@@ -7,7 +7,8 @@ Last updated: 2026-04-19
 - Sau khi chọn đáp án, UI tự cuộn mượt tới khối feedback kết quả để người chơi thấy ngay đúng/sai và đáp án đúng mà không cần cuộn tay trên màn hình dài/mobile.
 - Session stats now persist in local storage across page refreshes, using the existing app storage pattern; the in-game stats card also includes a reset button that clears the persisted score back to zero without affecting mode progression.
 - Google Analytics 4 can now be enabled by setting `VITE_GA_MEASUREMENT_ID` in deploy secrets; the app emits page views plus events for mode selection, play/replay, answers, next-question, return-home, and audio errors, and the production deploy now forwards that env var into the Docker build on the VPS.
-- `index.html` now includes production SEO/social metadata: descriptive page title, meta description, canonical URL, robots, Open Graph, and Twitter summary tags for `https://andy.dailyturning.com/`.
+- `index.html` now includes English-first production SEO/social metadata for `https://andy.dailyturning.com/`: descriptive page title, meta description, canonical URL, robots, Open Graph, Twitter summary tags, WebApplication JSON-LD structured data, and a no-JavaScript crawlable fallback summary.
+- `public/robots.txt` allows crawlers and points to `https://andy.dailyturning.com/sitemap.xml`; `public/sitemap.xml` lists the canonical production homepage.
 - Boot flow preloads all piano assets before the main game UI is shown.
 - The app now supports bilingual `en` / `vi` copy across shell UI, generated prompts/helper text, choice meta, and progression notices.
 - Both the boot screen and the main app shell now render the same footer signature in both languages: `For Son. By Father`, with a GitHub link under the slogan pointing to the current repository.

@@ -4,32 +4,62 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#21170f" />
     <title>Perfect Pitch | Ear Training with Real Piano Sounds</title>
     <meta
       name="description"
-      content="Perfect Pitch is an ear training web app with real piano sounds for single notes, double notes, melodies, intervals, arpeggios, and chords."
+      content="Perfect Pitch is an ear training web app for notes, intervals, melodies, arpeggios, and chords with instant feedback and sample-based piano sounds."
     />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://andy.dailyturning.com/" />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Perfect Pitch" />
-    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="vi_VN" />
     <meta property="og:url" content="https://andy.dailyturning.com/" />
     <meta property="og:title" content="Perfect Pitch | Ear Training with Real Piano Sounds" />
     <meta
       property="og:description"
-      content="Train your ear for notes, intervals, melodies, and chords with instant feedback and sample-based piano playback."
+      content="Train notes, intervals, melodies, arpeggios, and chords with instant feedback after every answer."
     />
 
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Perfect Pitch | Ear Training with Real Piano Sounds" />
     <meta
       name="twitter:description"
-      content="An ear training web app with 6 listening modes and instant feedback after every answer."
+      content="An ear training web app with 6 listening modes, real piano sounds, and instant feedback."
     />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Perfect Pitch",
+        "alternateName": "Ear training app",
+        "url": "https://andy.dailyturning.com/",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any",
+        "inLanguage": ["vi", "en"],
+        "description": "Ear training web app for notes, intervals, melodies, arpeggios, and chords with instant feedback and sample-based piano sounds.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
   </head>
   <body>
+    <noscript>
+      <main>
+        <h1>Perfect Pitch - Online ear training</h1>
+        <p>
+          Perfect Pitch is an ear training web app with real piano sounds. The app supports 6 modes:
+          single notes, two notes, short melodies, intervals, arpeggios, and chords.
+        </p>
+        <p>Enable JavaScript to start training and receive instant feedback after every answer.</p>
+      </main>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
