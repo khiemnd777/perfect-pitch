@@ -1,7 +1,7 @@
 # Perfect Pitch Agents Guide
 
 ## Product Goal
-- Build a client-side ear-training web app for single notes, double notes, short melodies, intervals, arpeggios, and chords.
+- Build a client-side ear-training web app for single notes, double notes, short melodies, intervals, arpeggios, triads, scales, and seventh chords.
 - Preserve instant feedback: answer selection must grade immediately and reveal the correct choice.
 - Keep the experience musical rather than synthetic; piano playback should stay sample-based.
 
@@ -30,13 +30,15 @@
 - `single` answers identify pitch class only, not octave.
 - `double` choices must stay unambiguous and use sorted note labels.
 - `melody` choices should match playback length and avoid visually duplicate distractors.
+- `scale` choices identify both root and scale quality; playback must stay inside the sampled range.
+- `seventh` choices identify four-note seventh chords and must remain distinct across roots and qualities.
 - A question generator must always produce exactly 4 unique choices with exactly 1 correct answer.
 
 ## Verification Checklist
 - Run `bun run lint`.
 - Run `bun run test:run`.
 - Run `bun run build`.
-- Manually verify first-play audio, replay, immediate grading, and next-question reset in all 6 modes.
+- Manually verify first-play audio, replay, immediate grading, and next-question reset in all 8 modes.
 - For CI/CD work, also run `bash -n scripts/deploy/bootstrap-github-secrets.sh scripts/deploy/remote-bootstrap.sh`, `docker compose config`, and a local `docker build`.
 
 ## Memory Workflow

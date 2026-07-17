@@ -1,7 +1,30 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react'
 import './App.css'
 import type { AudioEngine } from '../features/audio/audioEngine'
 import { evaluateSelection } from '../features/game/evaluation'
+import {
+  feedDino,
+  isDinoHungry,
+  loadDinoCare,
+  markDinoRoared,
+  saveDinoCare,
+  shouldDinoRoar,
+  type DinoCareState,
+} from '../features/game/dinoCare'
+import {
+  DINO_POINTS_PER_CORRECT,
+  DINO_STAGES,
+  getDinoEvolution,
+  loadDinoProgress,
+  saveDinoProgress,
+} from '../features/game/dinoProgress'
 import {
   applyProgression,
   loadProgressState,
@@ -17,13 +40,18 @@ import {
   getAppCopy,
   getDifficultyCopy,
   getDifficultyLabel,
+  getDinoReactions,
+  getDinoStageCopy,
   getModeCopy,
   formatChoiceMeta,
   translateIntervalLabel,
+  translateScaleLabel,
   type Language,
+  type DinoReactionCopy,
 } from '../shared/localization'
 import {
   GAME_MODES,
+  type DinoStageId,
   type GameMode,
   type Question,
   type QuestionEvaluation,
@@ -44,6 +72,114 @@ import { initAnalytics, trackEvent, trackPageView } from './analytics'
 const QUESTION_DEDUP_MAX_ATTEMPTS = 24
 const PLAYBACK_START_DELAY_MS = 80
 const PLAYBACK_LOCK_BUFFER_MS = 40
+const DINO_HUNGER_CHECK_INTERVAL_MS = 60 * 1000
+const DINO_REACTION_DURATION_MS = 2_400
+
+interface DinoAnimationFrame {
+  src: string
+  normalizeScale: number
+  offsetX: number
+  offsetY: number
+}
+
+function createDinoFrames(
+  stageId: DinoStageId,
+  alignment: readonly (readonly [number, number, number])[],
+): readonly DinoAnimationFrame[] {
+  return alignment.map(([normalizeScale, offsetX, offsetY], index) => ({
+    src: `/dino/frames-v1/${stageId}-${index + 1}.png`,
+    normalizeScale,
+    offsetX,
+    offsetY,
+  }))
+}
+
+const DINO_ANIMATION_FRAMES: Record<DinoStageId, readonly DinoAnimationFrame[]> = {
+  egg: createDinoFrames('egg', [
+    [0.9809, -4.023, 1.495],
+    [0.9847, 11.539, 0.239],
+    [0.9961, -6.226, 4.195],
+    [1.0405, 7.011, 3.739],
+  ]),
+  baby: createDinoFrames('baby', [
+    [1.0057, -2.848, 0.198],
+    [1.0029, 0.098, 0.294],
+    [1.0204, -3.488, 2.894],
+    [0.9589, 0, 4.768],
+  ]),
+  young: createDinoFrames('young', [
+    [1, -5.859, 0],
+    [0.9896, 10.534, -0.004],
+    [1.0053, -7.166, 3.144],
+    [1.0106, 11.251, 2.57],
+  ]),
+  adult: createDinoFrames('adult', [
+    [0.9836, 0.576, 0.653],
+    [0.9953, 10.011, -0.006],
+    [1.0396, 0.305, 3.701],
+    [1.0048, 8.144, 4.912],
+  ]),
+  super: createDinoFrames('super', [
+    [0.9888, -7.725, 0.105],
+    [1.0069, 10.324, -0.89],
+    [0.9977, -1.267, 4.581],
+    [1.0185, -3.979, 3.566],
+  ]),
+}
+
+const DINO_FRAME_INTERVAL_MS: Record<DinoStageId, number> = {
+  egg: 620,
+  baby: 520,
+  young: 440,
+  adult: 650,
+  super: 460,
+}
+
+const MODE_ICONS: Record<Exclude<GameMode, 'interval'>, string> = {
+  single: '🎵',
+  double: '🎶',
+  melody: '🎼',
+  arpeggio: '✨',
+  chord: '🎹',
+  scale: '🪜',
+  seventh: '🎷',
+}
+
+const RAINBOW_BANDS = [
+  { color: '#e63946', radius: 21 },
+  { color: '#f77f00', radius: 18 },
+  { color: '#facc15', radius: 15 },
+  { color: '#2bb673', radius: 12 },
+  { color: '#3a86ff', radius: 9 },
+  { color: '#4f46e5', radius: 6 },
+  { color: '#8b5cf6', radius: 3 },
+] as const
+
+function ModeIcon({ mode }: { mode: GameMode }) {
+  if (mode !== 'interval') {
+    return MODE_ICONS[mode]
+  }
+
+  return (
+    <svg className="mode-card__rainbow" viewBox="0 0 48 40">
+      {RAINBOW_BANDS.map(({ color, radius }) => (
+        <path
+          key={color}
+          className="mode-card__rainbow-band"
+          d={`M ${24 - radius} 36 A ${radius} ${radius} 0 0 1 ${24 + radius} 36`}
+          fill="none"
+          stroke={color}
+          strokeWidth="3"
+        />
+      ))}
+    </svg>
+  )
+}
+
+async function playDefaultDinoRoar() {
+  const { playDinoRoar } = await import('../features/audio/dinoVoice')
+  await playDinoRoar()
+}
 
 interface SeoPageContent {
   path: string
@@ -115,7 +251,7 @@ const SEO_PAGES: SeoPageContent[] = [
       {
         heading: 'Use short sessions',
         body:
-          'Short daily sessions are easier to sustain than long unfocused practice. The app adjusts difficulty across easy, medium, and hard levels as your answers improve.',
+          'Short daily sessions are easier to sustain than long unfocused practice. The app adjusts difficulty across five levels, from easy through master, as your answers improve.',
       },
     ],
     faqs: [
@@ -315,6 +451,8 @@ function resolveStorage(providedStorage?: Storage | null) {
 
 export interface PerfectPitchAppProps {
   audioEngine?: AudioEngine
+  dinoRoarPlayer?: () => Promise<void>
+  now?: () => number
   questionFactory?: QuestionFactory
   storage?: Storage | null
 }
@@ -325,6 +463,8 @@ function localizeQuestion(question: Question, language: Language): Question {
     const label =
       question.mode === 'interval'
         ? translateIntervalLabel(choice.label, language)
+        : question.mode === 'scale'
+          ? translateScaleLabel(choice.label, language)
         : choice.label
 
     return {
@@ -408,6 +548,272 @@ function FooterSignature({ language }: { language: Language }) {
   )
 }
 
+interface DinoReactionState extends DinoReactionCopy {
+  id: number
+}
+
+function DinoSprite({
+  stageId,
+  label,
+  tapLabel,
+  hungry,
+  reaction,
+  onTap,
+}: {
+  stageId: DinoStageId
+  label: string
+  tapLabel: string
+  hungry: boolean
+  reaction: DinoReactionState | null
+  onTap: () => void
+}) {
+  const frames = DINO_ANIMATION_FRAMES[stageId]
+  const [activeFrame, setActiveFrame] = useState(0)
+
+  useEffect(() => {
+    const reduceMotion =
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+    let intervalId: number | null = null
+
+    const stopAnimation = () => {
+      if (intervalId !== null) {
+        window.clearInterval(intervalId)
+        intervalId = null
+      }
+    }
+
+    const startAnimation = () => {
+      if (reduceMotion || document.hidden || intervalId !== null) {
+        return
+      }
+
+      intervalId = window.setInterval(() => {
+        setActiveFrame((current) => (current + 1) % frames.length)
+      }, DINO_FRAME_INTERVAL_MS[stageId])
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopAnimation()
+        return
+      }
+      startAnimation()
+    }
+
+    startAnimation()
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      stopAnimation()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [frames, stageId])
+
+  return (
+    <button
+      aria-label={tapLabel}
+      className={`dino-sprite-button ${
+        reaction ? 'dino-sprite-button--reacting' : ''
+      }`}
+      data-testid="dino-stage-button"
+      onClick={onTap}
+      type="button"
+    >
+      {reaction && (
+        <span
+          key={reaction.id}
+          aria-live="polite"
+          className="dino-reaction"
+          role="status"
+        >
+          <span aria-hidden="true" className="dino-reaction__emoji">
+            {reaction.emoji}
+          </span>
+          <span>{reaction.message}</span>
+        </span>
+      )}
+      <span
+        aria-label={label}
+        className={`dino-sprite dino-sprite--${stageId} ${
+          hungry ? 'dino-sprite--hungry' : ''
+        }`}
+        data-testid="dino-stage"
+        role="img"
+      >
+        {frames.map((frame, index) => (
+          <img
+            key={frame.src}
+            alt=""
+            aria-hidden="true"
+            className={`dino-sprite__frame ${
+              index === activeFrame ? 'dino-sprite__frame--active' : ''
+            }`}
+            data-active={index === activeFrame}
+            draggable="false"
+            src={frame.src}
+            style={
+              {
+                '--dino-frame-normalize-scale': frame.normalizeScale,
+                '--dino-frame-offset-x': `${frame.offsetX}%`,
+                '--dino-frame-offset-y': `${frame.offsetY}%`,
+              } as CSSProperties
+            }
+          />
+        ))}
+      </span>
+    </button>
+  )
+}
+
+function DinoCompanion({
+  language,
+  points,
+  compact = false,
+  celebrate = false,
+  hungry = false,
+  soundError = null,
+  onInteract,
+}: {
+  language: Language
+  points: number
+  compact?: boolean
+  celebrate?: boolean
+  hungry?: boolean
+  soundError?: string | null
+  onInteract?: () => void
+}) {
+  const copy = getAppCopy(language)
+  const evolution = getDinoEvolution(points)
+  const stageCopy = getDinoStageCopy(language, evolution.stage.id)
+  const reactions = getDinoReactions(language, evolution.stage.id, hungry)
+  const [reaction, setReaction] = useState<DinoReactionState | null>(null)
+  const reactionIndexRef = useRef(-1)
+  const reactionIdRef = useRef(0)
+  const reactionTimeoutRef = useRef<number | null>(null)
+  const progressLabel = evolution.nextStage
+    ? `${copy.petNextPrefix} ${evolution.pointsToNextStage} ${copy.petPointsLabel}`
+    : copy.petMaxStage
+
+  useEffect(
+    () => () => {
+      if (reactionTimeoutRef.current !== null) {
+        window.clearTimeout(reactionTimeoutRef.current)
+      }
+    },
+    [],
+  )
+
+  const handleDinoTap = () => {
+    reactionIndexRef.current = (reactionIndexRef.current + 1) % reactions.length
+    reactionIdRef.current += 1
+    setReaction({
+      ...reactions[reactionIndexRef.current],
+      id: reactionIdRef.current,
+    })
+
+    if (reactionTimeoutRef.current !== null) {
+      window.clearTimeout(reactionTimeoutRef.current)
+    }
+    reactionTimeoutRef.current = window.setTimeout(() => {
+      setReaction(null)
+      reactionTimeoutRef.current = null
+    }, DINO_REACTION_DURATION_MS)
+
+    onInteract?.()
+  }
+
+  return (
+    <section
+      aria-label={copy.petTitle}
+      className={`dino-card ${compact ? 'dino-card--compact' : ''} ${
+        celebrate ? 'dino-card--celebrate' : ''
+      } ${hungry ? 'dino-card--hungry' : ''}`}
+    >
+      <header className="dino-card__header">
+        <div>
+          <p className="dino-card__kicker">{copy.petTitle}</p>
+          {!compact && (
+            <p className="dino-card__subtitle">
+              {hungry ? copy.petHungryMessage : copy.petSubtitle}
+            </p>
+          )}
+        </div>
+        <div className="dino-card__status">
+          {hungry && <span className="dino-hunger-badge">🍎 {copy.petHungryLabel}</span>}
+          <span className="dino-points" aria-label={`${points} ${copy.petPointsLabel}`}>
+            <span aria-hidden="true">♫</span> {points}
+          </span>
+        </div>
+      </header>
+
+      <div className="dino-card__body">
+        <DinoSprite
+          key={evolution.stage.id}
+          hungry={hungry}
+          label={stageCopy.name}
+          onTap={handleDinoTap}
+          reaction={reaction}
+          stageId={evolution.stage.id}
+          tapLabel={copy.petTapLabel}
+        />
+        <div className="dino-card__copy">
+          <span className="dino-stage-chip">
+            {language === 'en' ? 'Stage' : 'Cấp'} {evolution.stageIndex + 1}/
+            {DINO_STAGES.length}
+          </span>
+          <strong className="dino-stage-name">{stageCopy.name}</strong>
+          <p>{stageCopy.description}</p>
+        </div>
+      </div>
+
+      <div className="dino-progress">
+        <div className="dino-progress__label">
+          <span>{progressLabel}</span>
+          <strong>{evolution.progressPercent}%</strong>
+        </div>
+        <div
+          aria-label={progressLabel}
+          aria-valuemax={100}
+          aria-valuemin={0}
+          aria-valuenow={evolution.progressPercent}
+          className="dino-progress__track"
+          role="progressbar"
+        >
+          <span style={{ width: `${evolution.progressPercent}%` }} />
+        </div>
+      </div>
+
+      <div className="evolution-track" aria-label={copy.petEvolutionLabel}>
+        {DINO_STAGES.map((stage, index) => {
+          const isCurrent = index === evolution.stageIndex
+          const isComplete = index < evolution.stageIndex
+
+          return (
+            <span
+              key={stage.id}
+              aria-label={getDinoStageCopy(language, stage.id).name}
+              className={`evolution-track__step ${
+                isCurrent ? 'evolution-track__step--current' : ''
+              } ${isComplete ? 'evolution-track__step--complete' : ''}`}
+              title={getDinoStageCopy(language, stage.id).name}
+            >
+              {isComplete ? '✓' : index + 1}
+            </span>
+          )
+        })}
+      </div>
+
+      <p className="dino-card__tap-hint">👆 {copy.petTapHint}</p>
+      {soundError && (
+        <p className="dino-card__sound-error" role="alert">
+          {soundError}
+        </p>
+      )}
+      {!compact && <p className="dino-card__hint">💡 {copy.petHint}</p>}
+    </section>
+  )
+}
+
 function SeoLinks() {
   return (
     <nav className="seo-links" aria-label="Ear training topics">
@@ -429,8 +835,8 @@ function SeoHomeContent() {
         <p>
           Perfect Pitch is an online ear training app for musicians who want short,
           practical listening drills. You can practice single notes, double notes,
-          melodies, intervals, arpeggios, and chords with real piano sounds and
-          instant feedback after each answer.
+          melodies, intervals, arpeggios, triads, scales, and seventh chords with real
+          piano sounds and instant feedback after each answer.
         </p>
       </div>
       <div className="seo-panel__grid">
@@ -445,9 +851,9 @@ function SeoHomeContent() {
         <article>
           <h3>For musical context</h3>
           <p>
-            Interval, melody, arpeggio, and chord modes connect note recognition to
-            musical patterns. That makes the training useful for singing, playing,
-            transcription, and composition.
+            Interval, melody, arpeggio, chord, scale, and seventh-chord modes connect
+            note recognition to musical patterns. That makes the training useful for
+            singing, playing, transcription, and composition.
           </p>
         </article>
       </div>
@@ -510,9 +916,13 @@ function SeoContentPage({ page }: { page: SeoPageContent }) {
 
 export function PerfectPitchApp({
   audioEngine: providedAudioEngine,
+  dinoRoarPlayer: providedDinoRoarPlayer,
+  now: providedNow,
   questionFactory: providedQuestionFactory,
   storage: providedStorage,
 }: PerfectPitchAppProps) {
+  const getNow = providedNow ?? Date.now
+  const dinoRoarPlayer = providedDinoRoarPlayer ?? playDefaultDinoRoar
   const [currentPath] = useState(() => getCurrentPath())
   const seoPage = SEO_PAGE_BY_PATH.get(currentPath) ?? null
   const audioEngineRef = useRef<AudioEngine | null>(providedAudioEngine ?? null)
@@ -530,6 +940,12 @@ export function PerfectPitchApp({
   )
   const [evaluation, setEvaluation] = useState<QuestionEvaluation | null>(null)
   const [stats, setStats] = useState<SessionStats>(() => loadSessionStats(storage))
+  const [dinoProgress, setDinoProgress] = useState(() => loadDinoProgress(storage))
+  const [currentTime, setCurrentTime] = useState(() => getNow())
+  const [dinoCare, setDinoCare] = useState<DinoCareState>(() =>
+    loadDinoCare(storage, currentTime),
+  )
+  const [dinoSoundError, setDinoSoundError] = useState<string | null>(null)
   const [audioStatus, setAudioStatus] = useState<
     'idle' | 'loading' | 'ready' | 'error'
   >('idle')
@@ -540,18 +956,44 @@ export function PerfectPitchApp({
   const [modeProgress, setModeProgress] = useState<ModeProgressState>(() =>
     loadProgressState(storage),
   )
-  const seenQuestionKeysRef = useRef<Record<GameMode, Set<string>>>({
-    single: new Set(),
-    double: new Set(),
-    melody: new Set(),
-    interval: new Set(),
-    arpeggio: new Set(),
-    chord: new Set(),
-  })
+  const seenQuestionKeysRef = useRef<Record<GameMode, Set<string>>>(
+    Object.fromEntries(GAME_MODES.map((gameMode) => [gameMode, new Set<string>()])) as Record<
+      GameMode,
+      Set<string>
+    >,
+  )
   const pageViewRef = useRef<string | null>(null)
   const feedbackPanelRef = useRef<HTMLDivElement | null>(null)
   const playbackUnlockTimeoutRef = useRef<number | null>(null)
+  const dinoCareRef = useRef(dinoCare)
+  const isDinoRoaringRef = useRef(false)
   const copy = getAppCopy(language)
+  const dinoHungry = isDinoHungry(dinoCare, currentTime)
+
+  const maybePlayDinoRoar = useCallback(async () => {
+    const roarAt = getNow()
+    if (
+      isDinoRoaringRef.current ||
+      !shouldDinoRoar(dinoCareRef.current, roarAt)
+    ) {
+      return
+    }
+
+    isDinoRoaringRef.current = true
+    try {
+      await dinoRoarPlayer()
+      const nextCare = markDinoRoared(dinoCareRef.current, roarAt)
+      dinoCareRef.current = nextCare
+      setDinoCare(nextCare)
+      setCurrentTime(roarAt)
+      setDinoSoundError(null)
+    } catch (error) {
+      setDinoSoundError(copy.petSoundError)
+      console.error(error)
+    } finally {
+      isDinoRoaringRef.current = false
+    }
+  }, [copy.petSoundError, dinoRoarPlayer, getNow])
 
   const getAudioEngine = async () => {
     if (audioEngineRef.current) {
@@ -578,6 +1020,43 @@ export function PerfectPitchApp({
   useEffect(() => {
     saveSessionStats(stats, storage)
   }, [stats, storage])
+
+  useEffect(() => {
+    saveDinoProgress(dinoProgress, storage)
+  }, [dinoProgress, storage])
+
+  useEffect(() => {
+    dinoCareRef.current = dinoCare
+    saveDinoCare(dinoCare, storage)
+  }, [dinoCare, storage])
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTime(getNow())
+    }, DINO_HUNGER_CHECK_INTERVAL_MS)
+
+    return () => window.clearInterval(intervalId)
+  }, [getNow])
+
+  useEffect(() => {
+    const handleUserGesture = () => {
+      void maybePlayDinoRoar()
+    }
+
+    window.addEventListener('pointerdown', handleUserGesture, { passive: true })
+    window.addEventListener('keydown', handleUserGesture)
+
+    return () => {
+      window.removeEventListener('pointerdown', handleUserGesture)
+      window.removeEventListener('keydown', handleUserGesture)
+    }
+  }, [maybePlayDinoRoar])
+
+  useEffect(() => {
+    if (audioStatus === 'ready' && dinoHungry) {
+      void maybePlayDinoRoar()
+    }
+  }, [audioStatus, dinoHungry, maybePlayDinoRoar])
 
   useEffect(() => {
     saveLanguagePreference(language, storage)
@@ -626,6 +1105,11 @@ export function PerfectPitchApp({
     trackPageView(pagePath, pageTitle, language)
     pageViewRef.current = `${pagePath}:${language}`
   }, [language, mode])
+
+  useEffect(() => {
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+  }, [mode])
 
   useEffect(() => {
     if (!evaluation) {
@@ -786,6 +1270,19 @@ export function PerfectPitchApp({
         bestStreak: Math.max(current.bestStreak, streak),
       }
     })
+    if (result.status === 'correct') {
+      const fedAt = getNow()
+      setDinoProgress((current) => ({
+        points: current.points + DINO_POINTS_PER_CORRECT,
+      }))
+      setDinoCare((current) => {
+        const nextCare = feedDino(current, fedAt)
+        dinoCareRef.current = nextCare
+        return nextCare
+      })
+      setCurrentTime(fedAt)
+      setDinoSoundError(null)
+    }
     const progression = applyProgression(modeProgress[question.mode], result.status, language)
     setProgressNotice(progression.notice)
     setModeProgress((current) => ({
@@ -854,12 +1351,23 @@ export function PerfectPitchApp({
               <div className="eyebrow">Perfect Pitch</div>
               <LanguageSwitcher language={language} onChange={setLanguage} />
             </div>
-            <h1>{copy.heroTitle}</h1>
-            <p className="hero-copy">{copy.heroBody}</p>
-            <div className="hero-stats">
-              <span>{copy.heroModesStat}</span>
-              <span>{copy.heroLevelsStat}</span>
-              <span>{copy.heroPianoStat}</span>
+            <div className="hero-panel__layout">
+              <div className="hero-panel__copy">
+                <h1>{copy.heroTitle}</h1>
+                <p className="hero-copy">{copy.heroBody}</p>
+                <div className="hero-stats">
+                  <span>🎧 {copy.heroModesStat}</span>
+                  <span>⭐ {copy.heroLevelsStat}</span>
+                  <span>🎹 {copy.heroPianoStat}</span>
+                </div>
+              </div>
+              <DinoCompanion
+                hungry={dinoHungry}
+                language={language}
+                onInteract={() => void maybePlayDinoRoar()}
+                points={dinoProgress.points}
+                soundError={dinoSoundError}
+              />
             </div>
           </section>
         )}
@@ -874,17 +1382,22 @@ export function PerfectPitchApp({
                 <button
                   key={gameMode}
                   aria-label={modeCopy.label}
-                  className="mode-card"
+                  className={`mode-card mode-card--${gameMode}`}
                   onClick={() => activateMode(gameMode)}
                   type="button"
                 >
                   <div className="mode-card__header">
-                    <span className="mode-card__tag">{copy.modeTag}</span>
+                    <span className="mode-card__icon" aria-hidden="true">
+                      <ModeIcon mode={gameMode} />
+                    </span>
                     <span className="difficulty-pill">
                       {getDifficultyLabel(language, progress.currentDifficulty)}
                     </span>
                   </div>
-                  <strong>{modeCopy.label}</strong>
+                  <strong>
+                    <span className="mode-card__tag">{copy.modeTag}</span>
+                    {modeCopy.label}
+                  </strong>
                   <span>{modeCopy.description}</span>
                 </button>
               )
@@ -926,7 +1439,18 @@ export function PerfectPitchApp({
               </div>
             </header>
 
-            <div className="question-panel">
+            <div className="game-board">
+              <DinoCompanion
+                celebrate={evaluation?.status === 'correct'}
+                compact
+                hungry={dinoHungry}
+                language={language}
+                onInteract={() => void maybePlayDinoRoar()}
+                points={dinoProgress.points}
+                soundError={dinoSoundError}
+              />
+
+              <div className="question-panel">
               <div className="question-heading">
                 <p className="question-kicker">{copy.currentQuestion}</p>
                 <h2>{displayQuestion.prompt}</h2>
@@ -996,6 +1520,9 @@ export function PerfectPitchApp({
                     <p className="feedback-title">
                       {evaluation.status === 'correct' ? copy.correct : copy.incorrect}
                     </p>
+                    {evaluation.status === 'correct' && (
+                      <p className="reward-message">♫ {copy.pointsEarned}</p>
+                    )}
                     <p>
                       {copy.correctAnswerPrefix}{' '}
                       <strong>
@@ -1013,6 +1540,7 @@ export function PerfectPitchApp({
                   </button>
                 </div>
               )}
+              </div>
             </div>
           </section>
         )}

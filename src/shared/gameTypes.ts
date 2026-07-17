@@ -7,7 +7,15 @@ export type GameMode =
   | 'interval'
   | 'arpeggio'
   | 'chord'
-export type DifficultyLevel = 'easy' | 'medium' | 'hard'
+  | 'scale'
+  | 'seventh'
+export type DifficultyLevel =
+  | 'easy'
+  | 'medium'
+  | 'hard'
+  | 'expert'
+  | 'master'
+export type DinoStageId = 'egg' | 'baby' | 'young' | 'adult' | 'super'
 
 export type QuestionId = string
 
@@ -18,7 +26,13 @@ export interface ModeProgress {
   incorrectStreak: number
 }
 
-export const DIFFICULTY_LEVELS: DifficultyLevel[] = ['easy', 'medium', 'hard']
+export const DIFFICULTY_LEVELS: DifficultyLevel[] = [
+  'easy',
+  'medium',
+  'hard',
+  'expert',
+  'master',
+]
 
 export const GAME_MODES: GameMode[] = [
   'single',
@@ -27,6 +41,8 @@ export const GAME_MODES: GameMode[] = [
   'interval',
   'arpeggio',
   'chord',
+  'scale',
+  'seventh',
 ]
 
 export interface Choice {

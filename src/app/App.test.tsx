@@ -4,6 +4,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { PerfectPitchApp } from './App'
 import { LANGUAGE_STORAGE_KEY } from './languagePreference'
 import {
+  DINO_CARE_STORAGE_KEY,
+  DINO_HUNGRY_AFTER_MS,
+} from '../features/game/dinoCare'
+import { DINO_PROGRESS_STORAGE_KEY } from '../features/game/dinoProgress'
+import {
   DEFAULT_SESSION_STATS,
   SCORE_STORAGE_KEY,
 } from './sessionStats'
@@ -96,6 +101,8 @@ describe('PerfectPitchApp', () => {
   beforeEach(() => {
     window.localStorage.clear()
     window.history.pushState({}, '', '/')
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
   })
 
   it('defaults to English when no saved language preference exists', async () => {
@@ -103,7 +110,7 @@ describe('PerfectPitchApp', () => {
 
     render(<PerfectPitchApp audioEngine={audioEngine} />)
 
-    expect(screen.getByText('Train your ear with a real piano')).toBeInTheDocument()
+    expect(screen.getByText('Listen, play & grow your dino!')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Single Note' })).toBeInTheDocument()
     expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe('en')
   })
@@ -115,7 +122,7 @@ describe('PerfectPitchApp', () => {
     render(<PerfectPitchApp audioEngine={audioEngine} storage={window.localStorage} />)
 
     expect(
-      await screen.findByText('Kiểm tra tai nghe nốt bằng piano thật'),
+      await screen.findByText('Nghe thật hay, nuôi khủng long lớn!'),
     ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Single Note' })).toBeInTheDocument()
   })
@@ -131,14 +138,14 @@ describe('PerfectPitchApp', () => {
     await user.click(screen.getAllByRole('button', { name: 'VI' })[0])
 
     expect(
-      screen.getByText('Kiểm tra tai nghe nốt bằng piano thật'),
+      screen.getByText('Nghe thật hay, nuôi khủng long lớn!'),
     ).toBeInTheDocument()
     expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe('vi')
 
     await user.click(screen.getAllByRole('button', { name: 'EN' })[0])
 
     expect(
-      await screen.findByText('Train your ear with a real piano'),
+      await screen.findByText('Listen, play & grow your dino!'),
     ).toBeInTheDocument()
     expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe('en')
   })
@@ -183,6 +190,35 @@ describe('PerfectPitchApp', () => {
     ).toBeInTheDocument()
   })
 
+  it('translates scale answer labels when switching language in game', async () => {
+    const user = userEvent.setup()
+    const audioEngine = createMockAudioEngine()
+    const { container } = render(
+      <PerfectPitchApp audioEngine={audioEngine} storage={window.localStorage} />,
+    )
+
+    await user.click(await screen.findByRole('button', { name: 'Scale' }))
+
+    const englishChoices = Array.from(
+      container.querySelectorAll<HTMLButtonElement>('.choice-card'),
+    ).map((choice) => choice.textContent ?? '')
+    expect(englishChoices.some((choice) => /major|natural minor/.test(choice))).toBe(
+      true,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'VI' }))
+
+    const vietnameseChoices = Array.from(
+      container.querySelectorAll<HTMLButtonElement>('.choice-card'),
+    ).map((choice) => choice.textContent ?? '')
+    expect(vietnameseChoices.every((choice) => !/major|natural minor/.test(choice))).toBe(
+      true,
+    )
+    expect(
+      vietnameseChoices.some((choice) => /trưởng|thứ tự nhiên/.test(choice)),
+    ).toBe(true)
+  })
+
   it('defers piano loading until the first playback gesture', async () => {
     const user = userEvent.setup()
     const audioEngine = createMockAudioEngine()
@@ -202,7 +238,7 @@ describe('PerfectPitchApp', () => {
     expect(audioEngine.init).toHaveBeenCalledTimes(1)
   })
 
-  it('shows all 6 modes on the home screen', async () => {
+  it('shows all 8 modes and 5 levels on the home screen', async () => {
     const audioEngine = createMockAudioEngine()
     const questionFactory = createTrackingQuestionFactory()
 
@@ -214,9 +250,37 @@ describe('PerfectPitchApp', () => {
 
     expect(screen.getByRole('button', { name: 'Double Note' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Melody' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Interval' })).toBeInTheDocument()
+    const intervalButton = screen.getByRole('button', { name: 'Interval' })
+    const rainbowBands = intervalButton.querySelectorAll('.mode-card__rainbow-band')
+    expect(intervalButton).toBeInTheDocument()
+    expect(rainbowBands).toHaveLength(7)
+    expect(new Set(Array.from(rainbowBands, (band) => band.getAttribute('stroke'))).size).toBe(7)
     expect(screen.getByRole('button', { name: 'Arpeggio' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Chord' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Scale' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '7th Chord' })).toBeInTheDocument()
+    expect(screen.getByText(/8 modes/)).toBeInTheDocument()
+    expect(screen.getByText(/5 levels/)).toBeInTheDocument()
+  })
+
+  it('returns to the top when opening a game mode', async () => {
+    const user = userEvent.setup()
+    const audioEngine = createMockAudioEngine()
+    const questionFactory = createTrackingQuestionFactory()
+
+    render(
+      <PerfectPitchApp
+        audioEngine={audioEngine}
+        questionFactory={questionFactory.factory}
+      />,
+    )
+
+    document.documentElement.scrollTop = 900
+    document.body.scrollTop = 900
+    await user.click(screen.getByRole('button', { name: 'Single Note' }))
+
+    expect(document.documentElement.scrollTop).toBe(0)
+    expect(document.body.scrollTop).toBe(0)
   })
 
   it('renders crawlable SEO topic content on the home screen', async () => {
@@ -339,6 +403,47 @@ describe('PerfectPitchApp', () => {
     expect(screen.getByText('medium-1')).toBeInTheDocument()
     expect(screen.getByText('Medium')).toBeInTheDocument()
   })
+
+  it.each([
+    ['hard', 'Expert', 'expert'],
+    ['expert', 'Master', 'master'],
+  ] as const)(
+    'advances from %s into the new %s level',
+    async (currentDifficulty, nextLabel, nextDifficulty) => {
+      window.localStorage.setItem(
+        'perfect-pitch-mode-progress',
+        JSON.stringify({
+          single: {
+            currentDifficulty,
+            highestUnlockedDifficulty: currentDifficulty,
+            correctAnswersTowardsLevelUp: 1,
+            incorrectStreak: 0,
+          },
+        }),
+      )
+      const user = userEvent.setup()
+      const audioEngine = createMockAudioEngine()
+      const questionFactory = createTrackingQuestionFactory()
+
+      render(
+        <PerfectPitchApp
+          audioEngine={audioEngine}
+          questionFactory={questionFactory.factory}
+          storage={window.localStorage}
+        />,
+      )
+
+      await user.click(await screen.findByRole('button', { name: 'Single Note' }))
+      await user.click(screen.getByRole('button', { name: 'Enable piano and play' }))
+      await user.click(screen.getByTestId('choice-c'))
+
+      expect(screen.getByText(`Moved up to ${nextLabel}.`)).toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: 'Next question' }))
+
+      expect(screen.getByText(`${nextDifficulty}-1`)).toBeInTheDocument()
+    },
+  )
 
   it('raises difficulty based on cumulative correct answers, not total answered questions', async () => {
     const user = userEvent.setup()
@@ -499,6 +604,203 @@ describe('PerfectPitchApp', () => {
       streak: 1,
       bestStreak: 1,
     })
+  })
+
+  it('awards persistent music notes to the dinosaur for a correct answer', async () => {
+    const user = userEvent.setup()
+    const audioEngine = createMockAudioEngine()
+    const questionFactory = createTrackingQuestionFactory()
+
+    render(
+      <PerfectPitchApp
+        audioEngine={audioEngine}
+        questionFactory={questionFactory.factory}
+        storage={window.localStorage}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Single Note' }))
+    await user.click(screen.getByRole('button', { name: 'Enable piano and play' }))
+    await user.click(screen.getByTestId('choice-c'))
+
+    expect(screen.getByText(/\+10 music notes for your dino!/)).toBeInTheDocument()
+    expect(screen.getByLabelText('10 music notes')).toBeInTheDocument()
+    expect(
+      JSON.parse(window.localStorage.getItem(DINO_PROGRESS_STORAGE_KEY) ?? 'null'),
+    ).toEqual({ points: 10 })
+  })
+
+  it('evolves the egg into a baby after reaching 50 music notes', async () => {
+    window.localStorage.setItem(
+      DINO_PROGRESS_STORAGE_KEY,
+      JSON.stringify({ points: 40 }),
+    )
+    const user = userEvent.setup()
+    const audioEngine = createMockAudioEngine()
+    const questionFactory = createTrackingQuestionFactory()
+
+    render(
+      <PerfectPitchApp
+        audioEngine={audioEngine}
+        questionFactory={questionFactory.factory}
+        storage={window.localStorage}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Single Note' }))
+    await user.click(screen.getByRole('button', { name: 'Enable piano and play' }))
+    await user.click(screen.getByTestId('choice-c'))
+
+    expect(screen.getByRole('img', { name: 'Baby Dino' })).toHaveClass(
+      'dino-sprite--baby',
+    )
+    expect(screen.getByText('Stage 2/5')).toBeInTheDocument()
+  })
+
+  it.each([
+    [0, 'Dino Egg', 'dino-sprite--egg'],
+    [50, 'Baby Dino', 'dino-sprite--baby'],
+    [200, 'Young Dino', 'dino-sprite--young'],
+    [500, 'Cute Adult Dino', 'dino-sprite--adult'],
+    [900, 'Super Dino', 'dino-sprite--super'],
+  ])('uses the stage-specific animation at %i points', (points, name, className) => {
+    window.localStorage.setItem(
+      DINO_PROGRESS_STORAGE_KEY,
+      JSON.stringify({ points }),
+    )
+
+    render(<PerfectPitchApp audioEngine={createMockAudioEngine()} />)
+
+    const sprite = screen.getByRole('img', { name })
+    const stageId = className.replace('dino-sprite--', '')
+    const frames = sprite.querySelectorAll('.dino-sprite__frame')
+
+    expect(sprite).toHaveClass(className)
+    expect(frames).toHaveLength(4)
+    expect(frames[0]).toHaveAttribute(
+      'src',
+      `/dino/frames-v1/${stageId}-1.png`,
+    )
+    expect(frames[0]).toHaveAttribute('data-active', 'true')
+  })
+
+  it('shows a stage-specific expression when the dinosaur is tapped', async () => {
+    const user = userEvent.setup()
+    const dinoRoarPlayer = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <PerfectPitchApp
+        audioEngine={createMockAudioEngine()}
+        dinoRoarPlayer={dinoRoarPlayer}
+      />,
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: 'Tap the dinosaur for a reaction' }),
+    )
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Knock knock... I can hear you!',
+    )
+    expect(dinoRoarPlayer).not.toHaveBeenCalled()
+  })
+
+  it('roars once after returning to a hungry dinosaur', async () => {
+    const now = 2_000_000
+    window.localStorage.setItem(
+      DINO_CARE_STORAGE_KEY,
+      JSON.stringify({
+        lastFedAt: now - DINO_HUNGRY_AFTER_MS,
+        lastRoaredAt: null,
+      }),
+    )
+    const user = userEvent.setup()
+    const dinoRoarPlayer = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <PerfectPitchApp
+        audioEngine={createMockAudioEngine()}
+        dinoRoarPlayer={dinoRoarPlayer}
+        now={() => now}
+        storage={window.localStorage}
+      />,
+    )
+
+    expect(screen.getByText(/Hungry!/)).toBeInTheDocument()
+    await user.click(
+      screen.getByRole('button', { name: 'Tap the dinosaur for a reaction' }),
+    )
+
+    await waitFor(() => expect(dinoRoarPlayer).toHaveBeenCalledTimes(1))
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Rawr... my tummy needs music!',
+    )
+    expect(
+      JSON.parse(window.localStorage.getItem(DINO_CARE_STORAGE_KEY) ?? 'null'),
+    ).toEqual({ lastFedAt: now - DINO_HUNGRY_AFTER_MS, lastRoaredAt: now })
+  })
+
+  it('shows a visible message when the dinosaur voice cannot start', async () => {
+    const now = 2_500_000
+    window.localStorage.setItem(
+      DINO_CARE_STORAGE_KEY,
+      JSON.stringify({
+        lastFedAt: now - DINO_HUNGRY_AFTER_MS,
+        lastRoaredAt: null,
+      }),
+    )
+    const user = userEvent.setup()
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+    render(
+      <PerfectPitchApp
+        audioEngine={createMockAudioEngine()}
+        dinoRoarPlayer={vi.fn().mockRejectedValue(new Error('audio blocked'))}
+        now={() => now}
+        storage={window.localStorage}
+      />,
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: 'Tap the dinosaur for a reaction' }),
+    )
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Dino voice is sleeping. Tap again to retry.',
+    )
+    consoleError.mockRestore()
+  })
+
+  it('feeds a hungry dinosaur with points from a correct answer', async () => {
+    const now = 3_000_000
+    window.localStorage.setItem(
+      DINO_CARE_STORAGE_KEY,
+      JSON.stringify({
+        lastFedAt: now - DINO_HUNGRY_AFTER_MS,
+        lastRoaredAt: null,
+      }),
+    )
+    const user = userEvent.setup()
+    const questionFactory = createTrackingQuestionFactory()
+
+    render(
+      <PerfectPitchApp
+        audioEngine={createMockAudioEngine()}
+        dinoRoarPlayer={vi.fn().mockResolvedValue(undefined)}
+        now={() => now}
+        questionFactory={questionFactory.factory}
+        storage={window.localStorage}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Single Note' }))
+    await user.click(screen.getByRole('button', { name: 'Enable piano and play' }))
+    await user.click(screen.getByTestId('choice-c'))
+
+    expect(screen.queryByText(/Hungry!/)).not.toBeInTheDocument()
+    expect(
+      JSON.parse(window.localStorage.getItem(DINO_CARE_STORAGE_KEY) ?? 'null'),
+    ).toEqual({ lastFedAt: now, lastRoaredAt: null })
   })
 
   it('resets session stats in UI and storage', async () => {

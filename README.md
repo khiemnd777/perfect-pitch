@@ -1,6 +1,6 @@
 # Perfect Pitch
 
-Perfect Pitch is a fully client-side ear-training web app built for practicing single notes, double notes, short melodies, intervals, arpeggios, and chords with local piano samples.
+Perfect Pitch is a fully client-side ear-training web app built for practicing single notes, double notes, short melodies, intervals, arpeggios, triads, scales, and seventh chords with local piano samples.
 
 Live site: [https://andy.dailyturning.com](https://andy.dailyturning.com)
 
@@ -12,8 +12,8 @@ Live site: [https://andy.dailyturning.com](https://andy.dailyturning.com)
 
 ## Current Features
 
-- 6 training modes: `single`, `double`, `melody`, `interval`, `arpeggio`, `chord`.
-- 3 fixed difficulty levels: `easy`, `medium`, `hard`.
+- 8 training modes: `single`, `double`, `melody`, `interval`, `arpeggio`, `chord`, `scale`, `seventh`.
+- 5 fixed difficulty levels: `easy`, `medium`, `hard`, `expert`, `master`.
 - Automatic difficulty progression up or down based on correct and incorrect streaks.
 - Per-mode progress persisted in local storage.
 - Replay always reuses the current question payload instead of generating a new one.
@@ -52,7 +52,7 @@ bun run build
 - `src/app`: app shell, mode flow, preload logic, grading state, and session stats.
 - `src/features/audio`: Tone startup, sample preload, playback, replay, and cleanup.
 - `src/features/game`: grading logic and streak-based progression.
-- `src/features/question-bank`: question generation for all 6 modes across 3 difficulty levels.
+- `src/features/question-bank`: question generation for all 8 modes across 5 difficulty levels.
 - `src/shared`: public types, music helpers, and random utilities.
 - `public/audio/piano`: piano samples used for playback.
 
@@ -78,7 +78,7 @@ docker build -t perfect-pitch-ci-local .
 Manual verification is also recommended for:
 
 - first-play audio after the first user gesture
-- replay behavior in all 6 modes
+- replay behavior in all 8 modes
 - immediate grading
 - next-question reset
 

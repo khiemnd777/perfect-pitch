@@ -52,6 +52,33 @@ describe('questionFactory', () => {
     },
   )
 
+  it.each([
+    ['expert', 2],
+    ['master', 1],
+  ] as const)(
+    'keeps %s melody distractors close by changing %i note positions',
+    (difficulty, expectedChanges) => {
+      const question = englishFactory.createQuestion(
+        'melody',
+        difficulty,
+        `melody-close-${difficulty}`,
+      )
+      const correctNotes = question.choices
+        .find((choice) => choice.isCorrect)!
+        .label.split(' - ')
+
+      question.choices
+        .filter((choice) => !choice.isCorrect)
+        .forEach((choice) => {
+          const changedPositions = choice.label
+            .split(' - ')
+            .filter((note, index) => note !== correctNotes[index]).length
+
+          expect(changedPositions).toBe(expectedChanges)
+        })
+    },
+  )
+
   it.each(DIFFICULTY_LEVELS)('keeps double-note labels sorted for %s', (difficulty) => {
     const question = englishFactory.createQuestion('double', difficulty, `double-${difficulty}`)
     const correctLabel = question.choices.find((choice) => choice.isCorrect)?.label ?? ''
@@ -89,6 +116,44 @@ describe('questionFactory', () => {
     expect(question.playback).toHaveLength(1)
     expect(question.playback[0]?.notes).toHaveLength(3)
     expect(question.playback.flatMap((event) => event.notes).every((note) => PITCHES.includes(note))).toBe(true)
+  })
+
+  it.each(DIFFICULTY_LEVELS)('keeps scale playback inside C4-B5 for %s', (difficulty) => {
+    const question = englishFactory.createQuestion('scale', difficulty, `scale-${difficulty}`)
+
+    expect(question.playback.length).toBeGreaterThanOrEqual(5)
+    expect(
+      question.playback
+        .flatMap((event) => event.notes)
+        .every((note) => PITCHES.includes(note)),
+    ).toBe(true)
+  })
+
+  it.each(DIFFICULTY_LEVELS)(
+    'creates four-note seventh chords inside C4-B5 for %s',
+    (difficulty) => {
+      const question = englishFactory.createQuestion(
+        'seventh',
+        difficulty,
+        `seventh-${difficulty}`,
+      )
+
+      expect(question.playback).toHaveLength(1)
+      expect(question.playback[0]?.notes).toHaveLength(4)
+      expect(
+        question.playback
+          .flatMap((event) => event.notes)
+          .every((note) => PITCHES.includes(note)),
+      ).toBe(true)
+    },
+  )
+
+  it.each(GAME_MODES)('offers a broad seeded question pool for %s', (mode) => {
+    const answers = Array.from({ length: 64 }, (_, index) =>
+      englishFactory.createQuestion(mode, 'master', `${mode}-bank-${index}`),
+    ).map((question) => question.correctChoiceId)
+
+    expect(new Set(answers).size).toBeGreaterThan(4)
   })
 
   it('renders compact chord-style labels for triads in both languages', () => {

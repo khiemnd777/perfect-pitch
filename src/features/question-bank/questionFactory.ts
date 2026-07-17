@@ -14,10 +14,14 @@ import {
   formatArpeggioLabel,
   formatChoiceMeta,
   formatChordLabel,
+  formatScaleLabel,
+  formatSeventhChordLabel,
   getDifficultyCopy,
   getIntervalLabel,
   getModeCopy,
   type Language,
+  type ScaleQuality,
+  type SeventhQuality,
   type TriadQuality,
 } from '../../shared/localization'
 import {
@@ -52,6 +56,16 @@ interface ChordSpec {
   intervals: [number, number, number]
 }
 
+interface ScaleSpec {
+  quality: ScaleQuality
+  intervals: number[]
+}
+
+interface SeventhChordSpec {
+  quality: SeventhQuality
+  intervals: [number, number, number, number]
+}
+
 const pitchPoolByNoteName = createPitchPoolByNoteName(PITCHES)
 const BASIC_SINGLE_NOTES: NoteName[] = ['C', 'D', 'E', 'F', 'G', 'A']
 const HARD_SINGLE_CLUSTERS: NoteName[][] = [
@@ -64,7 +78,6 @@ const HARD_SINGLE_CLUSTERS: NoteName[][] = [
 const INTERVAL_SPECS: Record<DifficultyLevel, IntervalSpec[]> = {
   easy: [
     { semitones: 0 },
-    { semitones: 1 },
     { semitones: 2 },
     { semitones: 3 },
     { semitones: 4 },
@@ -92,6 +105,7 @@ const INTERVAL_SPECS: Record<DifficultyLevel, IntervalSpec[]> = {
     { semitones: 3 },
     { semitones: 4 },
     { semitones: 5 },
+    { semitones: 6 },
     { semitones: 7 },
     { semitones: 8 },
     { semitones: 9 },
@@ -99,6 +113,8 @@ const INTERVAL_SPECS: Record<DifficultyLevel, IntervalSpec[]> = {
     { semitones: 11 },
     { semitones: 12 },
   ],
+  expert: Array.from({ length: 13 }, (_, semitones) => ({ semitones })),
+  master: Array.from({ length: 7 }, (_, index) => ({ semitones: index + 13 })),
 }
 
 const ARPEGGIO_SPECS: Record<DifficultyLevel, ArpeggioSpec[]> = {
@@ -111,6 +127,18 @@ const ARPEGGIO_SPECS: Record<DifficultyLevel, ArpeggioSpec[]> = {
     { quality: 'minor', intervals: [0, 3, 7] },
   ],
   hard: [
+    { quality: 'major', intervals: [0, 4, 7] },
+    { quality: 'minor', intervals: [0, 3, 7] },
+    { quality: 'diminished', intervals: [0, 3, 6] },
+    { quality: 'augmented', intervals: [0, 4, 8] },
+  ],
+  expert: [
+    { quality: 'major', intervals: [0, 4, 7] },
+    { quality: 'minor', intervals: [0, 3, 7] },
+    { quality: 'diminished', intervals: [0, 3, 6] },
+    { quality: 'augmented', intervals: [0, 4, 8] },
+  ],
+  master: [
     { quality: 'major', intervals: [0, 4, 7] },
     { quality: 'minor', intervals: [0, 3, 7] },
     { quality: 'diminished', intervals: [0, 3, 6] },
@@ -132,6 +160,85 @@ const CHORD_SPECS: Record<DifficultyLevel, ChordSpec[]> = {
     { quality: 'minor', intervals: [0, 3, 7] },
     { quality: 'diminished', intervals: [0, 3, 6] },
     { quality: 'augmented', intervals: [0, 4, 8] },
+  ],
+  expert: [
+    { quality: 'major', intervals: [0, 4, 7] },
+    { quality: 'minor', intervals: [0, 3, 7] },
+    { quality: 'diminished', intervals: [0, 3, 6] },
+    { quality: 'augmented', intervals: [0, 4, 8] },
+  ],
+  master: [
+    { quality: 'major', intervals: [0, 4, 7] },
+    { quality: 'minor', intervals: [0, 3, 7] },
+    { quality: 'diminished', intervals: [0, 3, 6] },
+    { quality: 'augmented', intervals: [0, 4, 8] },
+  ],
+}
+
+const SCALE_SPECS: Record<DifficultyLevel, ScaleSpec[]> = {
+  easy: [
+    { quality: 'major', intervals: [0, 2, 4, 5, 7, 9, 11, 12] },
+    { quality: 'natural-minor', intervals: [0, 2, 3, 5, 7, 8, 10, 12] },
+  ],
+  medium: [
+    { quality: 'major', intervals: [0, 2, 4, 5, 7, 9, 11, 12] },
+    { quality: 'natural-minor', intervals: [0, 2, 3, 5, 7, 8, 10, 12] },
+  ],
+  hard: [
+    { quality: 'major', intervals: [0, 2, 4, 5, 7, 9, 11, 12] },
+    { quality: 'natural-minor', intervals: [0, 2, 3, 5, 7, 8, 10, 12] },
+    { quality: 'harmonic-minor', intervals: [0, 2, 3, 5, 7, 8, 11, 12] },
+    { quality: 'melodic-minor', intervals: [0, 2, 3, 5, 7, 9, 11, 12] },
+  ],
+  expert: [
+    { quality: 'major', intervals: [0, 2, 4, 5, 7, 9, 11, 12] },
+    { quality: 'natural-minor', intervals: [0, 2, 3, 5, 7, 8, 10, 12] },
+    { quality: 'harmonic-minor', intervals: [0, 2, 3, 5, 7, 8, 11, 12] },
+    { quality: 'melodic-minor', intervals: [0, 2, 3, 5, 7, 9, 11, 12] },
+    { quality: 'dorian', intervals: [0, 2, 3, 5, 7, 9, 10, 12] },
+    { quality: 'mixolydian', intervals: [0, 2, 4, 5, 7, 9, 10, 12] },
+  ],
+  master: [
+    { quality: 'major', intervals: [0, 2, 4, 5, 7, 9, 11, 12] },
+    { quality: 'natural-minor', intervals: [0, 2, 3, 5, 7, 8, 10, 12] },
+    { quality: 'harmonic-minor', intervals: [0, 2, 3, 5, 7, 8, 11, 12] },
+    { quality: 'melodic-minor', intervals: [0, 2, 3, 5, 7, 9, 11, 12] },
+    { quality: 'dorian', intervals: [0, 2, 3, 5, 7, 9, 10, 12] },
+    { quality: 'mixolydian', intervals: [0, 2, 4, 5, 7, 9, 10, 12] },
+    { quality: 'whole-tone', intervals: [0, 2, 4, 6, 8, 10, 12] },
+    { quality: 'blues', intervals: [0, 3, 5, 6, 7, 10, 12] },
+  ],
+}
+
+const SEVENTH_CHORD_SPECS: Record<DifficultyLevel, SeventhChordSpec[]> = {
+  easy: [
+    { quality: 'major-seventh', intervals: [0, 4, 7, 11] },
+    { quality: 'minor-seventh', intervals: [0, 3, 7, 10] },
+  ],
+  medium: [
+    { quality: 'major-seventh', intervals: [0, 4, 7, 11] },
+    { quality: 'dominant-seventh', intervals: [0, 4, 7, 10] },
+    { quality: 'minor-seventh', intervals: [0, 3, 7, 10] },
+  ],
+  hard: [
+    { quality: 'major-seventh', intervals: [0, 4, 7, 11] },
+    { quality: 'dominant-seventh', intervals: [0, 4, 7, 10] },
+    { quality: 'minor-seventh', intervals: [0, 3, 7, 10] },
+    { quality: 'half-diminished-seventh', intervals: [0, 3, 6, 10] },
+  ],
+  expert: [
+    { quality: 'major-seventh', intervals: [0, 4, 7, 11] },
+    { quality: 'dominant-seventh', intervals: [0, 4, 7, 10] },
+    { quality: 'minor-seventh', intervals: [0, 3, 7, 10] },
+    { quality: 'half-diminished-seventh', intervals: [0, 3, 6, 10] },
+    { quality: 'diminished-seventh', intervals: [0, 3, 6, 9] },
+  ],
+  master: [
+    { quality: 'major-seventh', intervals: [0, 4, 7, 11] },
+    { quality: 'dominant-seventh', intervals: [0, 4, 7, 10] },
+    { quality: 'minor-seventh', intervals: [0, 3, 7, 10] },
+    { quality: 'half-diminished-seventh', intervals: [0, 3, 6, 10] },
+    { quality: 'diminished-seventh', intervals: [0, 3, 6, 9] },
   ],
 }
 
@@ -205,8 +312,9 @@ function createSingleQuestion(
   random: () => number,
 ): Question {
   const notePool = difficulty === 'easy' ? BASIC_SINGLE_NOTES : NOTE_NAMES
+  const isAdvanced = ['hard', 'expert', 'master'].includes(difficulty)
   const correctNote =
-    difficulty === 'hard'
+    isAdvanced
       ? pickOne(pickOne(HARD_SINGLE_CLUSTERS, random), random)
       : pickOne(notePool, random)
   const correctPitch = getRandomPitchForNoteName(pitchPoolByNoteName, correctNote, random)
@@ -215,9 +323,10 @@ function createSingleQuestion(
       ? sampleUniqueByFilter(notePool, 3, random, (note) =>
           note !== correctNote && circularDistance(note, correctNote) >= 2,
         )
-      : difficulty === 'hard'
+      : isAdvanced
         ? sampleUniqueByFilter(NOTE_NAMES, 3, random, (note) =>
-            note !== correctNote && circularDistance(note, correctNote) <= 2,
+            note !== correctNote &&
+            circularDistance(note, correctNote) <= 2,
           )
         : sampleWithoutReplacement(
             NOTE_NAMES.filter((note) => note !== correctNote),
@@ -239,8 +348,15 @@ function createSingleQuestion(
       {
         notes: [correctPitch],
         offsetMs: 0,
-        durationMs: difficulty === 'hard' ? 1350 : 1500,
-        velocity: 0.72,
+        durationMs:
+          difficulty === 'master'
+            ? 760
+            : difficulty === 'expert'
+              ? 980
+              : difficulty === 'hard'
+                ? 1250
+                : 1500,
+        velocity: difficulty === 'master' ? 0.64 : 0.72,
       },
     ],
   }
@@ -267,6 +383,8 @@ const DOUBLE_PAIR_POOLS: Record<DifficultyLevel, NoteName[][]> = {
   easy: createNotePairs(4, 11),
   medium: createNotePairs(1, 11),
   hard: createNotePairs(1, 3),
+  expert: createNotePairs(1, 2),
+  master: createNotePairs(1, 1),
 }
 
 function createDoubleQuestion(
@@ -287,9 +405,11 @@ function createDoubleQuestion(
   }
 
   const labels = shuffle([correctChoiceLabel, ...Array.from(distractors)], random)
-  const pitches = pair.map((noteName) =>
-    getRandomPitchForNoteName(pitchPoolByNoteName, noteName, random),
-  )
+  const pitches = ['hard', 'expert', 'master'].includes(difficulty)
+    ? pair.map((noteName) => PITCHES[NOTE_NAMES.indexOf(noteName)])
+    : pair.map((noteName) =>
+        getRandomPitchForNoteName(pitchPoolByNoteName, noteName, random),
+      )
   const correctChoiceId = uniqueChoiceId(correctChoiceLabel)
 
   return {
@@ -304,8 +424,15 @@ function createDoubleQuestion(
       {
         notes: pitches,
         offsetMs: 0,
-        durationMs: difficulty === 'hard' ? 1700 : 1800,
-        velocity: 0.76,
+        durationMs:
+          difficulty === 'master'
+            ? 1100
+            : difficulty === 'expert'
+              ? 1400
+              : difficulty === 'hard'
+                ? 1650
+                : 1800,
+        velocity: difficulty === 'master' ? 0.68 : 0.76,
       },
     ],
   }
@@ -320,14 +447,38 @@ function createMelodyQuestion(
     easy: 3,
     medium: 4,
     hard: 5,
+    expert: 6,
+    master: 7,
   }
   const length = lengthByDifficulty[difficulty]
-  const noteSequence = sampleWithoutReplacement(NOTE_NAMES, length, random)
+  const noteSequence = ['expert', 'master'].includes(difficulty)
+    ? Array.from({ length }, () => pickOne(NOTE_NAMES, random))
+    : sampleWithoutReplacement(NOTE_NAMES, length, random)
   const correctChoiceLabel = formatMelodyLabel(noteSequence)
   const distractors = new Set<string>()
 
   while (distractors.size < 3) {
-    const candidate = formatMelodyLabel(sampleWithoutReplacement(NOTE_NAMES, length, random))
+    const candidateNotes =
+      difficulty === 'easy' || difficulty === 'medium'
+        ? sampleWithoutReplacement(NOTE_NAMES, length, random)
+        : [...noteSequence]
+
+    if (difficulty !== 'easy' && difficulty !== 'medium') {
+      const changedIndexes = sampleWithoutReplacement(
+        Array.from({ length }, (_, index) => index),
+        difficulty === 'master' ? 1 : 2,
+        random,
+      )
+
+      changedIndexes.forEach((index) => {
+        candidateNotes[index] = pickOne(
+          NOTE_NAMES.filter((note) => note !== candidateNotes[index]),
+          random,
+        )
+      })
+    }
+
+    const candidate = formatMelodyLabel(candidateNotes)
     if (candidate !== correctChoiceLabel) {
       distractors.add(candidate)
     }
@@ -349,8 +500,20 @@ function createMelodyQuestion(
     choices: createChoiceSet(language, 'melody', labels, correctChoiceId),
     playback: createPlayback(
       pitches,
-      difficulty === 'hard' ? 760 : 820,
-      difficulty === 'hard' ? 580 : 640,
+      difficulty === 'master'
+        ? 560
+        : difficulty === 'expert'
+          ? 640
+          : difficulty === 'hard'
+            ? 720
+            : 820,
+      difficulty === 'master'
+        ? 420
+        : difficulty === 'expert'
+          ? 480
+          : difficulty === 'hard'
+            ? 560
+            : 640,
       0.7,
     ),
   }
@@ -361,14 +524,18 @@ function createIntervalPlayback(
   interval: IntervalSpec,
   random: () => number,
 ): PlaybackEvent[] {
-  const isHard = difficulty === 'hard'
-  const style = isHard ? pickOne(['harmonic', 'ascending', 'descending'] as const, random) : 'ascending'
+  const mixesPlayback = ['hard', 'expert', 'master'].includes(difficulty)
+  const style = mixesPlayback
+    ? pickOne(['harmonic', 'ascending', 'descending'] as const, random)
+    : 'ascending'
+  const staggerMs = difficulty === 'master' ? 560 : difficulty === 'expert' ? 640 : 720
+  const noteDurationMs = difficulty === 'master' ? 500 : 620
 
   if (style === 'descending') {
     const upperIndex = Math.floor(random() * (PITCHES.length - interval.semitones)) + interval.semitones
     const upper = PITCHES[upperIndex]
     const lower = PITCHES[upperIndex - interval.semitones]
-    return createPlayback([upper, lower], 720, 620, 0.72)
+    return createPlayback([upper, lower], staggerMs, noteDurationMs, 0.72)
   }
 
   const rootIndex = Math.floor(random() * (PITCHES.length - interval.semitones))
@@ -380,13 +547,18 @@ function createIntervalPlayback(
       {
         notes: interval.semitones === 0 ? [root] : [root, target],
         offsetMs: 0,
-        durationMs: 1700,
+        durationMs: difficulty === 'master' ? 1450 : 1700,
         velocity: 0.74,
       },
     ]
   }
 
-  return createPlayback(interval.semitones === 0 ? [root] : [root, target], 760, 620, 0.72)
+  return createPlayback(
+    interval.semitones === 0 ? [root] : [root, target],
+    staggerMs,
+    noteDurationMs,
+    0.72,
+  )
 }
 
 function createIntervalQuestion(
@@ -419,8 +591,8 @@ function createIntervalQuestion(
   }
 }
 
-function fitsPitchRange(rootIndex: number, intervals: [number, number, number]) {
-  return rootIndex + intervals[2] < PITCHES.length
+function fitsPitchRange(rootIndex: number, intervals: readonly number[]) {
+  return rootIndex + Math.max(...intervals) < PITCHES.length
 }
 
 function rotateArpeggioUp(pitches: PitchName[]) {
@@ -460,9 +632,29 @@ function createArpeggioPlayback(
     PitchName,
     PitchName,
   ]
-  let playbackPitches = basePitches
+  let playbackPitches: PitchName[] = basePitches
 
-  if (difficulty === 'hard') {
+  if (difficulty === 'expert') {
+    const pattern = pickOne(
+      [
+        [0, 1, 2, 1, 0],
+        [0, 2, 1, 2, 0],
+        [2, 1, 0, 1, 2],
+      ] as const,
+      random,
+    )
+    playbackPitches = pattern.map((index) => basePitches[index])
+  } else if (difficulty === 'master') {
+    const pattern = pickOne(
+      [
+        [0, 2, 1, 0, 1, 2],
+        [2, 0, 1, 2, 1, 0],
+        [1, 2, 0, 2, 1, 0],
+      ] as const,
+      random,
+    )
+    playbackPitches = pattern.map((index) => basePitches[index])
+  } else if (difficulty === 'hard') {
     const hardShape = pickOne(['up', 'down', 'rotate', 'spread'] as const, random)
     if (hardShape === 'rotate') {
       playbackPitches = rotateArpeggioUp(basePitches) as [PitchName, PitchName, PitchName]
@@ -475,7 +667,12 @@ function createArpeggioPlayback(
     playbackPitches = [...basePitches].reverse() as [PitchName, PitchName, PitchName]
   }
 
-  return createPlayback(playbackPitches, 580, 640, 0.72)
+  return createPlayback(
+    playbackPitches,
+    difficulty === 'master' ? 380 : difficulty === 'expert' ? 470 : 580,
+    difficulty === 'master' ? 440 : 640,
+    0.72,
+  )
 }
 
 function createArpeggioQuestion(
@@ -488,6 +685,16 @@ function createArpeggioQuestion(
   const correctSpec = pickOne(specs, random)
   const correctChoiceLabel = formatArpeggioLabel(correctRoot, correctSpec.quality)
   const distractors = new Set<string>()
+
+  if (difficulty === 'expert' || difficulty === 'master') {
+    specs
+      .filter((spec) => spec.quality !== correctSpec.quality)
+      .forEach((spec) => {
+        if (distractors.size < 3) {
+          distractors.add(formatArpeggioLabel(correctRoot, spec.quality))
+        }
+      })
+  }
 
   while (distractors.size < 3) {
     const nextLabel = formatArpeggioLabel(
@@ -570,15 +777,24 @@ function createChordPlayback(
   const inversion =
     difficulty === 'easy'
       ? 'root'
-      : pickOne(['root', 'first', 'second'] as const, random)
+      : difficulty === 'master'
+        ? pickOne(['first', 'second'] as const, random)
+        : pickOne(['root', 'first', 'second'] as const, random)
   const playbackPitches = invertChordUp(basePitches, inversion)
 
   return [
     {
       notes: playbackPitches,
       offsetMs: 0,
-      durationMs: difficulty === 'hard' ? 1850 : 1950,
-      velocity: 0.76,
+      durationMs:
+        difficulty === 'master'
+          ? 1350
+          : difficulty === 'expert'
+            ? 1600
+            : difficulty === 'hard'
+              ? 1800
+              : 1950,
+      velocity: difficulty === 'master' ? 0.7 : 0.76,
     },
   ]
 }
@@ -593,6 +809,16 @@ function createChordQuestion(
   const correctSpec = pickOne(specs, random)
   const correctChoiceLabel = formatChordLabel(correctRoot, correctSpec.quality)
   const distractors = new Set<string>()
+
+  if (difficulty === 'expert' || difficulty === 'master') {
+    specs
+      .filter((spec) => spec.quality !== correctSpec.quality)
+      .forEach((spec) => {
+        if (distractors.size < 3) {
+          distractors.add(formatChordLabel(correctRoot, spec.quality))
+        }
+      })
+  }
 
   while (distractors.size < 3) {
     const nextLabel = formatChordLabel(
@@ -619,6 +845,195 @@ function createChordQuestion(
   }
 }
 
+function createScalePlayback(
+  difficulty: DifficultyLevel,
+  root: NoteName,
+  spec: ScaleSpec,
+  random: () => number,
+) {
+  const rootIndex = NOTE_NAMES.indexOf(root)
+  const basePitches = spec.intervals.map(
+    (offset) => PITCHES[rootIndex + offset],
+  ) as PitchName[]
+  let playbackPitches: PitchName[]
+
+  if (difficulty === 'easy') {
+    playbackPitches = basePitches.slice(0, 5)
+  } else if (difficulty === 'medium') {
+    playbackPitches = basePitches
+  } else if (difficulty === 'hard') {
+    playbackPitches = random() > 0.5 ? basePitches : [...basePitches].reverse()
+  } else if (difficulty === 'expert') {
+    playbackPitches =
+      random() > 0.5
+        ? [...basePitches, ...basePitches.slice(0, -1).reverse()]
+        : [...basePitches].reverse()
+  } else {
+    const zigzag = basePitches.flatMap((pitch, index) => {
+      const nextPitch = basePitches[index + 2]
+      return nextPitch ? [pitch, nextPitch] : [pitch]
+    })
+    playbackPitches = random() > 0.5 ? zigzag : [...basePitches].reverse()
+  }
+
+  return createPlayback(
+    playbackPitches,
+    difficulty === 'master' ? 315 : difficulty === 'expert' ? 360 : 430,
+    difficulty === 'master' ? 300 : 380,
+    0.69,
+  )
+}
+
+function createScaleQuestion(
+  language: Language,
+  difficulty: DifficultyLevel,
+  random: () => number,
+): Question {
+  const specs = SCALE_SPECS[difficulty]
+  const correctRoot = pickOne(NOTE_NAMES, random)
+  const correctSpec = pickOne(specs, random)
+  const correctChoiceLabel = formatScaleLabel(
+    language,
+    correctRoot,
+    correctSpec.quality,
+  )
+  const distractors = new Set<string>()
+
+  if (difficulty === 'hard' || difficulty === 'expert' || difficulty === 'master') {
+    specs
+      .filter((spec) => spec.quality !== correctSpec.quality)
+      .forEach((spec) => {
+        if (distractors.size < 3) {
+          distractors.add(formatScaleLabel(language, correctRoot, spec.quality))
+        }
+      })
+  }
+
+  while (distractors.size < 3) {
+    const nextLabel = formatScaleLabel(
+      language,
+      pickOne(NOTE_NAMES, random),
+      pickOne(specs, random).quality,
+    )
+    if (nextLabel !== correctChoiceLabel) {
+      distractors.add(nextLabel)
+    }
+  }
+
+  const labels = shuffle([correctChoiceLabel, ...Array.from(distractors)], random)
+  const correctChoiceId = uniqueChoiceId(correctChoiceLabel)
+
+  return {
+    id: createId('scale', random),
+    mode: 'scale',
+    difficulty,
+    prompt: getModeCopy(language, 'scale').prompt,
+    helperText: getDifficultyCopy(language, 'scale', difficulty).helperText,
+    correctChoiceId,
+    choices: createChoiceSet(language, 'scale', labels, correctChoiceId),
+    playback: createScalePlayback(difficulty, correctRoot, correctSpec, random),
+  }
+}
+
+function rotateChordIntervals(intervals: readonly number[], inversion: number) {
+  return [
+    ...intervals.slice(inversion),
+    ...intervals.slice(0, inversion).map((interval) => interval + 12),
+  ]
+}
+
+function createSeventhChordPlayback(
+  difficulty: DifficultyLevel,
+  root: NoteName,
+  spec: SeventhChordSpec,
+  random: () => number,
+): PlaybackEvent[] {
+  const inversionOptions: Record<DifficultyLevel, number[]> = {
+    easy: [0],
+    medium: [0, 1],
+    hard: [0, 1, 2],
+    expert: [0, 1, 2, 3],
+    master: [1, 2, 3],
+  }
+  const inversion = pickOne(inversionOptions[difficulty], random)
+  const rootIndex = NOTE_NAMES.indexOf(root)
+  const rotatedIntervals = rotateChordIntervals(spec.intervals, inversion)
+  const playbackIntervals = fitsPitchRange(rootIndex, rotatedIntervals)
+    ? rotatedIntervals
+    : spec.intervals
+  const pitches = playbackIntervals.map(
+    (offset) => PITCHES[rootIndex + offset],
+  ) as PitchName[]
+
+  return [
+    {
+      notes: pitches,
+      offsetMs: 0,
+      durationMs:
+        difficulty === 'master'
+          ? 1450
+          : difficulty === 'expert'
+            ? 1650
+            : 1900,
+      velocity: difficulty === 'master' ? 0.69 : 0.74,
+    },
+  ]
+}
+
+function createSeventhChordQuestion(
+  language: Language,
+  difficulty: DifficultyLevel,
+  random: () => number,
+): Question {
+  const specs = SEVENTH_CHORD_SPECS[difficulty]
+  const correctRoot = pickOne(NOTE_NAMES, random)
+  const correctSpec = pickOne(specs, random)
+  const correctChoiceLabel = formatSeventhChordLabel(
+    correctRoot,
+    correctSpec.quality,
+  )
+  const distractors = new Set<string>()
+
+  if (difficulty === 'expert' || difficulty === 'master') {
+    specs
+      .filter((spec) => spec.quality !== correctSpec.quality)
+      .forEach((spec) => {
+        if (distractors.size < 3) {
+          distractors.add(formatSeventhChordLabel(correctRoot, spec.quality))
+        }
+      })
+  }
+
+  while (distractors.size < 3) {
+    const nextLabel = formatSeventhChordLabel(
+      pickOne(NOTE_NAMES, random),
+      pickOne(specs, random).quality,
+    )
+    if (nextLabel !== correctChoiceLabel) {
+      distractors.add(nextLabel)
+    }
+  }
+
+  const labels = shuffle([correctChoiceLabel, ...Array.from(distractors)], random)
+  const correctChoiceId = uniqueChoiceId(correctChoiceLabel)
+
+  return {
+    id: createId('seventh', random),
+    mode: 'seventh',
+    difficulty,
+    prompt: getModeCopy(language, 'seventh').prompt,
+    helperText: getDifficultyCopy(language, 'seventh', difficulty).helperText,
+    correctChoiceId,
+    choices: createChoiceSet(language, 'seventh', labels, correctChoiceId),
+    playback: createSeventhChordPlayback(
+      difficulty,
+      correctRoot,
+      correctSpec,
+      random,
+    ),
+  }
+}
+
 export function createQuestionFactory(language: Language = 'en'): QuestionFactory {
   return {
     createQuestion(mode, difficulty, seed) {
@@ -637,6 +1052,10 @@ export function createQuestionFactory(language: Language = 'en'): QuestionFactor
           return createArpeggioQuestion(language, difficulty, random)
         case 'chord':
           return createChordQuestion(language, difficulty, random)
+        case 'scale':
+          return createScaleQuestion(language, difficulty, random)
+        case 'seventh':
+          return createSeventhChordQuestion(language, difficulty, random)
       }
     },
   }
