@@ -25,6 +25,7 @@ import {
   loadDinoProgress,
   saveDinoProgress,
 } from '../features/game/dinoProgress'
+import { DINO_ANIMATIONS } from '../features/game/dinoAnimation'
 import {
   applyProgression,
   loadProgressState,
@@ -74,66 +75,6 @@ const PLAYBACK_START_DELAY_MS = 80
 const PLAYBACK_LOCK_BUFFER_MS = 40
 const DINO_HUNGER_CHECK_INTERVAL_MS = 60 * 1000
 const DINO_REACTION_DURATION_MS = 2_400
-
-interface DinoAnimationFrame {
-  src: string
-  normalizeScale: number
-  offsetX: number
-  offsetY: number
-}
-
-function createDinoFrames(
-  stageId: DinoStageId,
-  alignment: readonly (readonly [number, number, number])[],
-): readonly DinoAnimationFrame[] {
-  return alignment.map(([normalizeScale, offsetX, offsetY], index) => ({
-    src: `/dino/frames-v1/${stageId}-${index + 1}.png`,
-    normalizeScale,
-    offsetX,
-    offsetY,
-  }))
-}
-
-const DINO_ANIMATION_FRAMES: Record<DinoStageId, readonly DinoAnimationFrame[]> = {
-  egg: createDinoFrames('egg', [
-    [0.9809, -4.023, 1.495],
-    [0.9847, 11.539, 0.239],
-    [0.9961, -6.226, 4.195],
-    [1.0405, 7.011, 3.739],
-  ]),
-  baby: createDinoFrames('baby', [
-    [1.0057, -2.848, 0.198],
-    [1.0029, 0.098, 0.294],
-    [1.0204, -3.488, 2.894],
-    [0.9589, 0, 4.768],
-  ]),
-  young: createDinoFrames('young', [
-    [1, -5.859, 0],
-    [0.9896, 10.534, -0.004],
-    [1.0053, -7.166, 3.144],
-    [1.0106, 11.251, 2.57],
-  ]),
-  adult: createDinoFrames('adult', [
-    [0.9836, 0.576, 0.653],
-    [0.9953, 10.011, -0.006],
-    [1.0396, 0.305, 3.701],
-    [1.0048, 8.144, 4.912],
-  ]),
-  super: createDinoFrames('super', [
-    [0.9888, -7.725, 0.105],
-    [1.0069, 10.324, -0.89],
-    [0.9977, -1.267, 4.581],
-    [1.0185, -3.979, 3.566],
-  ]),
-}
-
-const DINO_FRAME_INTERVAL_MS: Record<DinoStageId, number> = {
-  egg: 620,
-  baby: 520,
-  young: 440,
-  adult: 650,
-  super: 460,
-}
 
 const MODE_ICONS: Record<Exclude<GameMode, 'interval'>, string> = {
   single: '🎵',
@@ -406,7 +347,7 @@ const SEO_PAGES: SeoPageContent[] = [
 ]
 
 const SEO_PAGE_BY_PATH = new Map(SEO_PAGES.map((page) => [page.path, page]))
-const SITE_URL = 'https://andy.dailyturning.com'
+const SITE_URL = 'https://andy.knasoftware.com'
 
 function getCurrentPath() {
   if (typeof window === 'undefined') {
@@ -567,29 +508,35 @@ function DinoSprite({
   reaction: DinoReactionState | null
   onTap: () => void
 }) {
-  const frames = DINO_ANIMATION_FRAMES[stageId]
-  const [activeFrame, setActiveFrame] = useState(0)
+  const animation = DINO_ANIMATIONS[stageId]
+  const [activeFrame, setActiveFrame] = useState(
+    animation.timeline[0].frameIndex,
+  )
 
   useEffect(() => {
     const reduceMotion =
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
-    let intervalId: number | null = null
+    let stepIndex = 0
+    let timeoutId: number | null = null
 
     const stopAnimation = () => {
-      if (intervalId !== null) {
-        window.clearInterval(intervalId)
-        intervalId = null
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId)
+        timeoutId = null
       }
     }
 
-    const startAnimation = () => {
-      if (reduceMotion || document.hidden || intervalId !== null) {
+    const scheduleNextStep = () => {
+      if (reduceMotion || document.hidden || timeoutId !== null) {
         return
       }
 
-      intervalId = window.setInterval(() => {
-        setActiveFrame((current) => (current + 1) % frames.length)
-      }, DINO_FRAME_INTERVAL_MS[stageId])
+      timeoutId = window.setTimeout(() => {
+        timeoutId = null
+        stepIndex = (stepIndex + 1) % animation.timeline.length
+        setActiveFrame(animation.timeline[stepIndex].frameIndex)
+        scheduleNextStep()
+      }, animation.timeline[stepIndex].holdMs)
     }
 
     const handleVisibilityChange = () => {
@@ -597,17 +544,17 @@ function DinoSprite({
         stopAnimation()
         return
       }
-      startAnimation()
+      scheduleNextStep()
     }
 
-    startAnimation()
+    scheduleNextStep()
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       stopAnimation()
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [frames, stageId])
+  }, [animation])
 
   return (
     <button
@@ -640,7 +587,7 @@ function DinoSprite({
         data-testid="dino-stage"
         role="img"
       >
-        {frames.map((frame, index) => (
+        {animation.frames.map((frame, index) => (
           <img
             key={frame.src}
             alt=""

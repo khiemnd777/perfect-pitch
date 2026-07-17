@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { PerfectPitchApp } from './App'
@@ -682,6 +682,33 @@ describe('PerfectPitchApp', () => {
       `/dino/frames-v1/${stageId}-1.png`,
     )
     expect(frames[0]).toHaveAttribute('data-active', 'true')
+  })
+
+  it('plays the dinosaur key poses on a paced expression timeline', () => {
+    vi.useFakeTimers()
+
+    try {
+      render(<PerfectPitchApp audioEngine={createMockAudioEngine()} />)
+
+      const sprite = screen.getByRole('img', { name: 'Dino Egg' })
+      const frames = sprite.querySelectorAll('.dino-sprite__frame')
+
+      expect(frames[0]).toHaveAttribute('data-active', 'true')
+
+      act(() => vi.advanceTimersByTime(520))
+      expect(frames[1]).toHaveAttribute('data-active', 'true')
+
+      act(() => vi.advanceTimersByTime(220))
+      expect(frames[2]).toHaveAttribute('data-active', 'true')
+
+      act(() => vi.advanceTimersByTime(220))
+      expect(frames[3]).toHaveAttribute('data-active', 'true')
+
+      act(() => vi.advanceTimersByTime(760))
+      expect(frames[2]).toHaveAttribute('data-active', 'true')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('shows a stage-specific expression when the dinosaur is tapped', async () => {

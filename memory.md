@@ -9,7 +9,7 @@
 - Runtime and tooling: `Bun`, `Vite`, `React 19`, `TypeScript`, `Vitest`, `ESLint`.
 - Audio layer: `tone`.
 - Assets: local piano samples under `public/audio/piano/`.
-- Deployment: `GitHub Actions`, `Docker`, `Caddy`.
+- Deployment: `GitHub Actions`, `Docker`, `Caddy`, and Firebase Hosting (Spark plan).
 - Hosted analytics can be enabled with Google Analytics 4 via the optional build-time env var `VITE_GA_MEASUREMENT_ID`.
 
 ## Architecture
@@ -50,13 +50,13 @@
 - `src/app/analytics.ts` injects Google Analytics 4 only when `VITE_GA_MEASUREMENT_ID` is present and tracks page views plus core quiz interactions.
 - Session stats track answered count, correct count, current streak, and best streak.
 - The child-friendly game shell shows a persistent five-stage dinosaur companion on the home and quiz screens. Each stage uses four generated transparent raster frames under `public/dino/frames-v1/`.
-- Dinosaur idle motion is frame-by-frame and driven by the React frame player; CSS motion is reserved for secondary tap, reward, and hunger feedback. Tapping the pet triggers localized stage-specific reactions, while hunger adds a distinct visual state and child-friendly rawr SFX.
+- Dinosaur idle motion uses stage-specific React timelines over four aligned key poses. Each timeline mixes short movement beats with longer expression holds, while CSS crossfades pose changes at the browser refresh rate; separate CSS motion remains reserved for tap, reward, and hunger feedback. Tapping the pet triggers localized stage-specific reactions, while hunger adds a distinct visual state and child-friendly rawr SFX.
 - `src/features/audio/audioEngine.ts` caches the current question for replay and uses layered `Tone.Sampler` instances mapped from local piano samples.
 - `src/features/question-bank/questionFactory.ts` supports deterministic generation across all 8 modes and 5 levels with an optional seed and bound language, including scale and seventh-chord questions.
 - `.github/workflows/ci.yml` runs lint, tests, production builds, deploy-script syntax checks, `docker compose config`, image builds, and default Caddy validation on pushes and pull requests.
 - `.github/workflows/deploy-production.yml` deploys successful `main` builds to a VPS by shipping the repo context over SSH, bootstrapping Docker if needed, and serving the app via Docker + Caddy.
 - `deploy/Caddyfile` is a checked-in local/default HTTP reverse-proxy config, while `deploy/Caddyfile.template` is rendered with the production domain on the VPS before rollout.
-- Public SEO discovery files live in `public/robots.txt` and `public/sitemap.xml` for the production canonical URL `https://andy.dailyturning.com/`.
+- Public SEO discovery files live in `public/robots.txt` and `public/sitemap.xml` for the production canonical URL `https://andy.knasoftware.com/`.
 - SEO content routes are handled in the React app for `/ear-training`, `/perfect-pitch-training`, `/interval-ear-training`, `/chord-ear-training`, `/piano-ear-training`, and `/what-is-perfect-pitch`; keep these routes listed in `public/sitemap.xml`.
 - `scripts/deploy/bootstrap-github-secrets.sh` reads deploy inputs from a repo-root `.env.deploy` file by default and can bootstrap from either an existing SSH key or a one-time VPS password by generating and installing a dedicated deploy key automatically.
 - `compose.yml` runs the public Caddy container in host-network mode and proxies to `127.0.0.1:8080`, which avoids broken ACME DNS resolution from the Docker bridge on the production VPS.
