@@ -4,12 +4,11 @@ import {
   useState,
   type CSSProperties,
 } from 'react'
-import { DINO_ANIMATIONS } from '../game/dinoAnimation'
+import { getPetAnimation } from '../game/petAnimation'
 import {
   DINO_STAGES,
   getDinoEvolution,
 } from '../game/dinoProgress'
-import { getPetCatalogItem } from '../game/petCollection'
 import type { DinoStageId, PetId } from '../../shared/gameTypes'
 import {
   getAppCopy,
@@ -26,16 +25,18 @@ interface PetReactionState extends DinoReactionCopy {
   id: number
 }
 
-function AnimatedDinoVisual({
+function AnimatedPetVisual({
+  petId,
   stageId,
   label,
   hungry,
 }: {
+  petId: PetId
   stageId: DinoStageId
   label: string
   hungry: boolean
 }) {
-  const animation = DINO_ANIMATIONS[stageId]
+  const animation = getPetAnimation(petId, stageId)
   const [activeFrame, setActiveFrame] = useState(
     animation.timeline[0].frameIndex,
   )
@@ -86,7 +87,7 @@ function AnimatedDinoVisual({
   return (
     <span
       aria-label={label}
-      className={`dino-sprite dino-sprite--${stageId} ${
+      className={`dino-sprite dino-sprite--${stageId} pet-sprite--${petId} ${
         hungry ? 'dino-sprite--hungry' : ''
       }`}
       data-testid="pet-stage"
@@ -116,55 +117,6 @@ function AnimatedDinoVisual({
   )
 }
 
-function EmojiPetVisual({
-  petId,
-  stageId,
-  label,
-  hungry,
-}: {
-  petId: Exclude<PetId, 'dino'>
-  stageId: DinoStageId
-  label: string
-  hungry: boolean
-}) {
-  const pet = getPetCatalogItem(petId)
-
-  return (
-    <span
-      aria-label={label}
-      className={`dino-sprite pet-emoji-avatar pet-emoji-avatar--${stageId} ${
-        hungry ? 'dino-sprite--hungry' : ''
-      }`}
-      data-testid="pet-stage"
-      role="img"
-      style={
-        {
-          '--pet-accent': pet.accent,
-          '--pet-accent-soft': pet.accentSoft,
-        } as CSSProperties
-      }
-    >
-      {stageId === 'egg' ? (
-        <span aria-hidden="true" className="pet-egg-shell">
-          <span className="pet-egg-shell__spot pet-egg-shell__spot--one" />
-          <span className="pet-egg-shell__spot pet-egg-shell__spot--two" />
-          <span className="pet-egg-shell__crack" />
-        </span>
-      ) : (
-        <span aria-hidden="true" className="pet-emoji-avatar__character">
-          <span className="pet-emoji-avatar__body">{pet.emoji}</span>
-          {(stageId === 'adult' || stageId === 'super') && (
-            <span className="pet-emoji-avatar__collar" />
-          )}
-          {stageId === 'super' && (
-            <span className="pet-emoji-avatar__crown">♛</span>
-          )}
-        </span>
-      )}
-    </span>
-  )
-}
-
 function PetVisual({
   petId,
   stageId,
@@ -176,10 +128,8 @@ function PetVisual({
   label: string
   hungry: boolean
 }) {
-  return petId === 'dino' ? (
-    <AnimatedDinoVisual hungry={hungry} label={label} stageId={stageId} />
-  ) : (
-    <EmojiPetVisual
+  return (
+    <AnimatedPetVisual
       hungry={hungry}
       label={label}
       petId={petId}
@@ -265,7 +215,7 @@ export function PetCompanion({
       } ${hungry ? 'dino-card--hungry' : ''}`}
     >
       <header className="dino-card__header">
-        <div>
+        <div className="dino-card__intro">
           <p className="dino-card__kicker">{copy.petTitle}</p>
           {!compact && (
             <p className="dino-card__subtitle">
@@ -277,19 +227,44 @@ export function PetCompanion({
           {hungry && (
             <span className="dino-hunger-badge">🍎 {copy.petHungryLabel}</span>
           )}
-          <span
-            className="dino-points"
-            aria-label={`${copy.petShopWalletLabel}: ${wallet}`}
-          >
-            <span aria-hidden="true">♫</span> {wallet}
-          </span>
-          <button className="pet-shop-open" onClick={onOpenShop} type="button">
-            <span aria-hidden="true">🛍️</span> {copy.petShopOpen}
-          </button>
         </div>
       </header>
 
+      <div className="dino-card__actions">
+        <span
+          className="dino-points"
+          aria-label={`${copy.petShopWalletLabel}: ${wallet}`}
+        >
+          <span className="dino-points__label">
+            {compact
+              ? copy.petShopWalletCompactLabel
+              : copy.petShopWalletLabel}
+          </span>
+          <strong className="dino-points__value">
+            <span aria-hidden="true">♫</span> {wallet}
+          </strong>
+        </span>
+        <button className="pet-shop-open" onClick={onOpenShop} type="button">
+          <span aria-hidden="true" className="pet-shop-open__icon">🛍️</span>
+          <span className="pet-shop-open__label">{copy.petShopOpen}</span>
+          <span aria-hidden="true" className="pet-shop-open__arrow">→</span>
+        </button>
+      </div>
+
       <div className="dino-card__body">
+        {reaction && (
+          <p
+            key={reaction.id}
+            aria-live="polite"
+            className="dino-feeling"
+            role="status"
+          >
+            <span aria-hidden="true" className="dino-feeling__emoji">
+              {reaction.emoji}
+            </span>
+            <span>{reaction.message}</span>
+          </p>
+        )}
         <button
           aria-label={copy.petTapLabel}
           className={`dino-sprite-button ${
@@ -299,19 +274,6 @@ export function PetCompanion({
           onClick={handlePetTap}
           type="button"
         >
-          {reaction && (
-            <span
-              key={reaction.id}
-              aria-live="polite"
-              className="dino-reaction"
-              role="status"
-            >
-              <span aria-hidden="true" className="dino-reaction__emoji">
-                {reaction.emoji}
-              </span>
-              <span>{reaction.message}</span>
-            </span>
-          )}
           <PetVisual
             hungry={hungry}
             label={stageCopy.name}
@@ -329,51 +291,55 @@ export function PetCompanion({
         </div>
       </div>
 
-      <div className="dino-progress">
-        <div className="dino-progress__label">
-          <span>{progressLabel}</span>
-          <strong>{evolution.progressPercent}%</strong>
+      <div className="dino-growth-panel">
+        <div className="dino-progress">
+          <div className="dino-progress__label">
+            <span>{progressLabel}</span>
+            <strong>{evolution.progressPercent}%</strong>
+          </div>
+          <div
+            aria-label={progressLabel}
+            aria-valuemax={100}
+            aria-valuemin={0}
+            aria-valuenow={evolution.progressPercent}
+            className="dino-progress__track"
+            role="progressbar"
+          >
+            <span style={{ width: `${evolution.progressPercent}%` }} />
+          </div>
         </div>
-        <div
-          aria-label={progressLabel}
-          aria-valuemax={100}
-          aria-valuemin={0}
-          aria-valuenow={evolution.progressPercent}
-          className="dino-progress__track"
-          role="progressbar"
-        >
-          <span style={{ width: `${evolution.progressPercent}%` }} />
+
+        <div className="evolution-track" aria-label={copy.petEvolutionLabel}>
+          {DINO_STAGES.map((stage, index) => {
+            const isCurrent = index === evolution.stageIndex
+            const isComplete = index < evolution.stageIndex
+            const label = getPetStageCopy(language, petId, stage.id).name
+
+            return (
+              <span
+                key={stage.id}
+                aria-label={label}
+                className={`evolution-track__step ${
+                  isCurrent ? 'evolution-track__step--current' : ''
+                } ${isComplete ? 'evolution-track__step--complete' : ''}`}
+                title={label}
+              >
+                {isComplete ? '✓' : index + 1}
+              </span>
+            )
+          })}
         </div>
       </div>
 
-      <div className="evolution-track" aria-label={copy.petEvolutionLabel}>
-        {DINO_STAGES.map((stage, index) => {
-          const isCurrent = index === evolution.stageIndex
-          const isComplete = index < evolution.stageIndex
-          const label = getPetStageCopy(language, petId, stage.id).name
-
-          return (
-            <span
-              key={stage.id}
-              aria-label={label}
-              className={`evolution-track__step ${
-                isCurrent ? 'evolution-track__step--current' : ''
-              } ${isComplete ? 'evolution-track__step--complete' : ''}`}
-              title={label}
-            >
-              {isComplete ? '✓' : index + 1}
-            </span>
-          )
-        })}
-      </div>
-
-      <p className="dino-card__tap-hint">👆 {copy.petTapHint}</p>
-      {soundError && (
-        <p className="dino-card__sound-error" role="alert">
-          {soundError}
-        </p>
-      )}
-      {!compact && <p className="dino-card__hint">💡 {copy.petHint}</p>}
+      <footer className="dino-card__footer">
+        <p className="dino-card__tap-hint">👆 {copy.petTapHint}</p>
+        {soundError && (
+          <p className="dino-card__sound-error" role="alert">
+            {soundError}
+          </p>
+        )}
+        {!compact && <p className="dino-card__hint">💡 {copy.petHint}</p>}
+      </footer>
     </section>
   )
 }

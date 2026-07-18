@@ -82,15 +82,23 @@ interface AppCopy {
   petShopTitle: string
   petShopSubtitle: string
   petShopWalletLabel: string
+  petShopWalletCompactLabel: string
   petShopOwned: string
   petShopCurrent: string
   petShopChoose: string
   petShopBuy: string
+  petShopConfirmTitle: string
+  petShopConfirmPrompt: (petName: string, price: number) => string
+  petShopBalanceAfter: (balance: number) => string
+  petShopCancel: string
+  petShopConfirmBuy: string
   petShopClose: string
   petShopNeedMore: string
   petShopBought: string
   petShopSelected: string
   petShopCollectionLabel: string
+  petShopLegendary: string
+  petShopMonster: string
 }
 
 interface DinoStageCopy {
@@ -733,15 +741,25 @@ const APP_COPY: Record<Language, AppCopy> = {
     petShopTitle: 'Pet Egg Shop',
     petShopSubtitle: 'Spend saved music notes on a new egg. Every pet grows separately.',
     petShopWalletLabel: 'Music-note wallet',
+    petShopWalletCompactLabel: 'Wallet',
     petShopOwned: 'Owned',
     petShopCurrent: 'Caring now',
     petShopChoose: 'Care for this pet',
     petShopBuy: 'Buy egg',
+    petShopConfirmTitle: 'Confirm purchase',
+    petShopConfirmPrompt: (petName, price) =>
+      `Buy ${petName} for ♫ ${price}?`,
+    petShopBalanceAfter: (balance) =>
+      `Your wallet will have ♫ ${balance} left.`,
+    petShopCancel: 'Cancel',
+    petShopConfirmBuy: 'Buy now',
     petShopClose: 'Close shop',
     petShopNeedMore: 'Need',
     petShopBought: 'New egg added! This pet is now ready to grow.',
     petShopSelected: 'You are now caring for this pet.',
     petShopCollectionLabel: 'Pet egg collection',
+    petShopLegendary: 'Legendary',
+    petShopMonster: 'Monster',
   },
   vi: {
     heroTitle: 'Nghe thật hay, nuôi thú cưng lớn!',
@@ -785,15 +803,25 @@ const APP_COPY: Record<Language, AppCopy> = {
     petShopTitle: 'Cửa hàng trứng thú cưng',
     petShopSubtitle: 'Dùng nốt nhạc đã để dành để mua trứng mới. Mỗi bé có tiến độ lớn riêng.',
     petShopWalletLabel: 'Ví nốt nhạc',
+    petShopWalletCompactLabel: 'Ví nhạc',
     petShopOwned: 'Đã sở hữu',
     petShopCurrent: 'Đang chăm',
     petShopChoose: 'Chăm bé này',
     petShopBuy: 'Mua trứng',
+    petShopConfirmTitle: 'Xác nhận mua',
+    petShopConfirmPrompt: (petName, price) =>
+      `Mua ${petName} với giá ♫ ${price}?`,
+    petShopBalanceAfter: (balance) =>
+      `Ví của bạn sẽ còn ♫ ${balance}.`,
+    petShopCancel: 'Hủy',
+    petShopConfirmBuy: 'Mua ngay',
     petShopClose: 'Đóng cửa hàng',
     petShopNeedMore: 'Cần thêm',
     petShopBought: 'Đã thêm trứng mới! Bé này đã sẵn sàng lớn lên.',
     petShopSelected: 'Bạn đang chăm bé này.',
     petShopCollectionLabel: 'Bộ sưu tập trứng thú cưng',
+    petShopLegendary: 'Huyền thoại',
+    petShopMonster: 'Monster',
   },
 }
 
@@ -815,6 +843,50 @@ const PET_IDENTITY_COPY: Record<Language, Record<PetId, PetIdentityCopy>> = {
       name: 'Star Fox',
       description: 'A bright little fox who grows into a sparkling listening hero.',
     },
+    dog: {
+      name: 'Sun Pup',
+      description: 'A loyal golden puppy who brings warm sunshine to every song.',
+    },
+    hamster: {
+      name: 'Chestnut Hamster',
+      description: 'A round little listener who stores every happy note in its cheeks.',
+    },
+    panda: {
+      name: 'Bamboo Panda',
+      description: 'A calm panda who finds a gentle rhythm in every bamboo leaf.',
+    },
+    penguin: {
+      name: 'Ice Penguin',
+      description: 'A cool little penguin who slides happily through bright melodies.',
+    },
+    unicorn: {
+      name: 'Rainbow Unicorn',
+      description: 'A pearly little unicorn whose warm rainbow magic follows every melody.',
+    },
+    dragon: {
+      name: 'Cloud Dragon',
+      description: 'A gentle sky dragon who curls through clouds to catch each note.',
+    },
+    phoenix: {
+      name: 'Dawn Phoenix',
+      description: 'A cuddly sunrise bird who grows brighter with every song.',
+    },
+    griffin: {
+      name: 'Star Griffin',
+      description: 'A brave winged cub born from starlight and musical courage.',
+    },
+    bella: {
+      name: 'Bella Monster',
+      description: 'A beloved fluffy pink monster with giant curious eyes and bouncy pom-pom feet.',
+    },
+    'little-bella': {
+      name: 'Little Bella',
+      description: 'A tiny fluffy gray monster with mint ears, giant aqua eyes, and bouncy pom-pom feet.',
+    },
+    andy: {
+      name: 'Andy',
+      description: 'A bright orange fluffy monster with aqua glasses and six bouncy pom-poms on its ears, feet, and hat.',
+    },
   },
   vi: {
     dino: {
@@ -832,6 +904,50 @@ const PET_IDENTITY_COPY: Record<Language, Record<PetId, PetIdentityCopy>> = {
     fox: {
       name: 'Cáo Sao',
       description: 'Bé cáo lanh lợi sẽ lớn thành siêu anh hùng cảm âm lấp lánh.',
+    },
+    dog: {
+      name: 'Cún Nắng',
+      description: 'Bé cún vàng trung thành mang nắng ấm vào từng bài hát.',
+    },
+    hamster: {
+      name: 'Hamster Hạt Dẻ',
+      description: 'Bé hamster tròn xoe cất từng nốt nhạc vui trong đôi má phúng phính.',
+    },
+    panda: {
+      name: 'Gấu Trúc Tre',
+      description: 'Bé gấu trúc điềm tĩnh tìm thấy nhịp điệu trong từng chiếc lá tre.',
+    },
+    penguin: {
+      name: 'Cánh Cụt Băng',
+      description: 'Bé cánh cụt mát lạnh trượt vui qua những giai điệu trong veo.',
+    },
+    unicorn: {
+      name: 'Kỳ Lân Cầu Vồng',
+      description: 'Bé kỳ lân óng ánh mang phép màu cầu vồng ấm áp theo từng giai điệu.',
+    },
+    dragon: {
+      name: 'Rồng Mây',
+      description: 'Bé rồng trời hiền lành uốn mình qua mây để bắt lấy từng nốt nhạc.',
+    },
+    phoenix: {
+      name: 'Phượng Hoàng Bình Minh',
+      description: 'Bé chim bình minh mềm mại lớn lên rực rỡ hơn sau mỗi bài hát.',
+    },
+    griffin: {
+      name: 'Griffin Ngôi Sao',
+      description: 'Bé sư tử có cánh sinh ra từ ánh sao và lòng can đảm âm nhạc.',
+    },
+    bella: {
+      name: 'Bella Monster',
+      description: 'Bé monster lông hồng đáng yêu với đôi mắt tò mò và hai bàn chân pom-pom nhún nhảy.',
+    },
+    'little-bella': {
+      name: 'Little Bella',
+      description: 'Bé monster lông xám nhỏ xíu với tai xanh bạc hà, đôi mắt xanh to tròn và hai bàn chân pom-pom nhún nhảy.',
+    },
+    andy: {
+      name: 'Andy',
+      description: 'Bé monster lông cam với kính xanh aqua và sáu pom-pom nhún nhảy trên tai, chân và chiếc mũ xanh.',
     },
   },
 }
@@ -909,6 +1025,83 @@ const PET_STAGE_NAMES: Record<
       adult: 'Grown Star Fox',
       super: 'Super Star Fox',
     },
+    dog: {
+      egg: 'Sun Pup Egg',
+      baby: 'Baby Sun Pup',
+      young: 'Young Sun Pup',
+      adult: 'Grown Sun Pup',
+      super: 'Super Sun Pup',
+    },
+    hamster: {
+      egg: 'Chestnut Hamster Egg',
+      baby: 'Baby Chestnut Hamster',
+      young: 'Young Chestnut Hamster',
+      adult: 'Grown Chestnut Hamster',
+      super: 'Super Chestnut Hamster',
+    },
+    panda: {
+      egg: 'Bamboo Panda Egg',
+      baby: 'Baby Bamboo Panda',
+      young: 'Young Bamboo Panda',
+      adult: 'Grown Bamboo Panda',
+      super: 'Super Bamboo Panda',
+    },
+    penguin: {
+      egg: 'Ice Penguin Egg',
+      baby: 'Baby Ice Penguin',
+      young: 'Young Ice Penguin',
+      adult: 'Grown Ice Penguin',
+      super: 'Super Ice Penguin',
+    },
+    unicorn: {
+      egg: 'Rainbow Unicorn Egg',
+      baby: 'Baby Rainbow Unicorn',
+      young: 'Young Rainbow Unicorn',
+      adult: 'Grown Rainbow Unicorn',
+      super: 'Super Rainbow Unicorn',
+    },
+    dragon: {
+      egg: 'Cloud Dragon Egg',
+      baby: 'Baby Cloud Dragon',
+      young: 'Young Cloud Dragon',
+      adult: 'Grown Cloud Dragon',
+      super: 'Super Cloud Dragon',
+    },
+    phoenix: {
+      egg: 'Dawn Phoenix Egg',
+      baby: 'Baby Dawn Phoenix',
+      young: 'Young Dawn Phoenix',
+      adult: 'Grown Dawn Phoenix',
+      super: 'Super Dawn Phoenix',
+    },
+    griffin: {
+      egg: 'Star Griffin Egg',
+      baby: 'Baby Star Griffin',
+      young: 'Young Star Griffin',
+      adult: 'Grown Star Griffin',
+      super: 'Super Star Griffin',
+    },
+    bella: {
+      egg: 'Bella Monster Egg',
+      baby: 'Baby Bella Monster',
+      young: 'Young Bella Monster',
+      adult: 'Grown Bella Monster',
+      super: 'Super Bella Monster',
+    },
+    'little-bella': {
+      egg: 'Little Bella Egg',
+      baby: 'Baby Little Bella',
+      young: 'Young Little Bella',
+      adult: 'Grown Little Bella',
+      super: 'Super Little Bella',
+    },
+    andy: {
+      egg: 'Andy Egg',
+      baby: 'Baby Andy',
+      young: 'Young Andy',
+      adult: 'Grown Andy',
+      super: 'Super Andy',
+    },
   },
   vi: {
     cat: {
@@ -931,6 +1124,83 @@ const PET_STAGE_NAMES: Record<
       young: 'Cáo Sao con',
       adult: 'Cáo Sao trưởng thành',
       super: 'Cáo Sao siêu nhân',
+    },
+    dog: {
+      egg: 'Trứng Cún Nắng',
+      baby: 'Cún Nắng baby',
+      young: 'Cún Nắng con',
+      adult: 'Cún Nắng trưởng thành',
+      super: 'Cún Nắng siêu nhân',
+    },
+    hamster: {
+      egg: 'Trứng Hamster Hạt Dẻ',
+      baby: 'Hamster Hạt Dẻ baby',
+      young: 'Hamster Hạt Dẻ con',
+      adult: 'Hamster Hạt Dẻ trưởng thành',
+      super: 'Hamster Hạt Dẻ siêu nhân',
+    },
+    panda: {
+      egg: 'Trứng Gấu Trúc Tre',
+      baby: 'Gấu Trúc Tre baby',
+      young: 'Gấu Trúc Tre con',
+      adult: 'Gấu Trúc Tre trưởng thành',
+      super: 'Gấu Trúc Tre siêu nhân',
+    },
+    penguin: {
+      egg: 'Trứng Cánh Cụt Băng',
+      baby: 'Cánh Cụt Băng baby',
+      young: 'Cánh Cụt Băng con',
+      adult: 'Cánh Cụt Băng trưởng thành',
+      super: 'Cánh Cụt Băng siêu nhân',
+    },
+    unicorn: {
+      egg: 'Trứng Kỳ Lân Cầu Vồng',
+      baby: 'Kỳ Lân Cầu Vồng baby',
+      young: 'Kỳ Lân Cầu Vồng con',
+      adult: 'Kỳ Lân Cầu Vồng trưởng thành',
+      super: 'Kỳ Lân Cầu Vồng siêu nhân',
+    },
+    dragon: {
+      egg: 'Trứng Rồng Mây',
+      baby: 'Rồng Mây baby',
+      young: 'Rồng Mây con',
+      adult: 'Rồng Mây trưởng thành',
+      super: 'Rồng Mây siêu nhân',
+    },
+    phoenix: {
+      egg: 'Trứng Phượng Hoàng Bình Minh',
+      baby: 'Phượng Hoàng Bình Minh baby',
+      young: 'Phượng Hoàng Bình Minh con',
+      adult: 'Phượng Hoàng Bình Minh trưởng thành',
+      super: 'Phượng Hoàng Bình Minh siêu nhân',
+    },
+    griffin: {
+      egg: 'Trứng Griffin Ngôi Sao',
+      baby: 'Griffin Ngôi Sao baby',
+      young: 'Griffin Ngôi Sao con',
+      adult: 'Griffin Ngôi Sao trưởng thành',
+      super: 'Griffin Ngôi Sao siêu nhân',
+    },
+    bella: {
+      egg: 'Trứng Bella Monster',
+      baby: 'Bella Monster baby',
+      young: 'Bella Monster con',
+      adult: 'Bella Monster trưởng thành',
+      super: 'Bella Monster siêu nhân',
+    },
+    'little-bella': {
+      egg: 'Trứng Little Bella',
+      baby: 'Little Bella baby',
+      young: 'Little Bella con',
+      adult: 'Little Bella trưởng thành',
+      super: 'Little Bella siêu nhân',
+    },
+    andy: {
+      egg: 'Trứng Andy',
+      baby: 'Andy baby',
+      young: 'Andy con',
+      adult: 'Andy trưởng thành',
+      super: 'Andy siêu nhân',
     },
   },
 }

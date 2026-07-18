@@ -3,7 +3,13 @@
 Last updated: 2026-07-18
 
 ## Implemented
-- A bilingual pet egg shop is available from the companion card on both home and quiz screens. The collection includes the original Music Dino plus Cloud Cat / Mèo Mây (100 notes), Moon Bunny / Thỏ Trăng (200), and Star Fox / Cáo Sao (350).
+- Pet purchases now open an accessible bilingual confirmation dialog before spending any music notes. The dialog shows the selected pet, price, and post-purchase wallet balance; Cancel and `Escape` leave the wallet unchanged, while Buy now completes the existing purchase flow. Desktop and 390px browser QA confirmed focus starts on the safe Cancel action, the mobile dialog stays within the viewport without horizontal overflow, successful purchases update ownership and wallet state, and no console errors are emitted.
+- Companion sprites now prioritize full-pet visibility: square-card stage scales were recalibrated, sprite/body paint clipping was removed, and active raster frames may render beyond their logical box instead of cutting off ears, wings, crowns, or animation poses. Tap reactions render as a top-layer absolute speech bubble above and clear of the pet, with a downward pointer aimed at the portrait; it paints above the wallet/shop row without intercepting pointer input. The pet and its copy stay at their original, unshifted baselines while the bubble toggles independently, so their relative positions and the companion card dimensions do not change. Home, mobile, and compact game cards passed 1440px/390px browser QA with stable before/after dimensions, no overflow, and no console issues.
+- The `Your Music Buddy` card now uses a compact companion-dashboard layout: wallet and shop actions share a clear top action row, the active pet sits in a dedicated visual spotlight, and evolution progress plus the five-stage journey live in one grouped growth panel. The same hierarchy adapts to the compact in-game card, keeps EN/VI copy readable, and passed browser QA at 1440px and 390px with no horizontal overflow or console issues.
+- The compact in-game companion card uses localized short wallet labels (`Wallet` / `Ví nhạc`) in a deliberate two-row wallet control, with the note balance below the label, so narrow sidebars never truncate it; the full wallet name remains in the accessible label and on the roomier home card.
+- A bilingual pet egg shop is available from the companion card on both home and quiz screens. The collection includes the original Music Dino; seven standard shop pets priced from 100 to 1,250 notes; four visibly badged legendary pets priced from 2,000 to 6,500; Bella Monster at 10,000 notes; Little Bella Monster at 12,500 notes; and Andy Monster at 15,000 notes with the distinct Monster badge above Legendary rarity.
+- All fourteen shop pets have complete five-stage, four-pose raster sprite sets matching the dinosaur art direction. The 280 shop-pet runtime frames are transparent 512×512 PNGs under `public/pets/<pet-id>/frames-v1/`; Bella, Little Bella, and Andy are grounded in supplied real-world reference photos and keep their defining mouthless faces. Andy's hatched stages use exactly six orange pom-poms—two ears, two feet, and two on the green hat—with no arms or extra body poms. The shared React animation registry gives every species the same paced stage timelines, reduced-motion behavior, and adult raster previews in the shop.
+- Pet-shop cards always show the first `adult` sprite for every catalog pet, including unowned pets, so children can preview the grown appearance. Ownership, price, current-stage labels, and active-companion progression remain unchanged.
 - Every correct answer adds 10 spendable notes to the shop wallet and 10 separate growth points to the selected pet. Purchases deduct only wallet notes, never evolution progress; every pet persists its own five-stage `0 / 50 / 200 / 500 / 900` journey, and a purchased egg becomes the active companion immediately.
 - Existing dinosaur saves migrate without losing progress: legacy points seed both dinosaur growth and the initial shop balance when no collection save exists, while the legacy key stays synchronized for compatibility.
 - The shop dialog is keyboard-dismissible, locks background scrolling, and renders through a body portal so it remains fixed after page scrolling. Browser QA passed at 1280px and 390px with no horizontal overflow, confirmed access from home and quiz screens, and found no console errors.
@@ -60,12 +66,14 @@ Last updated: 2026-07-18
 - `src/features/game/progression.ts`: difficulty streak rules and local-storage persistence helpers.
 - `src/features/game/dinoProgress.ts`: fixed evolution stages, progress calculation, and legacy dinosaur persistence.
 - `src/features/game/petCollection.ts`: persistent wallet, owned/selected pets, per-pet growth, prices, purchases, rewards, and legacy migration.
-- `src/features/pet-shop/PetCompanion.tsx`: active companion card, raster dinosaur animation, and egg-to-super visuals for shop pets.
+- `src/features/game/petAnimation.ts`: shared four-pose animation registry and runtime frame paths for every pet species and stage.
+- `src/features/pet-shop/PetCompanion.tsx`: active companion card and shared egg-to-super raster animation renderer for every pet.
 - `src/features/pet-shop/PetShop.tsx`: responsive bilingual catalog dialog, purchase actions, and pet selection.
 - `src/features/game/dinoCare.ts`: persistent feeding timestamps, hunger threshold, and roar cooldown.
 - `src/features/audio/dinoVoice.ts`: lazy Tone.js child-friendly dinosaur rawr SFX.
 - `public/dino/evolution-sprite.png`: original five-stage visual identity reference retained for future art work.
 - `public/dino/frames-v1/`: four transparent raster animation frames for each dinosaur stage.
+- `public/pets/<pet-id>/frames-v1/`: four transparent raster animation frames for every stage of all fourteen shop pets.
 - `src/shared/gameTypes.ts`: shared domain types used across the app.
 - `src/shared/localization.ts`: shared English/Vietnamese copy, label formatters, and progression text helpers.
 - `.github/workflows/ci.yml`: validation workflow for pushes and pull requests.
@@ -74,7 +82,7 @@ Last updated: 2026-07-18
 - `scripts/deploy/remote-bootstrap.sh`: idempotent VPS bootstrap and deploy entrypoint.
 
 ## Known Gaps
-- Cloud Cat, Moon Bunny, and Star Fox currently use compact CSS/emoji evolution visuals, while the original dinosaur retains its richer four-frame generated raster animation. Species-specific frame sets and sounds remain a future art/audio enhancement; purchasing, hatching, selection, and progression are complete.
+- All fourteen shop pets now match the dinosaur's raster animation depth, but they still reuse the dinosaur's generic interaction sound behavior; species-specific sounds remain a future audio enhancement.
 - There is no persisted agent memory workflow in the codebase beyond `AGENTS.md`. This file and `memory.md` are now the canonical lightweight memory layer.
 - Full perceptual audio verification with speakers still needs to be repeated in all 8 modes, including checking rawr volume against piano playback; automated flows and headless browser audio startup pass.
 - The production deploy path still depends on working GitHub repository secrets; live VPS reachability, Docker bootstrap, and HTTPS issuance have now been verified against real infrastructure.

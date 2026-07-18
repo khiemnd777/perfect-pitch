@@ -1,13 +1,16 @@
 import {
   useEffect,
   useRef,
+  useState,
   type CSSProperties,
+  type MouseEvent,
 } from 'react'
 import { getDinoEvolution } from '../game/dinoProgress'
 import {
   PET_CATALOG,
   type PetCollectionState,
 } from '../game/petCollection'
+import { getPetAnimation } from '../game/petAnimation'
 import type { PetId } from '../../shared/gameTypes'
 import {
   getAppCopy,
@@ -15,6 +18,8 @@ import {
   getPetStageCopy,
   type Language,
 } from '../../shared/localization'
+
+const PET_SHOP_PREVIEW_STAGE = 'adult'
 
 export function PetShop({
   language,
@@ -33,6 +38,14 @@ export function PetShop({
 }) {
   const copy = getAppCopy(language)
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
+  const cancelPurchaseButtonRef = useRef<HTMLButtonElement | null>(null)
+  const purchaseTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const pendingPetIdRef = useRef<PetId | null>(null)
+  const [pendingPetId, setPendingPetId] = useState<PetId | null>(null)
+
+  const pendingPet = pendingPetId
+    ? PET_CATALOG.find((pet) => pet.id === pendingPetId)
+    : null
 
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow
@@ -41,7 +54,14 @@ export function PetShop({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose()
+        event.preventDefault()
+        if (pendingPetIdRef.current) {
+          pendingPetIdRef.current = null
+          setPendingPetId(null)
+          purchaseTriggerRef.current?.focus()
+        } else {
+          onClose()
+        }
       }
     }
 
@@ -51,6 +71,37 @@ export function PetShop({
       document.body.style.overflow = previousBodyOverflow
     }
   }, [onClose])
+
+  useEffect(() => {
+    if (pendingPetId) {
+      cancelPurchaseButtonRef.current?.focus()
+    }
+  }, [pendingPetId])
+
+  const requestPurchase = (
+    event: MouseEvent<HTMLButtonElement>,
+    petId: PetId,
+  ) => {
+    purchaseTriggerRef.current = event.currentTarget
+    pendingPetIdRef.current = petId
+    setPendingPetId(petId)
+  }
+
+  const cancelPurchase = () => {
+    pendingPetIdRef.current = null
+    setPendingPetId(null)
+    purchaseTriggerRef.current?.focus()
+  }
+
+  const confirmPurchase = () => {
+    if (!pendingPet) {
+      return
+    }
+
+    onBuy(pendingPet.id)
+    pendingPetIdRef.current = null
+    setPendingPetId(null)
+  }
 
   return (
     <div className="pet-shop-backdrop">
@@ -125,22 +176,36 @@ export function PetShop({
                 }
               >
                 <div className="pet-shop-card__topline">
-                  <span className="pet-shop-card__badge">
-                    {owned ? copy.petShopOwned : `♫ ${pet.price}`}
-                  </span>
+                  <div className="pet-shop-card__badges">
+                    <span className="pet-shop-card__badge">
+                      {owned ? copy.petShopOwned : `♫ ${pet.price}`}
+                    </span>
+                    {pet.rarity === 'legendary' && (
+                      <span className="pet-shop-card__legendary">
+                        ✦ {copy.petShopLegendary}
+                      </span>
+                    )}
+                    {pet.rarity === 'monster' && (
+                      <span className="pet-shop-card__monster">
+                        ◆ {copy.petShopMonster}
+                      </span>
+                    )}
+                  </div>
                   {isCurrent && (
                     <span className="pet-shop-card__current">✓ {copy.petShopCurrent}</span>
                   )}
                 </div>
 
                 <div className="pet-shop-card__preview" aria-hidden="true">
-                  {stage === 'egg' ? (
-                    <span className="pet-shop-card__egg">
-                      <span />
-                    </span>
-                  ) : (
-                    <span className="pet-shop-card__emoji">{pet.emoji}</span>
-                  )}
+                  <img
+                    alt=""
+                    className="pet-shop-card__preview-image"
+                    draggable="false"
+                    src={
+                      getPetAnimation(pet.id, PET_SHOP_PREVIEW_STAGE).frames[0]
+                        .src
+                    }
+                  />
                 </div>
 
                 <div className="pet-shop-card__copy">
@@ -152,7 +217,11 @@ export function PetShop({
                 <button
                   className="pet-shop-card__button"
                   disabled={isCurrent || (!owned && !canBuy)}
-                  onClick={() => (owned ? onSelect(pet.id) : onBuy(pet.id))}
+                  onClick={(event) =>
+                    owned
+                      ? onSelect(pet.id)
+                      : requestPurchase(event, pet.id)
+                  }
                   type="button"
                 >
                   {buttonLabel}
@@ -161,6 +230,65 @@ export function PetShop({
             )
           })}
         </div>
+
+        {pendingPet && (
+          <div className="pet-purchase-backdrop">
+            <section
+              aria-describedby="pet-purchase-description pet-purchase-balance"
+              aria-labelledby="pet-purchase-title"
+              aria-modal="true"
+              className="pet-purchase-dialog"
+              role="alertdialog"
+              style={
+                {
+                  '--pet-accent': pendingPet.accent,
+                  '--pet-accent-soft': pendingPet.accentSoft,
+                } as CSSProperties
+              }
+            >
+              <div className="pet-purchase-dialog__pet" aria-hidden="true">
+                <img
+                  alt=""
+                  draggable="false"
+                  src={
+                    getPetAnimation(pendingPet.id, PET_SHOP_PREVIEW_STAGE)
+                      .frames[0].src
+                  }
+                />
+              </div>
+              <div className="pet-purchase-dialog__copy">
+                <p className="question-kicker">{copy.petShopCollectionLabel}</p>
+                <h2 id="pet-purchase-title">{copy.petShopConfirmTitle}</h2>
+                <p id="pet-purchase-description">
+                  {copy.petShopConfirmPrompt(
+                    getPetIdentityCopy(language, pendingPet.id).name,
+                    pendingPet.price,
+                  )}
+                </p>
+                <p id="pet-purchase-balance">
+                  {copy.petShopBalanceAfter(collection.wallet - pendingPet.price)}
+                </p>
+              </div>
+              <div className="pet-purchase-dialog__actions">
+                <button
+                  ref={cancelPurchaseButtonRef}
+                  className="pet-purchase-dialog__cancel"
+                  onClick={cancelPurchase}
+                  type="button"
+                >
+                  {copy.petShopCancel}
+                </button>
+                <button
+                  className="pet-purchase-dialog__confirm"
+                  onClick={confirmPurchase}
+                  type="button"
+                >
+                  {copy.petShopConfirmBuy}
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
       </section>
     </div>
   )

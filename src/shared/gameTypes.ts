@@ -15,7 +15,22 @@ export type DifficultyLevel =
   | 'hard'
   | 'expert'
   | 'master'
-export type PetId = 'dino' | 'cat' | 'bunny' | 'fox'
+export type PetId =
+  | 'dino'
+  | 'cat'
+  | 'bunny'
+  | 'fox'
+  | 'dog'
+  | 'hamster'
+  | 'panda'
+  | 'penguin'
+  | 'unicorn'
+  | 'dragon'
+  | 'phoenix'
+  | 'griffin'
+  | 'bella'
+  | 'little-bella'
+  | 'andy'
 export type PetStageId = 'egg' | 'baby' | 'young' | 'adult' | 'super'
 export type DinoStageId = PetStageId
 

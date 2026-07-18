@@ -234,6 +234,7 @@ describe('PerfectPitchApp', () => {
     expect(audioEngine.init).not.toHaveBeenCalled()
 
     await user.click(screen.getByRole('button', { name: 'Single Note' }))
+    expect(screen.getByText('Wallet')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Enable piano and play' }))
 
     expect(audioEngine.init).toHaveBeenCalledTimes(1)
@@ -638,7 +639,7 @@ describe('PerfectPitchApp', () => {
     })
   })
 
-  it('shows all pet eggs and blocks purchases when the wallet is too low', async () => {
+  it('shows every pet as an adult preview and blocks purchases when the wallet is too low', async () => {
     const user = userEvent.setup()
 
     render(<PerfectPitchApp audioEngine={createMockAudioEngine()} />)
@@ -649,9 +650,57 @@ describe('PerfectPitchApp', () => {
     expect(screen.getByText('Cloud Cat')).toBeInTheDocument()
     expect(screen.getByText('Moon Bunny')).toBeInTheDocument()
     expect(screen.getByText('Star Fox')).toBeInTheDocument()
+    expect(screen.getByText('Sun Pup')).toBeInTheDocument()
+    expect(screen.getByText('Chestnut Hamster')).toBeInTheDocument()
+    expect(screen.getByText('Bamboo Panda')).toBeInTheDocument()
+    expect(screen.getByText('Ice Penguin')).toBeInTheDocument()
+    expect(screen.getByText('Rainbow Unicorn')).toBeInTheDocument()
+    expect(screen.getByText('Cloud Dragon')).toBeInTheDocument()
+    expect(screen.getByText('Dawn Phoenix')).toBeInTheDocument()
+    expect(screen.getByText('Star Griffin')).toBeInTheDocument()
+    expect(screen.getByText('Bella Monster')).toBeInTheDocument()
+    expect(screen.getByText('Little Bella')).toBeInTheDocument()
+    expect(screen.getByText('Andy')).toBeInTheDocument()
+    expect(screen.getAllByText('✦ Legendary')).toHaveLength(4)
+    expect(screen.getAllByText('◆ Monster')).toHaveLength(3)
+    expect(
+      Array.from(
+        document.querySelectorAll<HTMLImageElement>(
+          '.pet-shop-card__preview-image',
+        ),
+        (image) => image.getAttribute('src'),
+      ),
+    ).toEqual([
+      '/dino/frames-v1/adult-1.png',
+      '/pets/cat/frames-v1/adult-1.png',
+      '/pets/bunny/frames-v1/adult-1.png',
+      '/pets/fox/frames-v1/adult-1.png',
+      '/pets/dog/frames-v1/adult-1.png',
+      '/pets/hamster/frames-v1/adult-1.png',
+      '/pets/panda/frames-v1/adult-1.png',
+      '/pets/penguin/frames-v1/adult-1.png',
+      '/pets/unicorn/frames-v1/adult-1.png',
+      '/pets/dragon/frames-v1/adult-1.png',
+      '/pets/phoenix/frames-v1/adult-1.png',
+      '/pets/griffin/frames-v1/adult-1.png',
+      '/pets/bella/frames-v1/adult-1.png',
+      '/pets/little-bella/frames-v1/adult-1.png',
+      '/pets/andy/frames-v1/adult-1.png',
+    ])
     expect(screen.getByRole('button', { name: 'Need ♫ 100' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Need ♫ 200' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Need ♫ 350' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Need ♫ 500' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Need ♫ 700' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Need ♫ 950' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Need ♫ 1250' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Need ♫ 2000' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Need ♫ 3000' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Need ♫ 4500' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Need ♫ 6500' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Need ♫ 10000' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Need ♫ 12500' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Need ♫ 15000' })).toBeDisabled()
   })
 
   it('buys a new egg with saved notes and keeps dinosaur growth intact', async () => {
@@ -670,6 +719,37 @@ describe('PerfectPitchApp', () => {
 
     await user.click(screen.getByRole('button', { name: 'Pet shop' }))
     await user.click(screen.getByRole('button', { name: 'Buy egg · ♫ 100' }))
+
+    expect(
+      screen.getByRole('alertdialog', { name: 'Confirm purchase' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Buy Cloud Cat for ♫ 100?')).toBeInTheDocument()
+    expect(screen.getByText('Your wallet will have ♫ 20 left.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus()
+    expect(screen.getAllByLabelText('Music-note wallet: 120')).not.toHaveLength(0)
+    expect(
+      JSON.parse(window.localStorage.getItem(PET_COLLECTION_STORAGE_KEY) ?? 'null'),
+    ).toMatchObject({
+      wallet: 120,
+      selectedPetId: 'dino',
+      ownedPetIds: ['dino'],
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect(screen.getAllByLabelText('Music-note wallet: 120')).not.toHaveLength(0)
+    expect(screen.getByRole('button', { name: 'Buy egg · ♫ 100' })).toHaveFocus()
+
+    await user.click(screen.getByRole('button', { name: 'Buy egg · ♫ 100' }))
+    await user.keyboard('{Escape}')
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect(screen.getAllByLabelText('Music-note wallet: 120')).not.toHaveLength(0)
+    expect(screen.getByRole('button', { name: 'Buy egg · ♫ 100' })).toHaveFocus()
+
+    await user.click(screen.getByRole('button', { name: 'Buy egg · ♫ 100' }))
+    await user.click(screen.getByRole('button', { name: 'Buy now' }))
 
     expect(screen.getByRole('img', { name: 'Cloud Cat Egg' })).toBeInTheDocument()
     expect(screen.getAllByLabelText('Music-note wallet: 20')).not.toHaveLength(0)
@@ -710,8 +790,13 @@ describe('PerfectPitchApp', () => {
     await user.click(screen.getByTestId('choice-c'))
 
     expect(screen.getByRole('img', { name: 'Baby Cloud Cat' })).toHaveClass(
-      'pet-emoji-avatar--baby',
+      'dino-sprite--baby',
     )
+    expect(
+      screen
+        .getByRole('img', { name: 'Baby Cloud Cat' })
+        .querySelector('.dino-sprite__frame'),
+    ).toHaveAttribute('src', '/pets/cat/frames-v1/baby-1.png')
     expect(
       JSON.parse(window.localStorage.getItem(PET_COLLECTION_STORAGE_KEY) ?? 'null'),
     ).toMatchObject({
@@ -841,13 +926,18 @@ describe('PerfectPitchApp', () => {
       />,
     )
 
-    await user.click(
-      screen.getByRole('button', { name: 'Tap the pet for a reaction' }),
-    )
+    const petButton = screen.getByRole('button', {
+      name: 'Tap the pet for a reaction',
+    })
+    await user.click(petButton)
 
-    expect(screen.getByRole('status')).toHaveTextContent(
+    const feeling = screen.getByRole('status')
+    expect(feeling).toHaveTextContent(
       'Knock knock... I can hear you!',
     )
+    expect(feeling).toHaveClass('dino-feeling')
+    expect(petButton).not.toContainElement(feeling)
+    expect(petButton.closest('.dino-card__body')).toContainElement(feeling)
     expect(dinoRoarPlayer).not.toHaveBeenCalled()
   })
 

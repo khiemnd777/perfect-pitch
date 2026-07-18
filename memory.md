@@ -21,6 +21,7 @@
 - Mode progression and difficulty persistence live in `src/features/game/progression.ts`.
 - Shared evolution thresholds plus legacy dinosaur persistence live in `src/features/game/dinoProgress.ts`.
 - Pet shop catalog, wallet, ownership, selection, legacy migration, and per-pet growth live in `src/features/game/petCollection.ts`; companion and shop UI live in `src/features/pet-shop`.
+- Shared four-pose animation metadata for every pet lives in `src/features/game/petAnimation.ts`; generated shop-pet frames live under `public/pets/<pet-id>/frames-v1/` and follow the existing `egg|baby|young|adult|super-1..4.png` naming convention.
 - Dinosaur hunger timestamps and roar cooldown rules live in `src/features/game/dinoCare.ts`; the lazily loaded Tone.js SFX lives in `src/features/audio/dinoVoice.ts`.
 
 ## Product Rules
@@ -34,7 +35,9 @@
 - `seventh` answers identify compact four-note seventh chords; advanced levels add inversions and close same-root distractors.
 - Every generated question must contain exactly 4 unique choices with exactly 1 correct answer.
 - Every correct answer adds 10 spendable music notes to the shop wallet and 10 non-spendable growth points to the selected pet. Buying an egg never reduces evolution progress; each pet uses the fixed thresholds `0 / 50 / 200 / 500 / 900` for egg, baby, young, adult, and super stages.
-- The collection starts with the dinosaur and offers Cloud Cat / Mèo Mây for 100 notes, Moon Bunny / Thỏ Trăng for 200, and Star Fox / Cáo Sao for 350. Each pet keeps separate growth progress, and a newly purchased pet starts as the selected egg.
+- Buying an unowned pet requires an explicit bilingual confirmation that shows the pet, price, and remaining wallet balance before any notes are deducted.
+- The collection starts with the dinosaur and offers seven standard pets priced from 100 to 1,250 notes, four Legendary pets priced from 2,000 to 6,500, Bella Monster for 10,000 notes, Little Bella Monster for 12,500 notes, and Andy Monster for 15,000 notes. Monster is a visibly distinct rarity above Legendary. The photo-grounded Monster pets keep mouthless faces: Bella has uninterrupted pink fur below her eyes; Little Bella has gray fur, mint ears, aqua eyes, yellow/pink cheek nubs, and gray pom-pom feet; Andy has one round orange body, glossy black eyes in joined aqua frames, and exactly six orange pom-poms—two ears, two feet, and two on the lime-green hat—with no arms, rays, or extra body poms. Each pet keeps separate growth progress, and a newly purchased pet starts as the selected egg.
+- Pet-shop cards always preview the pet's `adult` sprite so children can see its grown appearance before buying; owned-pet stage labels and the active companion still use real per-pet progress.
 - Existing `perfect-pitch-dino-progress` points seed both dinosaur growth and the initial shop wallet when no pet-collection save exists. The legacy dinosaur key remains synchronized for backward compatibility.
 - A correct answer also feeds the pet. The dinosaur becomes hungry after 30 minutes without a correct answer, may roar once after a valid user gesture, and uses a 5-minute roar cooldown until fed again.
 - Musical answer labels stay language-neutral where appropriate: note names remain Anglo note names, and compact chord/arpeggio labels stay symbol-based like `C`, `Cm`, `Cdim`, `Caug`.
@@ -52,9 +55,9 @@
 - `src/app/App.tsx` lets the user pick a mode immediately, lazy-loads the audio engine on first playback, restores per-mode difficulty and language from local storage, exposes an `EN/VI` switcher on home and game screens, and auto-adjusts level progression during play.
 - `src/app/analytics.ts` injects Google Analytics 4 only when `VITE_GA_MEASUREMENT_ID` is present and tracks page views plus core quiz interactions.
 - Session stats track answered count, correct count, current streak, and best streak.
-- The child-friendly game shell shows a persistent five-stage dinosaur companion on the home and quiz screens. Each stage uses four generated transparent raster frames under `public/dino/frames-v1/`.
+- The child-friendly game shell shows a persistent five-stage companion on the home and quiz screens. Every species and stage uses four generated transparent raster frames: the dinosaur under `public/dino/frames-v1/`, and shop pets under `public/pets/<pet-id>/frames-v1/`.
 - The companion card opens a bilingual pet shop from home and quiz screens. Collection state persists under `perfect-pitch-pet-collection`, and the modal renders through a body portal so it stays viewport-fixed on scrolled mobile pages.
-- Dinosaur idle motion uses stage-specific React timelines over four aligned key poses. Each timeline mixes short movement beats with longer expression holds, while CSS crossfades pose changes at the browser refresh rate; separate CSS motion remains reserved for tap, reward, and hunger feedback. Tapping the pet triggers localized stage-specific reactions, while hunger adds a distinct visual state and child-friendly rawr SFX.
+- Companion idle motion uses shared stage-specific React timelines over four aligned key poses. Each timeline mixes short movement beats with longer expression holds, while CSS crossfades pose changes at the browser refresh rate; separate CSS motion remains reserved for tap, reward, and hunger feedback. Tapping the pet triggers localized stage-specific reactions, while hunger adds a distinct visual state and child-friendly rawr SFX.
 - `src/features/audio/audioEngine.ts` caches the current question for replay and uses layered `Tone.Sampler` instances mapped from local piano samples.
 - `src/features/question-bank/questionFactory.ts` supports deterministic generation across all 8 modes and 5 levels with an optional seed and bound language, including scale and seventh-chord questions.
 - `.github/workflows/ci.yml` runs lint, tests, production builds, deploy-script syntax checks, `docker compose config`, image builds, and default Caddy validation on pushes and pull requests.

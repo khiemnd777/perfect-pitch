@@ -9,6 +9,7 @@ export interface PetCatalogItem {
   emoji: string
   accent: string
   accentSoft: string
+  rarity?: 'legendary' | 'monster'
 }
 
 export const PET_CATALOG: readonly PetCatalogItem[] = [
@@ -40,6 +41,90 @@ export const PET_CATALOG: readonly PetCatalogItem[] = [
     accent: '#e9785a',
     accentSoft: '#ffe4dc',
   },
+  {
+    id: 'dog',
+    price: 500,
+    emoji: '🐶',
+    accent: '#f0b34f',
+    accentSoft: '#fff3d1',
+  },
+  {
+    id: 'hamster',
+    price: 700,
+    emoji: '🐹',
+    accent: '#b97849',
+    accentSoft: '#f8e6d7',
+  },
+  {
+    id: 'panda',
+    price: 950,
+    emoji: '🐼',
+    accent: '#6fa96b',
+    accentSoft: '#e4f2df',
+  },
+  {
+    id: 'penguin',
+    price: 1_250,
+    emoji: '🐧',
+    accent: '#5aaecf',
+    accentSoft: '#e0f5fc',
+  },
+  {
+    id: 'unicorn',
+    price: 2_000,
+    emoji: '🦄',
+    accent: '#bd72dc',
+    accentSoft: '#f5e6ff',
+    rarity: 'legendary',
+  },
+  {
+    id: 'dragon',
+    price: 3_000,
+    emoji: '🐉',
+    accent: '#48bca8',
+    accentSoft: '#ddf8f2',
+    rarity: 'legendary',
+  },
+  {
+    id: 'phoenix',
+    price: 4_500,
+    emoji: '🔥',
+    accent: '#ee7c50',
+    accentSoft: '#ffeadb',
+    rarity: 'legendary',
+  },
+  {
+    id: 'griffin',
+    price: 6_500,
+    emoji: '🪽',
+    accent: '#6d6bc5',
+    accentSoft: '#eae9ff',
+    rarity: 'legendary',
+  },
+  {
+    id: 'bella',
+    price: 10_000,
+    emoji: '🩷',
+    accent: '#e963aa',
+    accentSoft: '#ffe2f2',
+    rarity: 'monster',
+  },
+  {
+    id: 'little-bella',
+    price: 12_500,
+    emoji: '🩶',
+    accent: '#70bdb7',
+    accentSoft: '#e2f5f3',
+    rarity: 'monster',
+  },
+  {
+    id: 'andy',
+    price: 15_000,
+    emoji: '🧡',
+    accent: '#e97828',
+    accentSoft: '#ffead7',
+    rarity: 'monster',
+  },
 ]
 
 export const PET_IDS = PET_CATALOG.map((pet) => pet.id) as readonly PetId[]
@@ -51,6 +136,10 @@ export interface PetCollectionState {
   selectedPetId: PetId
   ownedPetIds: PetId[]
   petPoints: PetPoints
+}
+
+function createEmptyPetPoints(): PetPoints {
+  return Object.fromEntries(PET_IDS.map((petId) => [petId, 0])) as PetPoints
 }
 
 function sanitizePoints(value: unknown) {
@@ -72,12 +161,7 @@ export function createDefaultPetCollection(
     wallet: points,
     selectedPetId: 'dino',
     ownedPetIds: ['dino'],
-    petPoints: {
-      dino: points,
-      cat: 0,
-      bunny: 0,
-      fox: 0,
-    },
+    petPoints: { ...createEmptyPetPoints(), dino: points },
   }
 }
 
@@ -112,12 +196,12 @@ function sanitizeCollection(
     wallet: sanitizePoints(candidate.wallet),
     selectedPetId,
     ownedPetIds,
-    petPoints: {
-      dino: sanitizePoints((storedPoints as Partial<PetPoints>).dino),
-      cat: sanitizePoints((storedPoints as Partial<PetPoints>).cat),
-      bunny: sanitizePoints((storedPoints as Partial<PetPoints>).bunny),
-      fox: sanitizePoints((storedPoints as Partial<PetPoints>).fox),
-    },
+    petPoints: Object.fromEntries(
+      PET_IDS.map((petId) => [
+        petId,
+        sanitizePoints((storedPoints as Partial<PetPoints>)[petId]),
+      ]),
+    ) as PetPoints,
   }
 }
 
