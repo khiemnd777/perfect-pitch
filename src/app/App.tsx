@@ -4,8 +4,8 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
 } from 'react'
+import { createPortal } from 'react-dom'
 import './App.css'
 import type { AudioEngine } from '../features/audio/audioEngine'
 import { evaluateSelection } from '../features/game/evaluation'
@@ -20,12 +20,15 @@ import {
 } from '../features/game/dinoCare'
 import {
   DINO_POINTS_PER_CORRECT,
-  DINO_STAGES,
-  getDinoEvolution,
-  loadDinoProgress,
   saveDinoProgress,
 } from '../features/game/dinoProgress'
-import { DINO_ANIMATIONS } from '../features/game/dinoAnimation'
+import {
+  loadPetCollection,
+  purchasePet,
+  rewardSelectedPet,
+  savePetCollection,
+  selectPet,
+} from '../features/game/petCollection'
 import {
   applyProgression,
   loadProgressState,
@@ -36,24 +39,24 @@ import {
   createQuestionFactory,
   type QuestionFactory,
 } from '../features/question-bank/questionFactory'
+import { PetCompanion } from '../features/pet-shop/PetCompanion'
+import { PetShop } from '../features/pet-shop/PetShop'
 import {
   formatSessionStats,
   getAppCopy,
   getDifficultyCopy,
   getDifficultyLabel,
-  getDinoReactions,
-  getDinoStageCopy,
+  getPetIdentityCopy,
   getModeCopy,
   formatChoiceMeta,
   translateIntervalLabel,
   translateScaleLabel,
   type Language,
-  type DinoReactionCopy,
 } from '../shared/localization'
 import {
   GAME_MODES,
-  type DinoStageId,
   type GameMode,
+  type PetId,
   type Question,
   type QuestionEvaluation,
   type SessionStats,
@@ -74,7 +77,6 @@ const QUESTION_DEDUP_MAX_ATTEMPTS = 24
 const PLAYBACK_START_DELAY_MS = 80
 const PLAYBACK_LOCK_BUFFER_MS = 40
 const DINO_HUNGER_CHECK_INTERVAL_MS = 60 * 1000
-const DINO_REACTION_DURATION_MS = 2_400
 
 const MODE_ICONS: Record<Exclude<GameMode, 'interval'>, string> = {
   single: '🎵',
@@ -489,278 +491,6 @@ function FooterSignature({ language }: { language: Language }) {
   )
 }
 
-interface DinoReactionState extends DinoReactionCopy {
-  id: number
-}
-
-function DinoSprite({
-  stageId,
-  label,
-  tapLabel,
-  hungry,
-  reaction,
-  onTap,
-}: {
-  stageId: DinoStageId
-  label: string
-  tapLabel: string
-  hungry: boolean
-  reaction: DinoReactionState | null
-  onTap: () => void
-}) {
-  const animation = DINO_ANIMATIONS[stageId]
-  const [activeFrame, setActiveFrame] = useState(
-    animation.timeline[0].frameIndex,
-  )
-
-  useEffect(() => {
-    const reduceMotion =
-      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
-    let stepIndex = 0
-    let timeoutId: number | null = null
-
-    const stopAnimation = () => {
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId)
-        timeoutId = null
-      }
-    }
-
-    const scheduleNextStep = () => {
-      if (reduceMotion || document.hidden || timeoutId !== null) {
-        return
-      }
-
-      timeoutId = window.setTimeout(() => {
-        timeoutId = null
-        stepIndex = (stepIndex + 1) % animation.timeline.length
-        setActiveFrame(animation.timeline[stepIndex].frameIndex)
-        scheduleNextStep()
-      }, animation.timeline[stepIndex].holdMs)
-    }
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        stopAnimation()
-        return
-      }
-      scheduleNextStep()
-    }
-
-    scheduleNextStep()
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      stopAnimation()
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [animation])
-
-  return (
-    <button
-      aria-label={tapLabel}
-      className={`dino-sprite-button ${
-        reaction ? 'dino-sprite-button--reacting' : ''
-      }`}
-      data-testid="dino-stage-button"
-      onClick={onTap}
-      type="button"
-    >
-      {reaction && (
-        <span
-          key={reaction.id}
-          aria-live="polite"
-          className="dino-reaction"
-          role="status"
-        >
-          <span aria-hidden="true" className="dino-reaction__emoji">
-            {reaction.emoji}
-          </span>
-          <span>{reaction.message}</span>
-        </span>
-      )}
-      <span
-        aria-label={label}
-        className={`dino-sprite dino-sprite--${stageId} ${
-          hungry ? 'dino-sprite--hungry' : ''
-        }`}
-        data-testid="dino-stage"
-        role="img"
-      >
-        {animation.frames.map((frame, index) => (
-          <img
-            key={frame.src}
-            alt=""
-            aria-hidden="true"
-            className={`dino-sprite__frame ${
-              index === activeFrame ? 'dino-sprite__frame--active' : ''
-            }`}
-            data-active={index === activeFrame}
-            draggable="false"
-            src={frame.src}
-            style={
-              {
-                '--dino-frame-normalize-scale': frame.normalizeScale,
-                '--dino-frame-offset-x': `${frame.offsetX}%`,
-                '--dino-frame-offset-y': `${frame.offsetY}%`,
-              } as CSSProperties
-            }
-          />
-        ))}
-      </span>
-    </button>
-  )
-}
-
-function DinoCompanion({
-  language,
-  points,
-  compact = false,
-  celebrate = false,
-  hungry = false,
-  soundError = null,
-  onInteract,
-}: {
-  language: Language
-  points: number
-  compact?: boolean
-  celebrate?: boolean
-  hungry?: boolean
-  soundError?: string | null
-  onInteract?: () => void
-}) {
-  const copy = getAppCopy(language)
-  const evolution = getDinoEvolution(points)
-  const stageCopy = getDinoStageCopy(language, evolution.stage.id)
-  const reactions = getDinoReactions(language, evolution.stage.id, hungry)
-  const [reaction, setReaction] = useState<DinoReactionState | null>(null)
-  const reactionIndexRef = useRef(-1)
-  const reactionIdRef = useRef(0)
-  const reactionTimeoutRef = useRef<number | null>(null)
-  const progressLabel = evolution.nextStage
-    ? `${copy.petNextPrefix} ${evolution.pointsToNextStage} ${copy.petPointsLabel}`
-    : copy.petMaxStage
-
-  useEffect(
-    () => () => {
-      if (reactionTimeoutRef.current !== null) {
-        window.clearTimeout(reactionTimeoutRef.current)
-      }
-    },
-    [],
-  )
-
-  const handleDinoTap = () => {
-    reactionIndexRef.current = (reactionIndexRef.current + 1) % reactions.length
-    reactionIdRef.current += 1
-    setReaction({
-      ...reactions[reactionIndexRef.current],
-      id: reactionIdRef.current,
-    })
-
-    if (reactionTimeoutRef.current !== null) {
-      window.clearTimeout(reactionTimeoutRef.current)
-    }
-    reactionTimeoutRef.current = window.setTimeout(() => {
-      setReaction(null)
-      reactionTimeoutRef.current = null
-    }, DINO_REACTION_DURATION_MS)
-
-    onInteract?.()
-  }
-
-  return (
-    <section
-      aria-label={copy.petTitle}
-      className={`dino-card ${compact ? 'dino-card--compact' : ''} ${
-        celebrate ? 'dino-card--celebrate' : ''
-      } ${hungry ? 'dino-card--hungry' : ''}`}
-    >
-      <header className="dino-card__header">
-        <div>
-          <p className="dino-card__kicker">{copy.petTitle}</p>
-          {!compact && (
-            <p className="dino-card__subtitle">
-              {hungry ? copy.petHungryMessage : copy.petSubtitle}
-            </p>
-          )}
-        </div>
-        <div className="dino-card__status">
-          {hungry && <span className="dino-hunger-badge">🍎 {copy.petHungryLabel}</span>}
-          <span className="dino-points" aria-label={`${points} ${copy.petPointsLabel}`}>
-            <span aria-hidden="true">♫</span> {points}
-          </span>
-        </div>
-      </header>
-
-      <div className="dino-card__body">
-        <DinoSprite
-          key={evolution.stage.id}
-          hungry={hungry}
-          label={stageCopy.name}
-          onTap={handleDinoTap}
-          reaction={reaction}
-          stageId={evolution.stage.id}
-          tapLabel={copy.petTapLabel}
-        />
-        <div className="dino-card__copy">
-          <span className="dino-stage-chip">
-            {language === 'en' ? 'Stage' : 'Cấp'} {evolution.stageIndex + 1}/
-            {DINO_STAGES.length}
-          </span>
-          <strong className="dino-stage-name">{stageCopy.name}</strong>
-          <p>{stageCopy.description}</p>
-        </div>
-      </div>
-
-      <div className="dino-progress">
-        <div className="dino-progress__label">
-          <span>{progressLabel}</span>
-          <strong>{evolution.progressPercent}%</strong>
-        </div>
-        <div
-          aria-label={progressLabel}
-          aria-valuemax={100}
-          aria-valuemin={0}
-          aria-valuenow={evolution.progressPercent}
-          className="dino-progress__track"
-          role="progressbar"
-        >
-          <span style={{ width: `${evolution.progressPercent}%` }} />
-        </div>
-      </div>
-
-      <div className="evolution-track" aria-label={copy.petEvolutionLabel}>
-        {DINO_STAGES.map((stage, index) => {
-          const isCurrent = index === evolution.stageIndex
-          const isComplete = index < evolution.stageIndex
-
-          return (
-            <span
-              key={stage.id}
-              aria-label={getDinoStageCopy(language, stage.id).name}
-              className={`evolution-track__step ${
-                isCurrent ? 'evolution-track__step--current' : ''
-              } ${isComplete ? 'evolution-track__step--complete' : ''}`}
-              title={getDinoStageCopy(language, stage.id).name}
-            >
-              {isComplete ? '✓' : index + 1}
-            </span>
-          )
-        })}
-      </div>
-
-      <p className="dino-card__tap-hint">👆 {copy.petTapHint}</p>
-      {soundError && (
-        <p className="dino-card__sound-error" role="alert">
-          {soundError}
-        </p>
-      )}
-      {!compact && <p className="dino-card__hint">💡 {copy.petHint}</p>}
-    </section>
-  )
-}
-
 function SeoLinks() {
   return (
     <nav className="seo-links" aria-label="Ear training topics">
@@ -887,7 +617,11 @@ export function PerfectPitchApp({
   )
   const [evaluation, setEvaluation] = useState<QuestionEvaluation | null>(null)
   const [stats, setStats] = useState<SessionStats>(() => loadSessionStats(storage))
-  const [dinoProgress, setDinoProgress] = useState(() => loadDinoProgress(storage))
+  const [petCollection, setPetCollection] = useState(() =>
+    loadPetCollection(storage),
+  )
+  const [isPetShopOpen, setIsPetShopOpen] = useState(false)
+  const [petShopNotice, setPetShopNotice] = useState<string | null>(null)
   const [currentTime, setCurrentTime] = useState(() => getNow())
   const [dinoCare, setDinoCare] = useState<DinoCareState>(() =>
     loadDinoCare(storage, currentTime),
@@ -915,11 +649,14 @@ export function PerfectPitchApp({
   const dinoCareRef = useRef(dinoCare)
   const isDinoRoaringRef = useRef(false)
   const copy = getAppCopy(language)
-  const dinoHungry = isDinoHungry(dinoCare, currentTime)
+  const activePetId = petCollection.selectedPetId
+  const activePetPoints = petCollection.petPoints[activePetId]
+  const petHungry = isDinoHungry(dinoCare, currentTime)
 
   const maybePlayDinoRoar = useCallback(async () => {
     const roarAt = getNow()
     if (
+      activePetId !== 'dino' ||
       isDinoRoaringRef.current ||
       !shouldDinoRoar(dinoCareRef.current, roarAt)
     ) {
@@ -940,7 +677,7 @@ export function PerfectPitchApp({
     } finally {
       isDinoRoaringRef.current = false
     }
-  }, [copy.petSoundError, dinoRoarPlayer, getNow])
+  }, [activePetId, copy.petSoundError, dinoRoarPlayer, getNow])
 
   const getAudioEngine = async () => {
     if (audioEngineRef.current) {
@@ -969,8 +706,9 @@ export function PerfectPitchApp({
   }, [stats, storage])
 
   useEffect(() => {
-    saveDinoProgress(dinoProgress, storage)
-  }, [dinoProgress, storage])
+    savePetCollection(petCollection, storage)
+    saveDinoProgress({ points: petCollection.petPoints.dino }, storage)
+  }, [petCollection, storage])
 
   useEffect(() => {
     dinoCareRef.current = dinoCare
@@ -1000,10 +738,10 @@ export function PerfectPitchApp({
   }, [maybePlayDinoRoar])
 
   useEffect(() => {
-    if (audioStatus === 'ready' && dinoHungry) {
+    if (audioStatus === 'ready' && petHungry) {
       void maybePlayDinoRoar()
     }
-  }, [audioStatus, dinoHungry, maybePlayDinoRoar])
+  }, [audioStatus, petHungry, maybePlayDinoRoar])
 
   useEffect(() => {
     saveLanguagePreference(language, storage)
@@ -1219,9 +957,9 @@ export function PerfectPitchApp({
     })
     if (result.status === 'correct') {
       const fedAt = getNow()
-      setDinoProgress((current) => ({
-        points: current.points + DINO_POINTS_PER_CORRECT,
-      }))
+      setPetCollection((current) =>
+        rewardSelectedPet(current, DINO_POINTS_PER_CORRECT),
+      )
       setDinoCare((current) => {
         const nextCare = feedDino(current, fedAt)
         dinoCareRef.current = nextCare
@@ -1283,6 +1021,52 @@ export function PerfectPitchApp({
     resetSessionStats(storage)
   }
 
+  const openPetShop = () => {
+    setPetShopNotice(null)
+    setIsPetShopOpen(true)
+    trackEvent('open_pet_shop', {
+      selected_pet: activePetId,
+      wallet: petCollection.wallet,
+      language,
+    })
+  }
+
+  const closePetShop = useCallback(() => {
+    setIsPetShopOpen(false)
+  }, [])
+
+  const buyPet = (petId: PetId) => {
+    const nextCollection = purchasePet(petCollection, petId)
+    if (nextCollection === petCollection) {
+      return
+    }
+
+    setPetCollection(nextCollection)
+    setPetShopNotice(
+      `${copy.petShopBought} ${getPetIdentityCopy(language, petId).name}`,
+    )
+    setDinoSoundError(null)
+    trackEvent('buy_pet', {
+      pet: petId,
+      wallet_after: nextCollection.wallet,
+      language,
+    })
+  }
+
+  const choosePet = (petId: PetId) => {
+    const nextCollection = selectPet(petCollection, petId)
+    if (nextCollection === petCollection) {
+      return
+    }
+
+    setPetCollection(nextCollection)
+    setPetShopNotice(
+      `${copy.petShopSelected} ${getPetIdentityCopy(language, petId).name}`,
+    )
+    setDinoSoundError(null)
+    trackEvent('select_pet', { pet: petId, language })
+  }
+
   const sessionStats = formatSessionStats(language, stats, accuracy)
 
   if (seoPage) {
@@ -1308,12 +1092,15 @@ export function PerfectPitchApp({
                   <span>🎹 {copy.heroPianoStat}</span>
                 </div>
               </div>
-              <DinoCompanion
-                hungry={dinoHungry}
+              <PetCompanion
+                hungry={petHungry}
                 language={language}
                 onInteract={() => void maybePlayDinoRoar()}
-                points={dinoProgress.points}
-                soundError={dinoSoundError}
+                onOpenShop={openPetShop}
+                petId={activePetId}
+                points={activePetPoints}
+                soundError={activePetId === 'dino' ? dinoSoundError : null}
+                wallet={petCollection.wallet}
               />
             </div>
           </section>
@@ -1387,14 +1174,17 @@ export function PerfectPitchApp({
             </header>
 
             <div className="game-board">
-              <DinoCompanion
+              <PetCompanion
                 celebrate={evaluation?.status === 'correct'}
                 compact
-                hungry={dinoHungry}
+                hungry={petHungry}
                 language={language}
                 onInteract={() => void maybePlayDinoRoar()}
-                points={dinoProgress.points}
-                soundError={dinoSoundError}
+                onOpenShop={openPetShop}
+                petId={activePetId}
+                points={activePetPoints}
+                soundError={activePetId === 'dino' ? dinoSoundError : null}
+                wallet={petCollection.wallet}
               />
 
               <div className="question-panel">
@@ -1493,6 +1283,18 @@ export function PerfectPitchApp({
         )}
         <FooterSignature language={language} />
       </div>
+      {isPetShopOpen &&
+        createPortal(
+          <PetShop
+            collection={petCollection}
+            language={language}
+            notice={petShopNotice}
+            onBuy={buyPet}
+            onClose={closePetShop}
+            onSelect={choosePet}
+          />,
+          document.body,
+        )}
     </main>
   )
 }

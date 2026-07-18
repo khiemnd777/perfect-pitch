@@ -19,7 +19,8 @@
 - Shared bilingual copy and text resolvers live in `src/shared/localization.ts`, while language persistence helpers live in `src/app/languagePreference.ts`.
 - Music helpers and deterministic random utilities live in `src/shared/music.ts` and `src/shared/random.ts`.
 - Mode progression and difficulty persistence live in `src/features/game/progression.ts`.
-- Dinosaur pet scoring, evolution thresholds, and persistence live in `src/features/game/dinoProgress.ts`.
+- Shared evolution thresholds plus legacy dinosaur persistence live in `src/features/game/dinoProgress.ts`.
+- Pet shop catalog, wallet, ownership, selection, legacy migration, and per-pet growth live in `src/features/game/petCollection.ts`; companion and shop UI live in `src/features/pet-shop`.
 - Dinosaur hunger timestamps and roar cooldown rules live in `src/features/game/dinoCare.ts`; the lazily loaded Tone.js SFX lives in `src/features/audio/dinoVoice.ts`.
 
 ## Product Rules
@@ -32,7 +33,9 @@
 - `scale` answers identify the root and scale quality across major, minor, modal, whole-tone, and blues content as levels increase.
 - `seventh` answers identify compact four-note seventh chords; advanced levels add inversions and close same-root distractors.
 - Every generated question must contain exactly 4 unique choices with exactly 1 correct answer.
-- Every correct answer awards 10 persistent music notes to the dinosaur pet. Pet evolution uses the fixed thresholds `0 / 50 / 200 / 500 / 900` for egg, baby, young, adult, and super stages; resetting session stats does not reset pet progress.
+- Every correct answer adds 10 spendable music notes to the shop wallet and 10 non-spendable growth points to the selected pet. Buying an egg never reduces evolution progress; each pet uses the fixed thresholds `0 / 50 / 200 / 500 / 900` for egg, baby, young, adult, and super stages.
+- The collection starts with the dinosaur and offers Cloud Cat / Mèo Mây for 100 notes, Moon Bunny / Thỏ Trăng for 200, and Star Fox / Cáo Sao for 350. Each pet keeps separate growth progress, and a newly purchased pet starts as the selected egg.
+- Existing `perfect-pitch-dino-progress` points seed both dinosaur growth and the initial shop wallet when no pet-collection save exists. The legacy dinosaur key remains synchronized for backward compatibility.
 - A correct answer also feeds the pet. The dinosaur becomes hungry after 30 minutes without a correct answer, may roar once after a valid user gesture, and uses a 5-minute roar cooldown until fed again.
 - Musical answer labels stay language-neutral where appropriate: note names remain Anglo note names, and compact chord/arpeggio labels stay symbol-based like `C`, `Cm`, `Cdim`, `Caug`.
 
@@ -50,6 +53,7 @@
 - `src/app/analytics.ts` injects Google Analytics 4 only when `VITE_GA_MEASUREMENT_ID` is present and tracks page views plus core quiz interactions.
 - Session stats track answered count, correct count, current streak, and best streak.
 - The child-friendly game shell shows a persistent five-stage dinosaur companion on the home and quiz screens. Each stage uses four generated transparent raster frames under `public/dino/frames-v1/`.
+- The companion card opens a bilingual pet shop from home and quiz screens. Collection state persists under `perfect-pitch-pet-collection`, and the modal renders through a body portal so it stays viewport-fixed on scrolled mobile pages.
 - Dinosaur idle motion uses stage-specific React timelines over four aligned key poses. Each timeline mixes short movement beats with longer expression holds, while CSS crossfades pose changes at the browser refresh rate; separate CSS motion remains reserved for tap, reward, and hunger feedback. Tapping the pet triggers localized stage-specific reactions, while hunger adds a distinct visual state and child-friendly rawr SFX.
 - `src/features/audio/audioEngine.ts` caches the current question for replay and uses layered `Tone.Sampler` instances mapped from local piano samples.
 - `src/features/question-bank/questionFactory.ts` supports deterministic generation across all 8 modes and 5 levels with an optional seed and bound language, including scale and seventh-chord questions.

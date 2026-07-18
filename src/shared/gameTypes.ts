@@ -15,7 +15,9 @@ export type DifficultyLevel =
   | 'hard'
   | 'expert'
   | 'master'
-export type DinoStageId = 'egg' | 'baby' | 'young' | 'adult' | 'super'
+export type PetId = 'dino' | 'cat' | 'bunny' | 'fox'
+export type PetStageId = 'egg' | 'baby' | 'young' | 'adult' | 'super'
+export type DinoStageId = PetStageId
 
 export type QuestionId = string
 

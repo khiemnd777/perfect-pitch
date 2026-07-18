@@ -8,6 +8,7 @@ import {
   DINO_HUNGRY_AFTER_MS,
 } from '../features/game/dinoCare'
 import { DINO_PROGRESS_STORAGE_KEY } from '../features/game/dinoProgress'
+import { PET_COLLECTION_STORAGE_KEY } from '../features/game/petCollection'
 import {
   DEFAULT_SESSION_STATS,
   SCORE_STORAGE_KEY,
@@ -110,7 +111,7 @@ describe('PerfectPitchApp', () => {
 
     render(<PerfectPitchApp audioEngine={audioEngine} />)
 
-    expect(screen.getByText('Listen, play & grow your dino!')).toBeInTheDocument()
+    expect(screen.getByText('Listen, play & grow your pets!')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Single Note' })).toBeInTheDocument()
     expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe('en')
   })
@@ -122,7 +123,7 @@ describe('PerfectPitchApp', () => {
     render(<PerfectPitchApp audioEngine={audioEngine} storage={window.localStorage} />)
 
     expect(
-      await screen.findByText('Nghe thật hay, nuôi khủng long lớn!'),
+      await screen.findByText('Nghe thật hay, nuôi thú cưng lớn!'),
     ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Single Note' })).toBeInTheDocument()
   })
@@ -138,14 +139,14 @@ describe('PerfectPitchApp', () => {
     await user.click(screen.getAllByRole('button', { name: 'VI' })[0])
 
     expect(
-      screen.getByText('Nghe thật hay, nuôi khủng long lớn!'),
+      screen.getByText('Nghe thật hay, nuôi thú cưng lớn!'),
     ).toBeInTheDocument()
     expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe('vi')
 
     await user.click(screen.getAllByRole('button', { name: 'EN' })[0])
 
     expect(
-      await screen.findByText('Listen, play & grow your dino!'),
+      await screen.findByText('Listen, play & grow your pets!'),
     ).toBeInTheDocument()
     expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe('en')
   })
@@ -606,7 +607,7 @@ describe('PerfectPitchApp', () => {
     })
   })
 
-  it('awards persistent music notes to the dinosaur for a correct answer', async () => {
+  it('rewards the shop wallet and selected pet for a correct answer', async () => {
     const user = userEvent.setup()
     const audioEngine = createMockAudioEngine()
     const questionFactory = createTrackingQuestionFactory()
@@ -623,11 +624,129 @@ describe('PerfectPitchApp', () => {
     await user.click(screen.getByRole('button', { name: 'Enable piano and play' }))
     await user.click(screen.getByTestId('choice-c'))
 
-    expect(screen.getByText(/\+10 music notes for your dino!/)).toBeInTheDocument()
-    expect(screen.getByLabelText('10 music notes')).toBeInTheDocument()
+    expect(screen.getByText(/\+10 shop notes and \+10 growth points!/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Music-note wallet: 10')).toBeInTheDocument()
     expect(
       JSON.parse(window.localStorage.getItem(DINO_PROGRESS_STORAGE_KEY) ?? 'null'),
     ).toEqual({ points: 10 })
+    expect(
+      JSON.parse(window.localStorage.getItem(PET_COLLECTION_STORAGE_KEY) ?? 'null'),
+    ).toMatchObject({
+      wallet: 10,
+      selectedPetId: 'dino',
+      petPoints: { dino: 10 },
+    })
+  })
+
+  it('shows all pet eggs and blocks purchases when the wallet is too low', async () => {
+    const user = userEvent.setup()
+
+    render(<PerfectPitchApp audioEngine={createMockAudioEngine()} />)
+
+    await user.click(screen.getByRole('button', { name: 'Pet shop' }))
+
+    expect(screen.getByRole('dialog', { name: 'Pet Egg Shop' })).toBeInTheDocument()
+    expect(screen.getByText('Cloud Cat')).toBeInTheDocument()
+    expect(screen.getByText('Moon Bunny')).toBeInTheDocument()
+    expect(screen.getByText('Star Fox')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Need ♫ 100' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Need ♫ 200' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Need ♫ 350' })).toBeDisabled()
+  })
+
+  it('buys a new egg with saved notes and keeps dinosaur growth intact', async () => {
+    window.localStorage.setItem(
+      DINO_PROGRESS_STORAGE_KEY,
+      JSON.stringify({ points: 120 }),
+    )
+    const user = userEvent.setup()
+
+    render(
+      <PerfectPitchApp
+        audioEngine={createMockAudioEngine()}
+        storage={window.localStorage}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Pet shop' }))
+    await user.click(screen.getByRole('button', { name: 'Buy egg · ♫ 100' }))
+
+    expect(screen.getByRole('img', { name: 'Cloud Cat Egg' })).toBeInTheDocument()
+    expect(screen.getAllByLabelText('Music-note wallet: 20')).not.toHaveLength(0)
+    expect(screen.getByRole('status')).toHaveTextContent('New egg added!')
+    expect(
+      JSON.parse(window.localStorage.getItem(PET_COLLECTION_STORAGE_KEY) ?? 'null'),
+    ).toMatchObject({
+      wallet: 20,
+      selectedPetId: 'cat',
+      ownedPetIds: ['dino', 'cat'],
+      petPoints: { dino: 120, cat: 0 },
+    })
+  })
+
+  it('hatches the selected shop pet after it earns enough growth points', async () => {
+    window.localStorage.setItem(
+      PET_COLLECTION_STORAGE_KEY,
+      JSON.stringify({
+        wallet: 0,
+        selectedPetId: 'cat',
+        ownedPetIds: ['dino', 'cat'],
+        petPoints: { dino: 0, cat: 40, bunny: 0, fox: 0 },
+      }),
+    )
+    const user = userEvent.setup()
+    const questionFactory = createTrackingQuestionFactory()
+
+    render(
+      <PerfectPitchApp
+        audioEngine={createMockAudioEngine()}
+        questionFactory={questionFactory.factory}
+        storage={window.localStorage}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Single Note' }))
+    await user.click(screen.getByRole('button', { name: 'Enable piano and play' }))
+    await user.click(screen.getByTestId('choice-c'))
+
+    expect(screen.getByRole('img', { name: 'Baby Cloud Cat' })).toHaveClass(
+      'pet-emoji-avatar--baby',
+    )
+    expect(
+      JSON.parse(window.localStorage.getItem(PET_COLLECTION_STORAGE_KEY) ?? 'null'),
+    ).toMatchObject({
+      wallet: 10,
+      selectedPetId: 'cat',
+      petPoints: { dino: 0, cat: 50 },
+    })
+  })
+
+  it('switches between owned pets without spending notes again', async () => {
+    window.localStorage.setItem(
+      PET_COLLECTION_STORAGE_KEY,
+      JSON.stringify({
+        wallet: 25,
+        selectedPetId: 'dino',
+        ownedPetIds: ['dino', 'cat'],
+        petPoints: { dino: 300, cat: 50, bunny: 0, fox: 0 },
+      }),
+    )
+    const user = userEvent.setup()
+
+    render(
+      <PerfectPitchApp
+        audioEngine={createMockAudioEngine()}
+        storage={window.localStorage}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Pet shop' }))
+    await user.click(screen.getByRole('button', { name: 'Care for this pet' }))
+
+    expect(screen.getByRole('img', { name: 'Baby Cloud Cat' })).toBeInTheDocument()
+    expect(
+      JSON.parse(window.localStorage.getItem(PET_COLLECTION_STORAGE_KEY) ?? 'null'),
+    ).toMatchObject({ wallet: 25, selectedPetId: 'cat' })
   })
 
   it('evolves the egg into a baby after reaching 50 music notes', async () => {
@@ -723,7 +842,7 @@ describe('PerfectPitchApp', () => {
     )
 
     await user.click(
-      screen.getByRole('button', { name: 'Tap the dinosaur for a reaction' }),
+      screen.getByRole('button', { name: 'Tap the pet for a reaction' }),
     )
 
     expect(screen.getByRole('status')).toHaveTextContent(
@@ -755,7 +874,7 @@ describe('PerfectPitchApp', () => {
 
     expect(screen.getByText(/Hungry!/)).toBeInTheDocument()
     await user.click(
-      screen.getByRole('button', { name: 'Tap the dinosaur for a reaction' }),
+      screen.getByRole('button', { name: 'Tap the pet for a reaction' }),
     )
 
     await waitFor(() => expect(dinoRoarPlayer).toHaveBeenCalledTimes(1))
@@ -789,7 +908,7 @@ describe('PerfectPitchApp', () => {
     )
 
     await user.click(
-      screen.getByRole('button', { name: 'Tap the dinosaur for a reaction' }),
+      screen.getByRole('button', { name: 'Tap the pet for a reaction' }),
     )
 
     expect(await screen.findByRole('alert')).toHaveTextContent(

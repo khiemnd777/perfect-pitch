@@ -1,8 +1,12 @@
 # Current Context
 
-Last updated: 2026-07-17
+Last updated: 2026-07-18
 
 ## Implemented
+- A bilingual pet egg shop is available from the companion card on both home and quiz screens. The collection includes the original Music Dino plus Cloud Cat / Mèo Mây (100 notes), Moon Bunny / Thỏ Trăng (200), and Star Fox / Cáo Sao (350).
+- Every correct answer adds 10 spendable notes to the shop wallet and 10 separate growth points to the selected pet. Purchases deduct only wallet notes, never evolution progress; every pet persists its own five-stage `0 / 50 / 200 / 500 / 900` journey, and a purchased egg becomes the active companion immediately.
+- Existing dinosaur saves migrate without losing progress: legacy points seed both dinosaur growth and the initial shop balance when no collection save exists, while the legacy key stays synchronized for compatibility.
+- The shop dialog is keyboard-dismissible, locks background scrolling, and renders through a body portal so it remains fixed after page scrolling. Browser QA passed at 1280px and 390px with no horizontal overflow, confirmed access from home and quiz screens, and found no console errors.
 - Firebase project `perfect-pitch-knasoftware` now hosts the production Vite build on the Spark plan. `firebase.json` serves `dist` and rewrites client-side routes to `index.html`; `.firebaserc` binds the repo to the dedicated project.
 - Production canonical, Open Graph, structured-data, robots, sitemap, and runtime SEO URLs now target `https://andy.knasoftware.com/`.
 - Firebase Hosting custom domain `andy.knasoftware.com` is active with HTTPS. The custom domain and `perfect-pitch-knasoftware.web.app` serve the same current Firebase release.
@@ -54,7 +58,10 @@ Last updated: 2026-07-17
 - `src/features/question-bank/questionFactory.ts`: question generation rules for all 8 modes across all 5 difficulty levels.
 - `src/features/game/evaluation.ts`: answer grading logic.
 - `src/features/game/progression.ts`: difficulty streak rules and local-storage persistence helpers.
-- `src/features/game/dinoProgress.ts`: pet point storage, fixed evolution stages, and progress calculation.
+- `src/features/game/dinoProgress.ts`: fixed evolution stages, progress calculation, and legacy dinosaur persistence.
+- `src/features/game/petCollection.ts`: persistent wallet, owned/selected pets, per-pet growth, prices, purchases, rewards, and legacy migration.
+- `src/features/pet-shop/PetCompanion.tsx`: active companion card, raster dinosaur animation, and egg-to-super visuals for shop pets.
+- `src/features/pet-shop/PetShop.tsx`: responsive bilingual catalog dialog, purchase actions, and pet selection.
 - `src/features/game/dinoCare.ts`: persistent feeding timestamps, hunger threshold, and roar cooldown.
 - `src/features/audio/dinoVoice.ts`: lazy Tone.js child-friendly dinosaur rawr SFX.
 - `public/dino/evolution-sprite.png`: original five-stage visual identity reference retained for future art work.
@@ -67,6 +74,7 @@ Last updated: 2026-07-17
 - `scripts/deploy/remote-bootstrap.sh`: idempotent VPS bootstrap and deploy entrypoint.
 
 ## Known Gaps
+- Cloud Cat, Moon Bunny, and Star Fox currently use compact CSS/emoji evolution visuals, while the original dinosaur retains its richer four-frame generated raster animation. Species-specific frame sets and sounds remain a future art/audio enhancement; purchasing, hatching, selection, and progression are complete.
 - There is no persisted agent memory workflow in the codebase beyond `AGENTS.md`. This file and `memory.md` are now the canonical lightweight memory layer.
 - Full perceptual audio verification with speakers still needs to be repeated in all 8 modes, including checking rawr volume against piano playback; automated flows and headless browser audio startup pass.
 - The production deploy path still depends on working GitHub repository secrets; live VPS reachability, Docker bootstrap, and HTTPS issuance have now been verified against real infrastructure.

@@ -4,6 +4,8 @@ import {
   type DinoStageId,
   type GameMode,
   GAME_MODES,
+  type PetId,
+  type PetStageId,
   type SessionStats,
 } from './gameTypes'
 
@@ -76,9 +78,27 @@ interface AppCopy {
   petTapHint: string
   petTapLabel: string
   petSoundError: string
+  petShopOpen: string
+  petShopTitle: string
+  petShopSubtitle: string
+  petShopWalletLabel: string
+  petShopOwned: string
+  petShopCurrent: string
+  petShopChoose: string
+  petShopBuy: string
+  petShopClose: string
+  petShopNeedMore: string
+  petShopBought: string
+  petShopSelected: string
+  petShopCollectionLabel: string
 }
 
 interface DinoStageCopy {
+  name: string
+  description: string
+}
+
+interface PetIdentityCopy {
   name: string
   description: string
 }
@@ -672,9 +692,9 @@ const INTERVAL_LABELS: Record<Language, Record<number, string>> = {
 
 const APP_COPY: Record<Language, AppCopy> = {
   en: {
-    heroTitle: 'Listen, play & grow your dino!',
+    heroTitle: 'Listen, play & grow your pets!',
     heroBody:
-      'Hear real piano sounds, choose the answer, and collect music notes. Every correct answer helps your tiny dino hatch, grow, and become a super hero!',
+      'Hear real piano sounds, choose the answer, and collect music notes. Grow your current buddy or save notes to hatch a new pet from the shop!',
     heroModesStat: `${GAME_MODES.length} modes`,
     heroLevelsStat: `${DIFFICULTY_LEVELS.length} levels`,
     heroPianoStat: 'Salamander piano',
@@ -697,23 +717,36 @@ const APP_COPY: Record<Language, AppCopy> = {
     languageVietnamese: 'Vietnamese',
     footerSignature: 'For Son. By Father',
     petTitle: 'Your music buddy',
-    petSubtitle: 'Every correct answer helps your dino grow.',
-    petPointsLabel: 'music notes',
+    petSubtitle: 'Every correct answer helps your current pet grow.',
+    petPointsLabel: 'growth points',
     petNextPrefix: 'Next evolution in',
     petMaxStage: 'Maximum evolution unlocked!',
-    petHint: 'Get 10 music notes for every correct answer.',
-    petEvolutionLabel: 'Dinosaur evolution journey',
-    pointsEarned: '+10 music notes for your dino!',
+    petHint: 'Each correct answer adds 10 notes to your wallet and 10 growth points.',
+    petEvolutionLabel: 'Pet evolution journey',
+    pointsEarned: '+10 shop notes and +10 growth points!',
     petHungryLabel: 'Hungry!',
-    petHungryMessage: 'Rawr... I miss music! Get one answer right to feed me.',
-    petTapHint: 'Tap your dino to see how it feels.',
-    petTapLabel: 'Tap the dinosaur for a reaction',
+    petHungryMessage: 'I miss music! Get one answer right to feed me.',
+    petTapHint: 'Tap your pet to see how it feels.',
+    petTapLabel: 'Tap the pet for a reaction',
     petSoundError: 'Dino voice is sleeping. Tap again to retry.',
+    petShopOpen: 'Pet shop',
+    petShopTitle: 'Pet Egg Shop',
+    petShopSubtitle: 'Spend saved music notes on a new egg. Every pet grows separately.',
+    petShopWalletLabel: 'Music-note wallet',
+    petShopOwned: 'Owned',
+    petShopCurrent: 'Caring now',
+    petShopChoose: 'Care for this pet',
+    petShopBuy: 'Buy egg',
+    petShopClose: 'Close shop',
+    petShopNeedMore: 'Need',
+    petShopBought: 'New egg added! This pet is now ready to grow.',
+    petShopSelected: 'You are now caring for this pet.',
+    petShopCollectionLabel: 'Pet egg collection',
   },
   vi: {
-    heroTitle: 'Nghe thật hay, nuôi khủng long lớn!',
+    heroTitle: 'Nghe thật hay, nuôi thú cưng lớn!',
     heroBody:
-      'Nghe tiếng piano thật, chọn đáp án và sưu tập nốt nhạc. Mỗi câu đúng sẽ giúp khủng long nở trứng, lớn lên và trở thành siêu nhân!',
+      'Nghe tiếng piano thật, chọn đáp án và sưu tập nốt nhạc. Nuôi bé hiện tại lớn lên hoặc để dành nốt nhạc mua một quả trứng mới trong cửa hàng!',
     heroModesStat: `${GAME_MODES.length} chế độ`,
     heroLevelsStat: `${DIFFICULTY_LEVELS.length} cấp độ`,
     heroPianoStat: 'Piano Salamander',
@@ -735,19 +768,71 @@ const APP_COPY: Record<Language, AppCopy> = {
     languageEnglish: 'Tiếng Anh',
     languageVietnamese: 'Tiếng Việt',
     footerSignature: 'For Son. By Father',
-    petTitle: 'Bạn khủng long âm nhạc',
-    petSubtitle: 'Mỗi câu đúng sẽ giúp khủng long lớn thêm.',
-    petPointsLabel: 'nốt nhạc',
+    petTitle: 'Bạn thú cưng âm nhạc',
+    petSubtitle: 'Mỗi câu đúng sẽ giúp bé đang chăm lớn thêm.',
+    petPointsLabel: 'điểm lớn',
     petNextPrefix: 'Còn lại để tiến hóa',
     petMaxStage: 'Đã mở khóa tiến hóa tối đa!',
-    petHint: 'Mỗi câu đúng nhận 10 nốt nhạc.',
-    petEvolutionLabel: 'Hành trình tiến hóa của khủng long',
-    pointsEarned: '+10 nốt nhạc cho khủng long!',
+    petHint: 'Mỗi câu đúng cộng 10 nốt vào ví và 10 điểm lớn cho bé.',
+    petEvolutionLabel: 'Hành trình lớn lên của thú cưng',
+    pointsEarned: '+10 nốt vào ví và +10 điểm lớn!',
     petHungryLabel: 'Đang đói!',
-    petHungryMessage: 'Rawr... mình nhớ âm nhạc! Trả lời đúng một câu để cho mình ăn nhé.',
-    petTapHint: 'Tap vào khủng long để xem bạn ấy đang cảm thấy gì.',
-    petTapLabel: 'Tap vào khủng long để xem biểu cảm',
+    petHungryMessage: 'Mình nhớ âm nhạc! Trả lời đúng một câu để cho mình ăn nhé.',
+    petTapHint: 'Chạm vào thú cưng để xem bạn ấy đang cảm thấy gì.',
+    petTapLabel: 'Chạm vào thú cưng để xem biểu cảm',
     petSoundError: 'Giọng khủng long đang ngủ. Tap lại để thử nhé.',
+    petShopOpen: 'Cửa hàng thú cưng',
+    petShopTitle: 'Cửa hàng trứng thú cưng',
+    petShopSubtitle: 'Dùng nốt nhạc đã để dành để mua trứng mới. Mỗi bé có tiến độ lớn riêng.',
+    petShopWalletLabel: 'Ví nốt nhạc',
+    petShopOwned: 'Đã sở hữu',
+    petShopCurrent: 'Đang chăm',
+    petShopChoose: 'Chăm bé này',
+    petShopBuy: 'Mua trứng',
+    petShopClose: 'Đóng cửa hàng',
+    petShopNeedMore: 'Cần thêm',
+    petShopBought: 'Đã thêm trứng mới! Bé này đã sẵn sàng lớn lên.',
+    petShopSelected: 'Bạn đang chăm bé này.',
+    petShopCollectionLabel: 'Bộ sưu tập trứng thú cưng',
+  },
+}
+
+const PET_IDENTITY_COPY: Record<Language, Record<PetId, PetIdentityCopy>> = {
+  en: {
+    dino: {
+      name: 'Music Dino',
+      description: 'Your first brave buddy with a five-stage musical evolution.',
+    },
+    cat: {
+      name: 'Cloud Cat',
+      description: 'A warm orange kitten who dreams of singing with the clouds.',
+    },
+    bunny: {
+      name: 'Moon Bunny',
+      description: 'A gentle purple bunny with quick ears for tiny piano notes.',
+    },
+    fox: {
+      name: 'Star Fox',
+      description: 'A bright little fox who grows into a sparkling listening hero.',
+    },
+  },
+  vi: {
+    dino: {
+      name: 'Khủng Long Nhạc',
+      description: 'Người bạn đầu tiên dũng cảm với năm cấp tiến hóa âm nhạc.',
+    },
+    cat: {
+      name: 'Mèo Mây',
+      description: 'Bé mèo cam ấm áp luôn mơ được hát cùng những đám mây.',
+    },
+    bunny: {
+      name: 'Thỏ Trăng',
+      description: 'Bé thỏ tím dịu dàng có đôi tai rất thính với từng nốt piano.',
+    },
+    fox: {
+      name: 'Cáo Sao',
+      description: 'Bé cáo lanh lợi sẽ lớn thành siêu anh hùng cảm âm lấp lánh.',
+    },
   },
 }
 
@@ -796,6 +881,92 @@ const DINO_STAGE_COPY: Record<Language, Record<DinoStageId, DinoStageCopy>> = {
       description: 'Vừa dễ thương vừa mạnh mẽ nhờ đôi tai siêu cấp của bạn!',
     },
   },
+}
+
+const PET_STAGE_NAMES: Record<
+  Language,
+  Record<Exclude<PetId, 'dino'>, Record<PetStageId, string>>
+> = {
+  en: {
+    cat: {
+      egg: 'Cloud Cat Egg',
+      baby: 'Baby Cloud Cat',
+      young: 'Young Cloud Cat',
+      adult: 'Grown Cloud Cat',
+      super: 'Super Cloud Cat',
+    },
+    bunny: {
+      egg: 'Moon Bunny Egg',
+      baby: 'Baby Moon Bunny',
+      young: 'Young Moon Bunny',
+      adult: 'Grown Moon Bunny',
+      super: 'Super Moon Bunny',
+    },
+    fox: {
+      egg: 'Star Fox Egg',
+      baby: 'Baby Star Fox',
+      young: 'Young Star Fox',
+      adult: 'Grown Star Fox',
+      super: 'Super Star Fox',
+    },
+  },
+  vi: {
+    cat: {
+      egg: 'Trứng Mèo Mây',
+      baby: 'Mèo Mây baby',
+      young: 'Mèo Mây con',
+      adult: 'Mèo Mây trưởng thành',
+      super: 'Mèo Mây siêu nhân',
+    },
+    bunny: {
+      egg: 'Trứng Thỏ Trăng',
+      baby: 'Thỏ Trăng baby',
+      young: 'Thỏ Trăng con',
+      adult: 'Thỏ Trăng trưởng thành',
+      super: 'Thỏ Trăng siêu nhân',
+    },
+    fox: {
+      egg: 'Trứng Cáo Sao',
+      baby: 'Cáo Sao baby',
+      young: 'Cáo Sao con',
+      adult: 'Cáo Sao trưởng thành',
+      super: 'Cáo Sao siêu nhân',
+    },
+  },
+}
+
+function getCompanionStageDescription(
+  language: Language,
+  petName: string,
+  stage: PetStageId,
+) {
+  if (language === 'en') {
+    switch (stage) {
+      case 'egg':
+        return `${petName} is listening from inside the egg and waiting to hatch.`
+      case 'baby':
+        return `Hatched! ${petName} is tiny, curious, and hungry for music.`
+      case 'young':
+        return `${petName} is growing quickly and learning every day.`
+      case 'adult':
+        return `${petName} is confident and ready for harder listening games.`
+      case 'super':
+        return `${petName} has unlocked super musical hearing!`
+    }
+  }
+
+  switch (stage) {
+    case 'egg':
+      return `${petName} đang lắng nghe từ trong trứng và chờ ngày nở.`
+    case 'baby':
+      return `Nở rồi! ${petName} còn bé xíu, tò mò và rất mê âm nhạc.`
+    case 'young':
+      return `${petName} đang lớn thật nhanh và học thêm mỗi ngày.`
+    case 'adult':
+      return `${petName} đã tự tin và sẵn sàng với thử thách khó hơn.`
+    case 'super':
+      return `${petName} đã mở khóa đôi tai âm nhạc siêu cấp!`
+  }
 }
 
 const DINO_REACTION_COPY: Record<
@@ -871,6 +1042,79 @@ const HUNGRY_REACTION_COPY: Record<Language, DinoReactionCopy[]> = {
   ],
 }
 
+const PET_REACTION_COPY: Record<
+  Language,
+  Record<PetStageId, DinoReactionCopy[]>
+> = {
+  en: {
+    egg: [
+      { emoji: '🥚', message: 'Knock knock... I can hear you!' },
+      { emoji: '🎵', message: 'A little more music, please!' },
+      { emoji: '✨', message: 'I am getting ready to hatch!' },
+    ],
+    baby: [
+      { emoji: '🥰', message: 'A tiny pet hug!' },
+      { emoji: '🎶', message: 'That note made me happy!' },
+      { emoji: '😋', message: 'Music helps me grow!' },
+    ],
+    young: [
+      { emoji: '🤩', message: 'Let’s play another round!' },
+      { emoji: '💃', message: 'Look at my happy dance!' },
+      { emoji: '🎧', message: 'Your ears are getting stronger!' },
+    ],
+    adult: [
+      { emoji: '😎', message: 'Ready for a harder challenge?' },
+      { emoji: '💚', message: 'I am proud of you!' },
+      { emoji: '🎹', message: 'Keep the piano music coming!' },
+    ],
+    super: [
+      { emoji: '🦸', message: 'Super hearing power activated!' },
+      { emoji: '⚡', message: 'We make a mighty music team!' },
+      { emoji: '🌟', message: 'You are a pitch hero!' },
+    ],
+  },
+  vi: {
+    egg: [
+      { emoji: '🥚', message: 'Cốc cốc... mình nghe thấy bạn rồi!' },
+      { emoji: '🎵', message: 'Cho mình nghe thêm một chút nhạc nhé!' },
+      { emoji: '✨', message: 'Mình đang chuẩn bị nở đây!' },
+    ],
+    baby: [
+      { emoji: '🥰', message: 'Ôm bé thú cưng một cái nào!' },
+      { emoji: '🎶', message: 'Nốt nhạc đó làm mình vui quá!' },
+      { emoji: '😋', message: 'Âm nhạc giúp mình lớn lên!' },
+    ],
+    young: [
+      { emoji: '🤩', message: 'Chơi thêm một câu nữa nhé!' },
+      { emoji: '💃', message: 'Xem mình nhảy vui nè!' },
+      { emoji: '🎧', message: 'Đôi tai của bạn mạnh hơn rồi!' },
+    ],
+    adult: [
+      { emoji: '😎', message: 'Sẵn sàng thử câu khó hơn chưa?' },
+      { emoji: '💚', message: 'Mình tự hào về bạn lắm!' },
+      { emoji: '🎹', message: 'Chơi thêm tiếng piano nhé!' },
+    ],
+    super: [
+      { emoji: '🦸', message: 'Kích hoạt sức mạnh siêu thính giác!' },
+      { emoji: '⚡', message: 'Chúng mình là đội âm nhạc siêu mạnh!' },
+      { emoji: '🌟', message: 'Bạn là siêu anh hùng cảm âm!' },
+    ],
+  },
+}
+
+const PET_HUNGRY_REACTION_COPY: Record<Language, DinoReactionCopy[]> = {
+  en: [
+    { emoji: '🥺', message: 'My tummy needs music!' },
+    { emoji: '🍽️', message: 'One correct answer will feed me!' },
+    { emoji: '😴', message: 'I miss playing with you.' },
+  ],
+  vi: [
+    { emoji: '🥺', message: 'Bụng mình cần nốt nhạc!' },
+    { emoji: '🍽️', message: 'Trả lời đúng một câu để cho mình ăn nhé!' },
+    { emoji: '😴', message: 'Mình nhớ được chơi cùng bạn.' },
+  ],
+}
+
 export function isLanguage(value: unknown): value is Language {
   return value === 'en' || value === 'vi'
 }
@@ -883,12 +1127,47 @@ export function getDinoStageCopy(language: Language, stage: DinoStageId) {
   return DINO_STAGE_COPY[language][stage]
 }
 
+export function getPetIdentityCopy(language: Language, petId: PetId) {
+  return PET_IDENTITY_COPY[language][petId]
+}
+
+export function getPetStageCopy(
+  language: Language,
+  petId: PetId,
+  stage: PetStageId,
+) {
+  if (petId === 'dino') {
+    return getDinoStageCopy(language, stage)
+  }
+
+  const petName = getPetIdentityCopy(language, petId).name
+  return {
+    name: PET_STAGE_NAMES[language][petId][stage],
+    description: getCompanionStageDescription(language, petName, stage),
+  }
+}
+
 export function getDinoReactions(
   language: Language,
   stage: DinoStageId,
   hungry: boolean,
 ) {
   return hungry ? HUNGRY_REACTION_COPY[language] : DINO_REACTION_COPY[language][stage]
+}
+
+export function getPetReactions(
+  language: Language,
+  petId: PetId,
+  stage: PetStageId,
+  hungry: boolean,
+) {
+  if (petId === 'dino') {
+    return getDinoReactions(language, stage, hungry)
+  }
+
+  return hungry
+    ? PET_HUNGRY_REACTION_COPY[language]
+    : PET_REACTION_COPY[language][stage]
 }
 
 export function getModeCopy(language: Language, mode: GameMode) {
