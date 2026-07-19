@@ -31,6 +31,8 @@ export type PetId =
   | 'bella'
   | 'little-bella'
   | 'andy'
+  | 'dory'
+  | 'alvin'
 export type PetStageId = 'egg' | 'baby' | 'young' | 'adult' | 'super'
 export type DinoStageId = PetStageId
 

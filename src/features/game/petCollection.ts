@@ -125,6 +125,22 @@ export const PET_CATALOG: readonly PetCatalogItem[] = [
     accentSoft: '#ffead7',
     rarity: 'monster',
   },
+  {
+    id: 'dory',
+    price: 17_500,
+    emoji: '🩵',
+    accent: '#76c7c8',
+    accentSoft: '#e2f7f5',
+    rarity: 'monster',
+  },
+  {
+    id: 'alvin',
+    price: 20_000,
+    emoji: '💚',
+    accent: '#328c73',
+    accentSoft: '#dff3eb',
+    rarity: 'monster',
+  },
 ]
 
 export const PET_IDS = PET_CATALOG.map((pet) => pet.id) as readonly PetId[]

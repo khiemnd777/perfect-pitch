@@ -42,6 +42,8 @@ describe('petCollection', () => {
         bella: 0,
         'little-bella': 0,
         andy: 0,
+        dory: 0,
+        alvin: 0,
       },
     })
   })
@@ -70,6 +72,8 @@ describe('petCollection', () => {
         bella: 0,
         'little-bella': 0,
         andy: 0,
+        dory: 0,
+        alvin: 0,
       },
     })
   })
@@ -98,6 +102,8 @@ describe('petCollection', () => {
     const bella = PET_CATALOG.find((pet) => pet.id === 'bella')
     const littleBella = PET_CATALOG.find((pet) => pet.id === 'little-bella')
     const andy = PET_CATALOG.find((pet) => pet.id === 'andy')
+    const dory = PET_CATALOG.find((pet) => pet.id === 'dory')
+    const alvin = PET_CATALOG.find((pet) => pet.id === 'alvin')
     const legendaryPrices = PET_CATALOG.filter(
       (pet) => pet.rarity === 'legendary',
     ).map((pet) => pet.price)
@@ -108,6 +114,10 @@ describe('petCollection', () => {
     expect(littleBella?.price).toBeGreaterThan(bella?.price ?? 0)
     expect(andy).toMatchObject({ price: 15_000, rarity: 'monster' })
     expect(andy?.price).toBeGreaterThan(littleBella?.price ?? 0)
+    expect(dory).toMatchObject({ price: 17_500, rarity: 'monster' })
+    expect(dory?.price).toBeGreaterThan(andy?.price ?? 0)
+    expect(alvin).toMatchObject({ price: 20_000, rarity: 'monster' })
+    expect(alvin?.price).toBeGreaterThan(dory?.price ?? 0)
     expect(purchasePet(createDefaultPetCollection(10_000), 'bella')).toMatchObject({
       wallet: 0,
       selectedPetId: 'bella',
@@ -127,6 +137,18 @@ describe('petCollection', () => {
       selectedPetId: 'andy',
       ownedPetIds: ['dino', 'andy'],
       petPoints: { dino: 15_000, andy: 0 },
+    })
+    expect(purchasePet(createDefaultPetCollection(17_500), 'dory')).toMatchObject({
+      wallet: 0,
+      selectedPetId: 'dory',
+      ownedPetIds: ['dino', 'dory'],
+      petPoints: { dino: 17_500, dory: 0 },
+    })
+    expect(purchasePet(createDefaultPetCollection(20_000), 'alvin')).toMatchObject({
+      wallet: 0,
+      selectedPetId: 'alvin',
+      ownedPetIds: ['dino', 'alvin'],
+      petPoints: { dino: 20_000, alvin: 0 },
     })
   })
 
@@ -155,6 +177,8 @@ describe('petCollection', () => {
         bella: 0,
         'little-bella': 0,
         andy: 0,
+        dory: 0,
+        alvin: 0,
       },
     })
   })
@@ -186,6 +210,8 @@ describe('petCollection', () => {
       bella: 0,
       'little-bella': 0,
       andy: 0,
+      dory: 0,
+      alvin: 0,
     })
   })
 

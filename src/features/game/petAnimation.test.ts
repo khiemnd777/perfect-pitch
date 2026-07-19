@@ -18,6 +18,8 @@ const PET_IDS: readonly PetId[] = [
   'bella',
   'little-bella',
   'andy',
+  'dory',
+  'alvin',
 ]
 const STAGE_IDS: readonly DinoStageId[] = [
   'egg',
@@ -56,6 +58,8 @@ describe('PET_ANIMATIONS', () => {
     'bella',
     'little-bella',
     'andy',
+    'dory',
+    'alvin',
   ] as const)(
     'uses the generated sprite folder for %s',
     (petId) => {

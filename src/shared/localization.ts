@@ -876,7 +876,7 @@ const PET_IDENTITY_COPY: Record<Language, Record<PetId, PetIdentityCopy>> = {
       description: 'A brave winged cub born from starlight and musical courage.',
     },
     bella: {
-      name: 'Bella Monster',
+      name: 'Bella',
       description: 'A beloved fluffy pink monster with giant curious eyes and bouncy pom-pom feet.',
     },
     'little-bella': {
@@ -886,6 +886,14 @@ const PET_IDENTITY_COPY: Record<Language, Record<PetId, PetIdentityCopy>> = {
     andy: {
       name: 'Andy',
       description: 'A bright orange fluffy monster with aqua glasses and six bouncy pom-poms on its ears, feet, and hat.',
+    },
+    dory: {
+      name: 'Dory',
+      description: 'A fluffy gray monster with giant aqua eyes, mint cord legs, and glossy peach-pink boots.',
+    },
+    alvin: {
+      name: 'Alvin',
+      description: 'A fluffy seafoam monster with round emerald ears, bright aqua eyes, mint cord legs, and glossy forest-green shoes.',
     },
   },
   vi: {
@@ -938,7 +946,7 @@ const PET_IDENTITY_COPY: Record<Language, Record<PetId, PetIdentityCopy>> = {
       description: 'Bé sư tử có cánh sinh ra từ ánh sao và lòng can đảm âm nhạc.',
     },
     bella: {
-      name: 'Bella Monster',
+      name: 'Bella',
       description: 'Bé monster lông hồng đáng yêu với đôi mắt tò mò và hai bàn chân pom-pom nhún nhảy.',
     },
     'little-bella': {
@@ -948,6 +956,14 @@ const PET_IDENTITY_COPY: Record<Language, Record<PetId, PetIdentityCopy>> = {
     andy: {
       name: 'Andy',
       description: 'Bé monster lông cam với kính xanh aqua và sáu pom-pom nhún nhảy trên tai, chân và chiếc mũ xanh.',
+    },
+    dory: {
+      name: 'Dory',
+      description: 'Bé monster lông xám với đôi mắt aqua to tròn, hai chân dây xanh bạc hà và đôi bốt hồng đào bóng loáng.',
+    },
+    alvin: {
+      name: 'Alvin',
+      description: 'Bé monster lông xanh seafoam với đôi tai emerald tròn, mắt aqua sáng, hai chân dây bạc hà và đôi giày xanh rừng bóng loáng.',
     },
   },
 }
@@ -1082,11 +1098,11 @@ const PET_STAGE_NAMES: Record<
       super: 'Super Star Griffin',
     },
     bella: {
-      egg: 'Bella Monster Egg',
-      baby: 'Baby Bella Monster',
-      young: 'Young Bella Monster',
-      adult: 'Grown Bella Monster',
-      super: 'Super Bella Monster',
+      egg: 'Bella Egg',
+      baby: 'Baby Bella',
+      young: 'Young Bella',
+      adult: 'Grown Bella',
+      super: 'Super Bella',
     },
     'little-bella': {
       egg: 'Little Bella Egg',
@@ -1101,6 +1117,20 @@ const PET_STAGE_NAMES: Record<
       young: 'Young Andy',
       adult: 'Grown Andy',
       super: 'Super Andy',
+    },
+    dory: {
+      egg: 'Dory Egg',
+      baby: 'Baby Dory',
+      young: 'Young Dory',
+      adult: 'Grown Dory',
+      super: 'Super Dory',
+    },
+    alvin: {
+      egg: 'Alvin Egg',
+      baby: 'Baby Alvin',
+      young: 'Young Alvin',
+      adult: 'Grown Alvin',
+      super: 'Super Alvin',
     },
   },
   vi: {
@@ -1182,11 +1212,11 @@ const PET_STAGE_NAMES: Record<
       super: 'Griffin Ngôi Sao siêu nhân',
     },
     bella: {
-      egg: 'Trứng Bella Monster',
-      baby: 'Bella Monster baby',
-      young: 'Bella Monster con',
-      adult: 'Bella Monster trưởng thành',
-      super: 'Bella Monster siêu nhân',
+      egg: 'Trứng Bella',
+      baby: 'Bella baby',
+      young: 'Bella con',
+      adult: 'Bella trưởng thành',
+      super: 'Bella siêu nhân',
     },
     'little-bella': {
       egg: 'Trứng Little Bella',
@@ -1201,6 +1231,20 @@ const PET_STAGE_NAMES: Record<
       young: 'Andy con',
       adult: 'Andy trưởng thành',
       super: 'Andy siêu nhân',
+    },
+    dory: {
+      egg: 'Trứng Dory',
+      baby: 'Dory baby',
+      young: 'Dory con',
+      adult: 'Dory trưởng thành',
+      super: 'Dory siêu nhân',
+    },
+    alvin: {
+      egg: 'Trứng Alvin',
+      baby: 'Alvin baby',
+      young: 'Alvin con',
+      adult: 'Alvin trưởng thành',
+      super: 'Alvin siêu nhân',
     },
   },
 }

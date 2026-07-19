@@ -658,11 +658,13 @@ describe('PerfectPitchApp', () => {
     expect(screen.getByText('Cloud Dragon')).toBeInTheDocument()
     expect(screen.getByText('Dawn Phoenix')).toBeInTheDocument()
     expect(screen.getByText('Star Griffin')).toBeInTheDocument()
-    expect(screen.getByText('Bella Monster')).toBeInTheDocument()
+    expect(screen.getByText('Bella')).toBeInTheDocument()
     expect(screen.getByText('Little Bella')).toBeInTheDocument()
     expect(screen.getByText('Andy')).toBeInTheDocument()
+    expect(screen.getByText('Dory')).toBeInTheDocument()
+    expect(screen.getByText('Alvin')).toBeInTheDocument()
     expect(screen.getAllByText('✦ Legendary')).toHaveLength(4)
-    expect(screen.getAllByText('◆ Monster')).toHaveLength(3)
+    expect(screen.getAllByText('◆ Monster')).toHaveLength(5)
     expect(
       Array.from(
         document.querySelectorAll<HTMLImageElement>(
@@ -686,6 +688,8 @@ describe('PerfectPitchApp', () => {
       '/pets/bella/frames-v1/adult-1.png',
       '/pets/little-bella/frames-v1/adult-1.png',
       '/pets/andy/frames-v1/adult-1.png',
+      '/pets/dory/frames-v1/adult-1.png',
+      '/pets/alvin/frames-v1/adult-1.png',
     ])
     expect(screen.getByRole('button', { name: 'Need ♫ 100' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Need ♫ 200' })).toBeDisabled()
@@ -701,6 +705,8 @@ describe('PerfectPitchApp', () => {
     expect(screen.getByRole('button', { name: 'Need ♫ 10000' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Need ♫ 12500' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Need ♫ 15000' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Need ♫ 17500' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Need ♫ 20000' })).toBeDisabled()
   })
 
   it('buys a new egg with saved notes and keeps dinosaur growth intact', async () => {

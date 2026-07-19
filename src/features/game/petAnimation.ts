@@ -58,6 +58,8 @@ export const PET_ANIMATIONS: Record<
   bella: createPetAnimations('bella'),
   'little-bella': createPetAnimations('little-bella'),
   andy: createPetAnimations('andy'),
+  dory: createPetAnimations('dory'),
+  alvin: createPetAnimations('alvin'),
 }
 
 export function getPetAnimation(petId: PetId, stageId: DinoStageId) {
