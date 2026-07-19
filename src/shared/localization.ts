@@ -57,6 +57,9 @@ interface AppCopy {
   playQuestion: string
   replayQuestion: string
   audioTip: string
+  chooseAnswer: string
+  answersLocked: string
+  answersReady: string
   correct: string
   incorrect: string
   nextQuestion: string
@@ -716,6 +719,9 @@ const APP_COPY: Record<Language, AppCopy> = {
     playQuestion: 'Enable piano and play',
     replayQuestion: 'Replay',
     audioTip: 'Tip: the first playback unlocks Web Audio after a user gesture.',
+    chooseAnswer: 'Choose your answer',
+    answersLocked: 'Play the sound to unlock',
+    answersReady: '4 choices ready',
     correct: 'Correct',
     incorrect: 'Not quite',
     nextQuestion: 'Next question',
@@ -778,6 +784,9 @@ const APP_COPY: Record<Language, AppCopy> = {
     playQuestion: 'Bật piano và phát',
     replayQuestion: 'Phát lại',
     audioTip: 'Mẹo: lần phát đầu sẽ kích hoạt Web Audio theo thao tác người dùng.',
+    chooseAnswer: 'Chọn đáp án',
+    answersLocked: 'Phát âm thanh để mở khóa',
+    answersReady: '4 lựa chọn sẵn sàng',
     correct: 'Chính xác',
     incorrect: 'Chưa đúng',
     nextQuestion: 'Câu tiếp theo',

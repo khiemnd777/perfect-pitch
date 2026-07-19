@@ -183,12 +183,16 @@ describe('PerfectPitchApp', () => {
     expect(
       await screen.findByText('Listen to the interval and choose the correct interval name'),
     ).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Choose your answer' })).toBeInTheDocument()
+    expect(screen.getByText('Play the sound to unlock')).toBeInTheDocument()
 
     await user.click(screen.getAllByRole('button', { name: 'VI' })[0])
 
     expect(
       await screen.findByText('Nghe quãng và chọn đúng tên quãng'),
     ).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Chọn đáp án' })).toBeInTheDocument()
+    expect(screen.getByText('Phát âm thanh để mở khóa')).toBeInTheDocument()
   })
 
   it('translates scale answer labels when switching language in game', async () => {
@@ -335,6 +339,9 @@ describe('PerfectPitchApp', () => {
     await user.click(screen.getByRole('button', { name: 'Enable piano and play' }))
 
     expect(screen.getByTestId('choice-a')).not.toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Replay' }).closest('.listen-card')).toHaveClass(
+      'listen-card--replay',
+    )
   })
 
   it('shows immediate feedback and resets on next question', async () => {

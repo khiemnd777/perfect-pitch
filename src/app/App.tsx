@@ -1188,95 +1188,135 @@ export function PerfectPitchApp({
               />
 
               <div className="question-panel">
-              <div className="question-heading">
-                <p className="question-kicker">{copy.currentQuestion}</p>
-                <h2>{displayQuestion.prompt}</h2>
-                <p>{displayQuestion.helperText}</p>
-              </div>
-
-              {progressNotice && <p className="progress-banner">{progressNotice}</p>}
-
-              <div className="control-row">
-                <button
-                  className="play-button"
-                  disabled={audioStatus === 'loading' || isPlayingQuestion}
-                  onClick={playQuestion}
-                  type="button"
-                >
-                  {audioStatus === 'loading'
-                    ? copy.loadingAudio
-                    : hasPlayedCurrent
-                      ? copy.replayQuestion
-                      : copy.playQuestion}
-                </button>
-              </div>
-
-              {audioError && <p className="status-message error">{audioError}</p>}
-              {!hasPlayedCurrent && !audioError && (
-                <p className="status-message">{copy.audioTip}</p>
-              )}
-
-              <div className="choices-grid">
-                {displayQuestion.choices.map((choice) => {
-                  const isSelected = evaluation?.selectedChoiceId === choice.id
-                  const isCorrect = choice.id === question.correctChoiceId
-                  const isChoiceDisabled = !hasPlayedCurrent || Boolean(evaluation)
-
-                  const stateClass = evaluation
-                    ? isCorrect
-                      ? 'choice-card correct'
-                      : isSelected
-                        ? 'choice-card wrong'
-                        : 'choice-card muted'
-                    : 'choice-card'
-
-                  return (
-                    <button
-                      key={choice.id}
-                      className={stateClass}
-                      data-testid={`choice-${choice.id}`}
-                      disabled={isChoiceDisabled}
-                      onClick={() => chooseAnswer(choice.id)}
-                      type="button"
-                    >
-                      <span className="choice-label">{choice.label}</span>
-                      <span className="choice-meta">{choice.meta}</span>
-                    </button>
-                  )
-                })}
-              </div>
-
-              {evaluation && (
-                <div
-                  ref={feedbackPanelRef}
-                  className={`feedback-panel ${
-                    evaluation.status === 'correct' ? 'success' : 'danger'
-                  }`}
-                >
-                  <div>
-                    <p className="feedback-title">
-                      {evaluation.status === 'correct' ? copy.correct : copy.incorrect}
-                    </p>
-                    {evaluation.status === 'correct' && (
-                      <p className="reward-message">♫ {copy.pointsEarned}</p>
-                    )}
-                    <p>
-                      {copy.correctAnswerPrefix}{' '}
-                      <strong>
-                        {
-                          displayQuestion.choices.find(
-                            (choice) => choice.id === question.correctChoiceId,
-                          )?.label
-                        }
-                      </strong>
-                      .
-                    </p>
+                <div className="question-hero">
+                  <div className="question-heading">
+                    <p className="question-kicker">{copy.currentQuestion}</p>
+                    <h2>{displayQuestion.prompt}</h2>
+                    <p>{displayQuestion.helperText}</p>
                   </div>
-                  <button className="next-button" onClick={goToNextQuestion} type="button">
-                    {copy.nextQuestion}
-                  </button>
+
+                  <div
+                    className={`listen-card ${
+                      isPlayingQuestion ? 'listen-card--playing' : ''
+                    } ${hasPlayedCurrent ? 'listen-card--replay' : ''}`}
+                  >
+                    <div className="listen-card__visual" aria-hidden="true">
+                      <span />
+                      <span />
+                      <span />
+                      <span />
+                      <span />
+                      <span />
+                      <span />
+                    </div>
+                    <div className="control-row">
+                      <button
+                        className="play-button"
+                        disabled={audioStatus === 'loading' || isPlayingQuestion}
+                        onClick={playQuestion}
+                        type="button"
+                      >
+                        {audioStatus === 'loading'
+                          ? copy.loadingAudio
+                          : hasPlayedCurrent
+                            ? copy.replayQuestion
+                            : copy.playQuestion}
+                      </button>
+                    </div>
+
+                    {audioError && <p className="status-message error">{audioError}</p>}
+                    {!hasPlayedCurrent && !audioError && (
+                      <p className="status-message">{copy.audioTip}</p>
+                    )}
+                  </div>
                 </div>
-              )}
+
+                {progressNotice && <p className="progress-banner">{progressNotice}</p>}
+
+                <div className="answer-panel">
+                  <div className="answer-panel__header">
+                    <h3>{copy.chooseAnswer}</h3>
+                    <span className={hasPlayedCurrent ? 'is-ready' : ''}>
+                      <span aria-hidden="true">{hasPlayedCurrent ? '●' : '○'}</span>{' '}
+                      {hasPlayedCurrent ? copy.answersReady : copy.answersLocked}
+                    </span>
+                  </div>
+
+                  <div className="choices-grid">
+                    {displayQuestion.choices.map((choice, choiceIndex) => {
+                      const isSelected = evaluation?.selectedChoiceId === choice.id
+                      const isCorrect = choice.id === question.correctChoiceId
+                      const isChoiceDisabled = !hasPlayedCurrent || Boolean(evaluation)
+
+                      const stateClass = evaluation
+                        ? isCorrect
+                          ? 'choice-card correct'
+                          : isSelected
+                            ? 'choice-card wrong'
+                            : 'choice-card muted'
+                        : 'choice-card'
+
+                      return (
+                        <button
+                          key={choice.id}
+                          className={stateClass}
+                          data-testid={`choice-${choice.id}`}
+                          disabled={isChoiceDisabled}
+                          onClick={() => chooseAnswer(choice.id)}
+                          type="button"
+                        >
+                          <span className="choice-card__topline">
+                            <span className="choice-index" aria-hidden="true">
+                              {String.fromCharCode(65 + choiceIndex)}
+                            </span>
+                            {evaluation && (isCorrect || isSelected) && (
+                              <span className="choice-state" aria-hidden="true">
+                                {isCorrect ? '✓' : '×'}
+                              </span>
+                            )}
+                          </span>
+                          <span className="choice-label">{choice.label}</span>
+                          <span className="choice-meta">{choice.meta}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {evaluation && (
+                  <div
+                    ref={feedbackPanelRef}
+                    className={`feedback-panel ${
+                      evaluation.status === 'correct' ? 'success' : 'danger'
+                    }`}
+                  >
+                    <span className="feedback-panel__icon" aria-hidden="true">
+                      {evaluation.status === 'correct' ? '✓' : '↗'}
+                    </span>
+                    <div className="feedback-panel__copy">
+                      <p className="feedback-title">
+                        {evaluation.status === 'correct' ? copy.correct : copy.incorrect}
+                      </p>
+                      {evaluation.status === 'correct' && (
+                        <p className="reward-message">♫ {copy.pointsEarned}</p>
+                      )}
+                      <p>
+                        {copy.correctAnswerPrefix}{' '}
+                        <strong>
+                          {
+                            displayQuestion.choices.find(
+                              (choice) => choice.id === question.correctChoiceId,
+                            )?.label
+                          }
+                        </strong>
+                        .
+                      </p>
+                    </div>
+                    <button className="next-button" onClick={goToNextQuestion} type="button">
+                      {copy.nextQuestion}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </section>
