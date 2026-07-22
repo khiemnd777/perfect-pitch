@@ -14,6 +14,7 @@
 
 ## Architecture
 - App wiring lives in `src/app`.
+- The shared Claymorphism visual system lives in `src/app/clayTheme.css`; `App.css` retains the structural layout and animation primitives, while `src/index.css` owns the global palette and base tokens.
 - Feature logic is split under `src/features/audio`, `src/features/game`, and `src/features/question-bank`.
 - Shared public types live in `src/shared/gameTypes.ts`.
 - Shared bilingual copy and text resolvers live in `src/shared/localization.ts`, while language persistence helpers live in `src/app/languagePreference.ts`.
@@ -25,6 +26,7 @@
 - Dinosaur hunger timestamps and roar cooldown rules live in `src/features/game/dinoCare.ts`; the lazily loaded Tone.js SFX lives in `src/features/audio/dinoVoice.ts`.
 
 ## Product Rules
+- The product UI uses a warm, child-friendly Claymorphism direction: pastel musical surfaces, large rounded forms, layered outer/inset depth, tactile press states, strong focus rings, and readable semantic colors for correct/incorrect feedback.
 - The app supports both English and Vietnamese UI/content, defaults to English, and persists the selected language in local storage.
 - `single` mode answers identify pitch class only, not octave.
 - `double` mode choices must remain unambiguous and use sorted note labels.

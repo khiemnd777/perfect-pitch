@@ -1,8 +1,9 @@
 # Current Context
 
-Last updated: 2026-07-19
+Last updated: 2026-07-22
 
 ## Implemented
+- The full application now uses a centralized Claymorphism visual system across the home hero, balanced desktop 4×2 mode grid, companion dashboard, quiz shell, playback control, answer states, feedback, pet shop, purchase confirmation, footer, and crawlable SEO pages. The theme adds consistent raised/pressed depth, inner highlights, tactile hover/active behavior, accessible focus rings, and semantic success/error treatments without changing quiz, audio, progression, localization, or pet behavior. Browser QA passed at 1280px and 390px: home, game, immediate wrong/correct reveal, shop dialog, and an SEO landing page render without horizontal overflow or console warnings/errors. Lint, all 197 tests, and the production build pass.
 - The quiz Question & Answer frame now separates the musical prompt, animated playback control, answer readiness state, indexed A-D choices, and result feedback into a clearer visual hierarchy. After the first playback, the tall audio prompt changes into a compact horizontal Replay strip so no empty upper area remains; the waveform still animates during replay. Correct and incorrect selections keep strong color/icon cues while unrelated choices recede; the bilingual labels and existing instant-grading, replay, auto-scroll, reward, and next-question behavior remain intact. Desktop and 390px browser QA confirmed the responsive one-column layout, readable Vietnamese copy, and no horizontal overflow.
 - Pet purchases now open an accessible bilingual confirmation dialog before spending any music notes. The dialog shows the selected pet, price, and post-purchase wallet balance; Cancel and `Escape` leave the wallet unchanged, while Buy now completes the existing purchase flow. Desktop and 390px browser QA confirmed focus starts on the safe Cancel action, the mobile dialog stays within the viewport without horizontal overflow, successful purchases update ownership and wallet state, and no console errors are emitted.
 - Companion sprites now prioritize full-pet visibility: square-card stage scales were recalibrated, sprite/body paint clipping was removed, and active raster frames may render beyond their logical box instead of cutting off ears, wings, crowns, or animation poses. Tap reactions render as a top-layer absolute speech bubble above and clear of the pet, with a downward pointer aimed at the portrait; it paints above the wallet/shop row without intercepting pointer input. The pet and its copy stay at their original, unshifted baselines while the bubble toggles independently, so their relative positions and the companion card dimensions do not change. Home, mobile, and compact game cards passed 1440px/390px browser QA with stable before/after dimensions, no overflow, and no console issues.
@@ -59,6 +60,7 @@ Last updated: 2026-07-19
 
 ## Important Files
 - `src/app/App.tsx`: main flow, mode selection, playback actions, grading state, and session stats.
+- `src/app/clayTheme.css`: centralized Claymorphism tokens, surface depth, interaction states, responsive overrides, and styling coverage for the app, shop, and SEO routes.
 - `src/app/languagePreference.ts`: local-storage load/save helpers for selected language.
 - `src/features/audio/audioEngine.ts`: Tone startup, sample preload, playback scheduling, replay, and cleanup.
 - `src/features/audio/pianoSamples.ts`: local piano sample mapping and velocity layers.

@@ -7,6 +7,7 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import './App.css'
+import './clayTheme.css'
 import type { AudioEngine } from '../features/audio/audioEngine'
 import { evaluateSelection } from '../features/game/evaluation'
 import {

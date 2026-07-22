@@ -1,20 +1,36 @@
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap');
 
 :root {
-  --bg: #fff8df;
-  --surface: #ffffff;
-  --text-strong: #263b47;
-  --text-muted: #5f737b;
-  --accent: #6453cc;
-  --danger: #bd4f48;
-  --shadow-soft: 0 15px 32px rgba(49, 75, 76, 0.12);
-  --shadow-elevated: 0 22px 42px rgba(45, 67, 70, 0.2);
+  --bg: #f8f4ec;
+  --surface: #fffdfa;
+  --text-strong: #303653;
+  --text-muted: #667085;
+  --accent: #6d5bd0;
+  --danger: #bd4f5b;
+  --clay-purple: #7868d8;
+  --clay-purple-dark: #5746b4;
+  --clay-mint: #a9e5d1;
+  --clay-yellow: #f6d979;
+  --clay-peach: #f5b8a4;
+  --clay-blue: #acd5f3;
+  --clay-pink: #efb7d1;
+  --clay-green: #b9dfa3;
+  --clay-cream: #fff8e8;
+  --shadow-soft:
+    0 16px 30px rgba(66, 61, 92, 0.13),
+    inset 0 2px 2px rgba(255, 255, 255, 0.88),
+    inset 0 -5px 10px rgba(80, 66, 105, 0.06);
+  --shadow-elevated:
+    0 23px 38px rgba(66, 61, 92, 0.2),
+    inset 0 2px 2px rgba(255, 255, 255, 0.9),
+    inset 0 -6px 12px rgba(80, 66, 105, 0.08);
 
   color: var(--text-strong);
   background:
-    radial-gradient(circle at 6% 3%, rgba(255, 214, 92, 0.33), transparent 22%),
-    radial-gradient(circle at 96% 9%, rgba(129, 218, 194, 0.3), transparent 24%),
-    linear-gradient(180deg, #fff9e8, #f8f3df 70%, #eff8ed);
+    radial-gradient(circle at 6% 4%, rgba(246, 217, 121, 0.42), transparent 23%),
+    radial-gradient(circle at 94% 8%, rgba(169, 229, 209, 0.46), transparent 25%),
+    radial-gradient(circle at 76% 88%, rgba(239, 183, 209, 0.28), transparent 27%),
+    linear-gradient(155deg, #fffaf0 0%, #f8f2ef 48%, #eef8f2 100%);
   font: 18px/1.5 'Nunito', sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -35,17 +51,19 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  overflow-x: hidden;
 }
 
 button {
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button:focus-visible,
 a:focus-visible,
 summary:focus-visible {
-  outline: 4px solid rgba(86, 72, 190, 0.28);
-  outline-offset: 3px;
+  outline: 4px solid rgba(87, 70, 180, 0.36);
+  outline-offset: 4px;
 }
 
 h1,
