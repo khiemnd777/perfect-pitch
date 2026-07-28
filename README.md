@@ -2,7 +2,7 @@
 
 Perfect Pitch is a fully client-side ear-training web app built for practicing single notes, double notes, short melodies, intervals, arpeggios, triads, scales, and seventh chords with local piano samples.
 
-Live site: [https://andy.dailyturning.com](https://andy.dailyturning.com)
+Live site: [https://andy.knasoftware.com](https://andy.knasoftware.com)
 
 ## Product Goal
 
@@ -18,6 +18,7 @@ Live site: [https://andy.dailyturning.com](https://andy.dailyturning.com)
 - Per-mode progress persisted in local storage.
 - Replay always reuses the current question payload instead of generating a new one.
 - Deterministic question generation patterns, with optional seeds for testing when needed.
+- Crawlable English and Vietnamese learning pages for high-intent ear-training topics, with direct links into the matching practice mode.
 
 ## Tech Stack
 
@@ -45,7 +46,10 @@ bun run dev
 bun run lint
 bun run test:run
 bun run build
+bun run seo:generate
 ```
+
+`bun run build` compiles the app and then generates the crawlable route HTML, `404.html`, and `sitemap.xml` from `src/seo/seoContent.ts`. `seo:generate` is useful only when regenerating those artifacts inside an existing `dist` directory.
 
 ## Project Structure
 
@@ -54,6 +58,8 @@ bun run build
 - `src/features/game`: grading logic and streak-based progression.
 - `src/features/question-bank`: question generation for all 8 modes across 5 difficulty levels.
 - `src/shared`: public types, music helpers, and random utilities.
+- `src/seo`: the canonical SEO route/content/metadata manifest.
+- `scripts/generate-seo.ts`: static SEO route, 404, and sitemap generation.
 - `public/audio/piano`: piano samples used for playback.
 
 ## Domain Rules
@@ -127,5 +133,15 @@ If you want the whole flow to be one shell command with no separate `gh auth log
 If you only have the VPS password, set `VPS_PASSWORD` in `.env.deploy` and leave `SSH_KEY_PATH` commented out. The helper will generate a dedicated deploy key, install it on the server, and then upload the GitHub secrets.
 
 To enable a hosted analytics dashboard without touching the VPS, create a Google Analytics 4 web data stream for your production domain and set `VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX` in `.env.deploy` before running `bash scripts/deploy/bootstrap-github-secrets.sh`. The production deploy now forwards that secret into the Docker build on the VPS, so live bundles will send page views plus quiz events such as mode selection, play/replay, next question, audio errors, and answer correctness to the GA UI.
+
+## SEO Release Checklist
+
+After deploying a production build:
+
+- confirm `/ear-training` and `/vi/luyen-cam-am` return unique HTML with HTTP 200
+- confirm a random invalid URL returns HTTP 404 and `noindex, follow`
+- submit `https://andy.knasoftware.com/sitemap.xml` in Google Search Console
+- request indexing for the homepage, `/ear-training`, `/perfect-pitch-training`, and `/vi/luyen-cam-am`
+- verify the GA4 Realtime/DebugView events `seo_practice_landing`, `seo_cta_click`, `first_answer`, `answer_5`, and `answer_10`
 
 Before the first production deploy succeeds, point the domain A record to the VPS IP.

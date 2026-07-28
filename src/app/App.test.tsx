@@ -312,13 +312,67 @@ describe('PerfectPitchApp', () => {
 
     expect(
       screen.getByRole('heading', {
-        name: 'Interval ear training for cleaner musical listening',
+        name: 'Learn to recognize musical intervals by ear',
       }),
     ).toBeInTheDocument()
     expect(screen.getByText('Melodic and harmonic intervals')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Start practice' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Start interval practice' })).toHaveAttribute(
       'href',
-      '/#practice',
+      '/?mode=interval&source=%2Finterval-ear-training',
+    )
+    expect(document.title).toBe('Interval Ear Training | Learn Intervals by Ear')
+    expect(document.documentElement.lang).toBe('en')
+  })
+
+  it('renders a Vietnamese SEO route with reciprocal language navigation', () => {
+    window.history.pushState({}, '', '/vi/luyen-quang')
+
+    render(<PerfectPitchApp audioEngine={createMockAudioEngine()} />)
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Nhận biết khoảng cách giữa hai nốt bằng tai',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'EN' })).toHaveAttribute(
+      'href',
+      '/interval-ear-training',
+    )
+    expect(document.documentElement.lang).toBe('vi')
+  })
+
+  it('opens the requested practice mode from an SEO deep link', () => {
+    window.history.pushState(
+      {},
+      '',
+      '/?mode=interval&source=%2Finterval-ear-training',
+    )
+    const questionFactory = createTrackingQuestionFactory()
+
+    render(
+      <PerfectPitchApp
+        audioEngine={createMockAudioEngine()}
+        questionFactory={questionFactory.factory}
+      />,
+    )
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Listen to the interval and choose the correct interval name',
+      }),
+    ).toBeInTheDocument()
+    expect(questionFactory.createQuestion).toHaveBeenCalledWith('interval', 'easy')
+  })
+
+  it('renders a noindex not-found screen for an unknown client route', () => {
+    window.history.pushState({}, '', '/missing-page')
+
+    render(<PerfectPitchApp audioEngine={createMockAudioEngine()} />)
+
+    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute(
+      'content',
+      'noindex, follow',
     )
   })
 
@@ -653,7 +707,9 @@ describe('PerfectPitchApp', () => {
 
     await user.click(screen.getByRole('button', { name: 'Pet shop' }))
 
-    expect(screen.getByRole('dialog', { name: 'Pet Egg Shop' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('dialog', { name: 'Pet Egg Shop' }),
+    ).toBeInTheDocument()
     expect(screen.getByText('Cloud Cat')).toBeInTheDocument()
     expect(screen.getByText('Moon Bunny')).toBeInTheDocument()
     expect(screen.getByText('Star Fox')).toBeInTheDocument()
@@ -731,6 +787,7 @@ describe('PerfectPitchApp', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'Pet shop' }))
+    await screen.findByRole('dialog', { name: 'Pet Egg Shop' })
     await user.click(screen.getByRole('button', { name: 'Buy egg · ♫ 100' }))
 
     expect(
@@ -839,6 +896,7 @@ describe('PerfectPitchApp', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'Pet shop' }))
+    await screen.findByRole('dialog', { name: 'Pet Egg Shop' })
     await user.click(screen.getByRole('button', { name: 'Care for this pet' }))
 
     expect(screen.getByRole('img', { name: 'Baby Cloud Cat' })).toBeInTheDocument()

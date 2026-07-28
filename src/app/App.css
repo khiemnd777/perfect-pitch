@@ -2071,6 +2071,7 @@
 .seo-panel,
 .seo-page__body,
 .seo-page__faq {
+  min-width: 0;
   border: 3px solid white;
   border-radius: 28px;
   background: rgba(255, 255, 255, 0.78);
@@ -2131,11 +2132,13 @@
 
 .seo-page {
   display: grid;
+  min-width: 0;
   gap: 22px;
 }
 
 .seo-page__hero {
   display: grid;
+  min-width: 0;
   gap: 17px;
   padding: 30px;
   border: 3px solid white;
@@ -2147,7 +2150,70 @@
 .seo-page__hero h1 {
   max-width: 13ch;
   color: #293e48;
+  overflow-wrap: anywhere;
   text-wrap: balance;
+}
+
+.seo-page__actions,
+.seo-breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+}
+
+.seo-page__actions {
+  min-width: 0;
+  max-width: 100%;
+  justify-content: flex-end;
+}
+
+.seo-page__actions .ghost-button {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: center;
+  white-space: normal;
+}
+
+.seo-breadcrumbs {
+  color: #536e68;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.seo-breadcrumbs a {
+  color: #4f5aa0;
+}
+
+.seo-page__body ul {
+  display: grid;
+  gap: 7px;
+  margin: 3px 0 0;
+  padding-left: 1.3rem;
+  color: var(--text-muted);
+}
+
+.seo-page__not-found {
+  min-height: 360px;
+  align-content: center;
+}
+
+.seo-page__not-found .primary-button {
+  width: fit-content;
+}
+
+.pet-shop-loading {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(48, 54, 83, 0.34);
+  color: white;
+  font-weight: 900;
+  backdrop-filter: blur(5px);
 }
 
 .seo-page__body,
@@ -2189,6 +2255,16 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .seo-page__hero .hero-panel__top {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .seo-page__actions {
+    justify-content: flex-start;
+  }
+
   .pet-shop-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2214,6 +2290,32 @@
 
   .hero-panel h1 {
     font-size: clamp(2.55rem, 13vw, 4rem);
+  }
+
+  .seo-page__hero {
+    padding: 20px;
+    border-radius: 28px;
+  }
+
+  .seo-page__hero h1 {
+    max-width: 100%;
+    font-size: clamp(2.35rem, 12vw, 3.4rem);
+  }
+
+  .seo-page__actions {
+    display: grid;
+    width: 100%;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .seo-page__actions .ghost-button {
+    width: 100%;
+  }
+
+  .seo-panel,
+  .seo-page__body,
+  .seo-page__faq {
+    padding: 20px;
   }
 
   .language-switcher__label {

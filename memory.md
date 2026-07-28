@@ -56,6 +56,9 @@
 ## Current Implementation Snapshot
 - `src/app/App.tsx` lets the user pick a mode immediately, lazy-loads the audio engine on first playback, restores per-mode difficulty and language from local storage, exposes an `EN/VI` switcher on home and game screens, and auto-adjusts level progression during play.
 - `src/app/analytics.ts` injects Google Analytics 4 only when `VITE_GA_MEASUREMENT_ID` is present and tracks page views plus core quiz interactions.
+- SEO content and metadata are centralized in `src/seo/seoContent.ts`. `scripts/generate-seo.ts` turns that manifest into crawlable route HTML, `404.html`, and `sitemap.xml` after every production build.
+- Production SEO uses 10 English and 5 Vietnamese learning routes with canonical URLs, reciprocal `hreflang` where translations exist, visible internal links, route-specific JSON-LD, and direct practice deep links such as `/?mode=interval&source=/interval-ear-training`.
+- Unknown paths must return the generated noindex 404 page; hosting configs must not restore the old catch-all 200 rewrite because that recreates soft 404s.
 - Session stats track answered count, correct count, current streak, and best streak.
 - The child-friendly game shell shows a persistent five-stage companion on the home and quiz screens. Every species and stage uses four generated transparent raster frames: the dinosaur under `public/dino/frames-v1/`, and shop pets under `public/pets/<pet-id>/frames-v1/`.
 - The companion card opens a bilingual pet shop from home and quiz screens. Collection state persists under `perfect-pitch-pet-collection`, and the modal renders through a body portal so it stays viewport-fixed on scrolled mobile pages.
@@ -65,8 +68,8 @@
 - `.github/workflows/ci.yml` runs lint, tests, production builds, deploy-script syntax checks, `docker compose config`, image builds, and default Caddy validation on pushes and pull requests.
 - `.github/workflows/deploy-production.yml` deploys successful `main` builds to a VPS by shipping the repo context over SSH, bootstrapping Docker if needed, and serving the app via Docker + Caddy.
 - `deploy/Caddyfile` is a checked-in local/default HTTP reverse-proxy config, while `deploy/Caddyfile.template` is rendered with the production domain on the VPS before rollout.
-- Public SEO discovery files live in `public/robots.txt` and `public/sitemap.xml` for the production canonical URL `https://andy.knasoftware.com/`.
-- SEO content routes are handled in the React app for `/ear-training`, `/perfect-pitch-training`, `/interval-ear-training`, `/chord-ear-training`, `/piano-ear-training`, and `/what-is-perfect-pitch`; keep these routes listed in `public/sitemap.xml`.
+- `public/robots.txt` points crawlers to the production sitemap. The sitemap is generated from `src/seo/seoContent.ts` during `bun run build`; do not maintain a second hand-written sitemap under `public`.
+- Firebase Hosting uses clean URLs and the generated `404.html`; the Nginx production image resolves `$uri.html` and returns real 404 status codes for unknown paths. Hashed assets are immutable for one year, piano audio is cached for 30 days, and HTML revalidates.
 - `scripts/deploy/bootstrap-github-secrets.sh` reads deploy inputs from a repo-root `.env.deploy` file by default and can bootstrap from either an existing SSH key or a one-time VPS password by generating and installing a dedicated deploy key automatically.
 - `compose.yml` runs the public Caddy container in host-network mode and proxies to `127.0.0.1:8080`, which avoids broken ACME DNS resolution from the Docker bridge on the production VPS.
 - `scripts/deploy/bootstrap-github-secrets.sh` pushes deployment secrets to GitHub from the local machine via `gh secret set`.

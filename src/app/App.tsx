@@ -1,4 +1,6 @@
 import {
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -41,7 +43,6 @@ import {
   type QuestionFactory,
 } from '../features/question-bank/questionFactory'
 import { PetCompanion } from '../features/pet-shop/PetCompanion'
-import { PetShop } from '../features/pet-shop/PetShop'
 import {
   formatSessionStats,
   getAppCopy,
@@ -73,11 +74,30 @@ import {
   saveSessionStats,
 } from './sessionStats'
 import { initAnalytics, trackEvent, trackPageView } from './analytics'
+import {
+  DEFAULT_DESCRIPTION,
+  DEFAULT_TITLE,
+  SEO_PAGES,
+  SEO_PAGE_BY_PATH,
+  SITE_URL,
+  SOCIAL_IMAGE_PATH,
+  getAbsoluteUrl,
+  getLanguageAlternates,
+  getPracticeHref,
+  getStructuredData,
+  type SeoPageContent,
+} from '../seo/seoContent'
 
 const QUESTION_DEDUP_MAX_ATTEMPTS = 24
 const PLAYBACK_START_DELAY_MS = 80
 const PLAYBACK_LOCK_BUFFER_MS = 40
 const DINO_HUNGER_CHECK_INTERVAL_MS = 60 * 1000
+
+const PetShop = lazy(() =>
+  import('../features/pet-shop/PetShop').then((module) => ({
+    default: module.PetShop,
+  })),
+)
 
 const MODE_ICONS: Record<Exclude<GameMode, 'interval'>, string> = {
   single: '🎵',
@@ -125,232 +145,6 @@ async function playDefaultDinoRoar() {
   await playDinoRoar()
 }
 
-interface SeoPageContent {
-  path: string
-  title: string
-  description: string
-  eyebrow: string
-  heading: string
-  intro: string
-  sections: Array<{
-    heading: string
-    body: string
-  }>
-  faqs: Array<{
-    question: string
-    answer: string
-  }>
-}
-
-const SEO_PAGES: SeoPageContent[] = [
-  {
-    path: '/ear-training',
-    title: 'Ear Training Online | Perfect Pitch',
-    description:
-      'Practice ear training online with real piano sounds, instant feedback, and focused modes for notes, intervals, melodies, arpeggios, and chords.',
-    eyebrow: 'Ear training online',
-    heading: 'Ear training online with real piano sounds',
-    intro:
-      'Perfect Pitch helps musicians practice listening skills with short, repeatable piano exercises. Each round plays a musical prompt, offers four choices, and grades the answer immediately.',
-    sections: [
-      {
-        heading: 'What you can practice',
-        body:
-          'Start with single notes, then move into double notes, short melodies, intervals, arpeggios, and chords. The exercises stay compact so you can train for a few minutes without setting up a full lesson.',
-      },
-      {
-        heading: 'Why piano samples matter',
-        body:
-          'The app uses sample-based piano playback instead of a basic oscillator. That gives each note a more natural attack and decay, which is closer to how musicians hear pitch in real practice.',
-      },
-    ],
-    faqs: [
-      {
-        question: 'Is this ear training app free?',
-        answer:
-          'Yes. The web app runs in the browser and lets you practice the available listening modes without creating an account.',
-      },
-      {
-        question: 'Should beginners start with single notes or intervals?',
-        answer:
-          'Beginners usually do best with single notes first, then intervals once individual pitch colors feel more familiar.',
-      },
-    ],
-  },
-  {
-    path: '/perfect-pitch-training',
-    title: 'Perfect Pitch Training | Practice Notes by Ear',
-    description:
-      'Train perfect pitch by identifying single notes and related listening patterns with real piano playback and instant feedback.',
-    eyebrow: 'Perfect pitch training',
-    heading: 'Perfect pitch training for note recognition',
-    intro:
-      'Perfect pitch training is about building reliable note recognition. This app keeps the exercise simple: hear a piano note, choose an answer, and see the result right away.',
-    sections: [
-      {
-        heading: 'Start with pitch class',
-        body:
-          'Single-note rounds identify pitch class rather than octave. That keeps attention on the note name itself, which is the foundation for stronger absolute pitch recognition.',
-      },
-      {
-        heading: 'Use short sessions',
-        body:
-          'Short daily sessions are easier to sustain than long unfocused practice. The app adjusts difficulty across five levels, from easy through master, as your answers improve.',
-      },
-    ],
-    faqs: [
-      {
-        question: 'Can adults train perfect pitch?',
-        answer:
-          'Adults can still improve pitch recognition and relative listening skills. Results vary, but structured note-identification practice can make pitch memory more consistent.',
-      },
-      {
-        question: 'Does the app test octave?',
-        answer:
-          'Single-note answers focus on pitch class only, not octave, so C4 and C5 are treated as the same note name.',
-      },
-    ],
-  },
-  {
-    path: '/interval-ear-training',
-    title: 'Interval Ear Training | Learn Intervals by Ear',
-    description:
-      'Practice interval ear training with piano playback, instant grading, and focused exercises from core intervals to octave-wide listening.',
-    eyebrow: 'Interval ear training',
-    heading: 'Interval ear training for cleaner musical listening',
-    intro:
-      'Intervals are the distance between two notes. Training them by ear helps with singing, transcription, improvisation, and recognizing melodies faster.',
-    sections: [
-      {
-        heading: 'Melodic and harmonic intervals',
-        body:
-          'The interval mode can train both separated notes and stacked sounds depending on difficulty, helping you recognize distance whether notes are played one after another or together.',
-      },
-      {
-        heading: 'Build from simple distances',
-        body:
-          'Easy practice starts with core intervals. Higher levels add wider and more confusing options so you learn to separate similar distances by sound.',
-      },
-    ],
-    faqs: [
-      {
-        question: 'Why train intervals?',
-        answer:
-          'Intervals are a practical bridge between raw pitch recognition and real music. They help you hear movement, tension, and resolution.',
-      },
-      {
-        question: 'Is interval training different from perfect pitch?',
-        answer:
-          'Yes. Interval training is relative: it focuses on the distance between notes. Perfect pitch training focuses on naming a note without a reference.',
-      },
-    ],
-  },
-  {
-    path: '/chord-ear-training',
-    title: 'Chord Ear Training | Identify Chords by Ear',
-    description:
-      'Practice chord ear training by identifying piano chords, triad colors, inversions, and harmonic qualities with immediate feedback.',
-    eyebrow: 'Chord ear training',
-    heading: 'Chord ear training for triads and harmonic color',
-    intro:
-      'Chord ear training helps you hear harmony as a color instead of guessing individual notes. Perfect Pitch includes a chord mode for identifying triads played together.',
-    sections: [
-      {
-        heading: 'Hear chords as one sound',
-        body:
-          'Chord mode plays notes together so you can focus on harmonic quality. Easy levels separate major and minor; harder levels add diminished and augmented colors.',
-      },
-      {
-        heading: 'Connect chords and arpeggios',
-        body:
-          'Arpeggio mode breaks chord tones apart, while chord mode stacks them. Practicing both helps connect melodic memory with harmonic recognition.',
-      },
-    ],
-    faqs: [
-      {
-        question: 'What chord types are included?',
-        answer:
-          'The app includes major, minor, diminished, and augmented triad colors across the harder chord and arpeggio exercises.',
-      },
-      {
-        question: 'Should I practice chords before intervals?',
-        answer:
-          'Intervals usually come first for beginners. Chords become easier once you can hear the relationships between individual notes.',
-      },
-    ],
-  },
-  {
-    path: '/piano-ear-training',
-    title: 'Piano Ear Training | Train with Sample-Based Piano',
-    description:
-      'Use piano ear training exercises with realistic sample-based playback for notes, intervals, melodies, arpeggios, and chords.',
-    eyebrow: 'Piano ear training',
-    heading: 'Piano ear training with sampled piano playback',
-    intro:
-      'Many ear training tools use synthetic tones. Perfect Pitch uses local piano samples so practice feels closer to a real instrument.',
-    sections: [
-      {
-        heading: 'Realistic note attacks',
-        body:
-          'Piano notes have a clear attack, body, and decay. Training with that shape makes the listening experience more musical than a plain sine wave.',
-      },
-      {
-        heading: 'Browser-based practice',
-        body:
-          'The app runs in the browser and loads audio only when you start playback. That keeps the page fast while preserving sample-based sound during practice.',
-      },
-    ],
-    faqs: [
-      {
-        question: 'Do I need a piano?',
-        answer:
-          'No. The exercises use built-in piano samples, so you can practice directly in the browser.',
-      },
-      {
-        question: 'Does piano sound help ear training?',
-        answer:
-          'It can help if your musical context is piano, composition, or general music study because the sound is closer to what you will hear in real use.',
-      },
-    ],
-  },
-  {
-    path: '/what-is-perfect-pitch',
-    title: 'What Is Perfect Pitch? | Absolute Pitch Explained',
-    description:
-      'Learn what perfect pitch means, how it differs from relative pitch, and how note-recognition practice can support ear training.',
-    eyebrow: 'Absolute pitch explained',
-    heading: 'What is perfect pitch?',
-    intro:
-      'Perfect pitch, also called absolute pitch, is the ability to identify or produce a note without being given a reference note first.',
-    sections: [
-      {
-        heading: 'Perfect pitch vs relative pitch',
-        body:
-          'Perfect pitch names a note directly. Relative pitch compares notes and recognizes distance, chord color, or movement. Musicians often benefit from training both.',
-      },
-      {
-        heading: 'How this app helps',
-        body:
-          'Single-note mode supports note recognition, while interval, melody, arpeggio, and chord modes build broader musical hearing around that foundation.',
-      },
-    ],
-    faqs: [
-      {
-        question: 'Is perfect pitch required to be a good musician?',
-        answer:
-          'No. Many strong musicians rely on relative pitch. Perfect pitch can be useful, but it is not required for musicianship.',
-      },
-      {
-        question: 'What should I practice first?',
-        answer:
-          'Start with single-note recognition and simple intervals. Add chords and melodies as your listening becomes more stable.',
-      },
-    ],
-  },
-]
-
-const SEO_PAGE_BY_PATH = new Map(SEO_PAGES.map((page) => [page.path, page]))
-const SITE_URL = 'https://andy.knasoftware.com'
 
 function getCurrentPath() {
   if (typeof window === 'undefined') {
@@ -360,12 +154,91 @@ function getCurrentPath() {
   return window.location.pathname
 }
 
+function getRequestedMode() {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const requestedMode = new URLSearchParams(window.location.search).get('mode')
+  return GAME_MODES.includes(requestedMode as GameMode)
+    ? (requestedMode as GameMode)
+    : null
+}
+
+function getRequestedSource() {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  return new URLSearchParams(window.location.search).get('source')
+}
+
 function setMetaContent(selector: string, content: string) {
-  document.querySelector(selector)?.setAttribute('content', content)
+  let meta = document.querySelector<HTMLMetaElement>(selector)
+  if (!meta) {
+    const selectorMatch = selector.match(/^meta\[(name|property)="([^"]+)"\]$/)
+    if (!selectorMatch) {
+      return
+    }
+
+    meta = document.createElement('meta')
+    meta.setAttribute(selectorMatch[1], selectorMatch[2])
+    document.head.appendChild(meta)
+  }
+
+  meta.setAttribute('content', content)
 }
 
 function setCanonicalUrl(url: string) {
-  document.querySelector('link[rel="canonical"]')?.setAttribute('href', url)
+  let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')
+  if (!canonical) {
+    canonical = document.createElement('link')
+    canonical.rel = 'canonical'
+    document.head.appendChild(canonical)
+  }
+  canonical.href = url
+}
+
+function setDocumentLanguageAlternates(page: SeoPageContent | null) {
+  document
+    .querySelectorAll('link[rel="alternate"][hreflang]')
+    .forEach((link) => link.remove())
+
+  if (!page) {
+    return
+  }
+
+  getLanguageAlternates(page).forEach((alternate) => {
+    const link = document.createElement('link')
+    link.rel = 'alternate'
+    link.hreflang = alternate.language
+    link.href = getAbsoluteUrl(alternate.path)
+    document.head.appendChild(link)
+  })
+
+  const defaultLink = document.createElement('link')
+  defaultLink.rel = 'alternate'
+  defaultLink.hreflang = 'x-default'
+  defaultLink.href = getAbsoluteUrl(
+    page.language === 'en' ? page.path : (page.alternatePath ?? page.path),
+  )
+  document.head.appendChild(defaultLink)
+}
+
+function setStructuredData(page: SeoPageContent | null) {
+  let script = document.querySelector<HTMLScriptElement>('#seo-structured-data')
+  if (!script) {
+    script = document.createElement('script')
+    script.id = 'seo-structured-data'
+    script.type = 'application/ld+json'
+    document.head.appendChild(script)
+  }
+
+  script.textContent = JSON.stringify(getStructuredData(page))
+}
+
+function removeStructuredData() {
+  document.querySelector('#seo-structured-data')?.remove()
 }
 
 function getPlaybackDurationMs(question: Question) {
@@ -492,10 +365,16 @@ function FooterSignature({ language }: { language: Language }) {
   )
 }
 
-function SeoLinks() {
+function SeoLinks({ paths }: { paths?: string[] }) {
+  const pages = paths
+    ? paths
+        .map((path) => SEO_PAGE_BY_PATH.get(path))
+        .filter((page): page is SeoPageContent => Boolean(page))
+    : SEO_PAGES.filter((page) => page.language === 'en')
+
   return (
     <nav className="seo-links" aria-label="Ear training topics">
-      {SEO_PAGES.map((page) => (
+      {pages.map((page) => (
         <a key={page.path} href={page.path}>
           {page.eyebrow}
         </a>
@@ -541,6 +420,12 @@ function SeoHomeContent() {
 }
 
 function SeoContentPage({ page }: { page: SeoPageContent }) {
+  const alternate = page.alternatePath
+    ? SEO_PAGE_BY_PATH.get(page.alternatePath)
+    : null
+  const isVietnamese = page.language === 'vi'
+  const practiceHref = getPracticeHref(page)
+
   return (
     <main className="shell shell--ready">
       <div className="shell__content">
@@ -550,10 +435,40 @@ function SeoContentPage({ page }: { page: SeoPageContent }) {
               <a className="eyebrow eyebrow--link" href="/">
                 Perfect Pitch
               </a>
-              <a className="ghost-button" href="/#practice">
-                Start practice
-              </a>
+              <div className="seo-page__actions">
+                {alternate && (
+                  <a className="ghost-button" href={alternate.path} lang={alternate.language}>
+                    {alternate.language === 'vi' ? 'VI' : 'EN'}
+                  </a>
+                )}
+                <a
+                  className="ghost-button"
+                  href={practiceHref}
+                  onClick={() =>
+                    trackEvent('seo_cta_click', {
+                      landing_path: page.path,
+                      mode: page.practiceMode,
+                      language: page.language,
+                    })
+                  }
+                >
+                  {page.practiceLabel}
+                </a>
+              </div>
             </div>
+            <nav aria-label={isVietnamese ? 'Đường dẫn trang' : 'Breadcrumb'} className="seo-breadcrumbs">
+              <a href="/">Perfect Pitch</a>
+              <span aria-hidden="true">/</span>
+              <a href={isVietnamese ? '/vi/luyen-cam-am' : '/ear-training'}>
+                {isVietnamese ? 'Luyện cảm âm' : 'Ear training'}
+              </a>
+              {page.path !== (isVietnamese ? '/vi/luyen-cam-am' : '/ear-training') && (
+                <>
+                  <span aria-hidden="true">/</span>
+                  <span aria-current="page">{page.eyebrow}</span>
+                </>
+              )}
+            </nav>
             <p className="question-kicker">{page.eyebrow}</p>
             <h1>{page.heading}</h1>
             <p className="hero-copy">{page.intro}</p>
@@ -563,13 +478,24 @@ function SeoContentPage({ page }: { page: SeoPageContent }) {
             {page.sections.map((section) => (
               <section key={section.heading}>
                 <h2>{section.heading}</h2>
-                <p>{section.body}</p>
+                {section.paragraphs.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+                {section.points && (
+                  <ul>
+                    {section.points.map((point) => (
+                      <li key={point}>{point}</li>
+                    ))}
+                  </ul>
+                )}
               </section>
             ))}
           </section>
 
           <section className="seo-page__faq" aria-labelledby="seo-faq-heading">
-            <h2 id="seo-faq-heading">Frequently asked questions</h2>
+            <h2 id="seo-faq-heading">
+              {isVietnamese ? 'Câu hỏi thường gặp' : 'Frequently asked questions'}
+            </h2>
             {page.faqs.map((faq) => (
               <details key={faq.question}>
                 <summary>{faq.question}</summary>
@@ -580,13 +506,38 @@ function SeoContentPage({ page }: { page: SeoPageContent }) {
 
           <section className="seo-panel" aria-labelledby="seo-more-heading">
             <div className="seo-panel__header">
-              <p className="question-kicker">More ear training topics</p>
-              <h2 id="seo-more-heading">Keep exploring</h2>
+              <p className="question-kicker">
+                {isVietnamese ? 'Chủ đề luyện tai liên quan' : 'More ear training topics'}
+              </p>
+              <h2 id="seo-more-heading">
+                {isVietnamese ? 'Tiếp tục khám phá' : 'Keep exploring'}
+              </h2>
             </div>
-            <SeoLinks />
+            <SeoLinks paths={page.relatedPaths} />
           </section>
         </article>
-        <FooterSignature language="en" />
+        <FooterSignature language={page.language} />
+      </div>
+    </main>
+  )
+}
+
+function NotFoundPage() {
+  return (
+    <main className="shell shell--ready">
+      <div className="shell__content">
+        <section className="seo-page__hero seo-page__not-found">
+          <p className="question-kicker">404</p>
+          <h1>Page not found</h1>
+          <p className="hero-copy">
+            This page does not exist. Return to the ear trainer or choose a learning
+            guide below.
+          </p>
+          <a className="primary-button" href="/">
+            Return to Perfect Pitch
+          </a>
+        </section>
+        <SeoLinks paths={['/ear-training', '/perfect-pitch-training', '/interval-ear-training']} />
       </div>
     </main>
   )
@@ -603,6 +554,7 @@ export function PerfectPitchApp({
   const dinoRoarPlayer = providedDinoRoarPlayer ?? playDefaultDinoRoar
   const [currentPath] = useState(() => getCurrentPath())
   const seoPage = SEO_PAGE_BY_PATH.get(currentPath) ?? null
+  const isNotFound = currentPath !== '/' && !seoPage
   const audioEngineRef = useRef<AudioEngine | null>(providedAudioEngine ?? null)
   const storage = useMemo(() => resolveStorage(providedStorage), [providedStorage])
   const [language, setLanguage] = useState<Language>(() => loadLanguagePreference(storage))
@@ -610,8 +562,22 @@ export function PerfectPitchApp({
     () => providedQuestionFactory ?? createQuestionFactory(language),
     [language, providedQuestionFactory],
   )
-  const [mode, setMode] = useState<GameMode | null>(null)
-  const [question, setQuestion] = useState<Question | null>(null)
+  const [modeProgress, setModeProgress] = useState<ModeProgressState>(() =>
+    loadProgressState(storage),
+  )
+  const [requestedMode] = useState(() =>
+    currentPath === '/' ? getRequestedMode() : null,
+  )
+  const [requestedSource] = useState(() => getRequestedSource())
+  const [mode, setMode] = useState<GameMode | null>(requestedMode)
+  const [question, setQuestion] = useState<Question | null>(() =>
+    requestedMode
+      ? questionFactory.createQuestion(
+          requestedMode,
+          modeProgress[requestedMode].currentDifficulty,
+        )
+      : null,
+  )
   const displayQuestion = useMemo(
     () => (question ? localizeQuestion(question, language) : null),
     [language, question],
@@ -635,9 +601,6 @@ export function PerfectPitchApp({
   const [hasPlayedCurrent, setHasPlayedCurrent] = useState(false)
   const [isPlayingQuestion, setIsPlayingQuestion] = useState(false)
   const [progressNotice, setProgressNotice] = useState<string | null>(null)
-  const [modeProgress, setModeProgress] = useState<ModeProgressState>(() =>
-    loadProgressState(storage),
-  )
   const seenQuestionKeysRef = useRef<Record<GameMode, Set<string>>>(
     Object.fromEntries(GAME_MODES.map((gameMode) => [gameMode, new Set<string>()])) as Record<
       GameMode,
@@ -649,6 +612,7 @@ export function PerfectPitchApp({
   const playbackUnlockTimeoutRef = useRef<number | null>(null)
   const dinoCareRef = useRef(dinoCare)
   const isDinoRoaringRef = useRef(false)
+  const seoLandingTrackedRef = useRef(false)
   const copy = getAppCopy(language)
   const activePetId = petCollection.selectedPetId
   const activePetPoints = petCollection.petPoints[activePetId]
@@ -750,47 +714,90 @@ export function PerfectPitchApp({
 
   useEffect(() => {
     initAnalytics()
-  }, [])
+    if (requestedMode && !seoLandingTrackedRef.current) {
+      trackEvent('seo_practice_landing', {
+        landing_path: requestedSource ?? 'direct',
+        mode: requestedMode,
+        language,
+      })
+      seoLandingTrackedRef.current = true
+    }
+  }, [language, requestedMode, requestedSource])
 
   useEffect(() => {
-    if (!seoPage) {
-      document.title = 'Perfect Pitch | Ear Training with Real Piano Sounds'
-      const description =
-        'Perfect Pitch is an ear training web app for notes, intervals, melodies, arpeggios, and chords with instant feedback and sample-based piano sounds.'
-      setMetaContent('meta[name="description"]', description)
-      setMetaContent('meta[property="og:title"]', document.title)
-      setMetaContent('meta[property="og:description"]', description)
-      setMetaContent('meta[property="og:url"]', `${SITE_URL}/`)
-      setMetaContent('meta[name="twitter:title"]', document.title)
-      setMetaContent('meta[name="twitter:description"]', description)
-      setCanonicalUrl(`${SITE_URL}/`)
+    if (isNotFound) {
+      document.documentElement.lang = 'en'
+      document.title = 'Page Not Found | Perfect Pitch'
+      setMetaContent('meta[name="description"]', 'The requested page could not be found.')
+      setMetaContent('meta[name="robots"]', 'noindex, follow')
+      document.querySelector('link[rel="canonical"]')?.remove()
+      setDocumentLanguageAlternates(null)
+      removeStructuredData()
       return
     }
 
-    const url = `${SITE_URL}${seoPage.path}`
+    if (!seoPage) {
+      document.documentElement.lang = 'en'
+      document.title = DEFAULT_TITLE
+      setMetaContent('meta[name="description"]', DEFAULT_DESCRIPTION)
+      setMetaContent('meta[name="robots"]', 'index, follow')
+      setMetaContent('meta[property="og:title"]', document.title)
+      setMetaContent('meta[property="og:description"]', DEFAULT_DESCRIPTION)
+      setMetaContent('meta[property="og:url"]', `${SITE_URL}/`)
+      setMetaContent('meta[property="og:locale"]', 'en_US')
+      setMetaContent('meta[property="og:locale:alternate"]', 'vi_VN')
+      setMetaContent('meta[property="og:image"]', getAbsoluteUrl(SOCIAL_IMAGE_PATH))
+      setMetaContent('meta[name="twitter:title"]', document.title)
+      setMetaContent('meta[name="twitter:description"]', DEFAULT_DESCRIPTION)
+      setMetaContent('meta[name="twitter:image"]', getAbsoluteUrl(SOCIAL_IMAGE_PATH))
+      setCanonicalUrl(`${SITE_URL}/`)
+      setDocumentLanguageAlternates(null)
+      setStructuredData(null)
+      return
+    }
+
+    const url = getAbsoluteUrl(seoPage.path)
+    document.documentElement.lang = seoPage.language
     document.title = seoPage.title
     setMetaContent('meta[name="description"]', seoPage.description)
+    setMetaContent('meta[name="robots"]', 'index, follow')
     setMetaContent('meta[property="og:title"]', seoPage.title)
     setMetaContent('meta[property="og:description"]', seoPage.description)
     setMetaContent('meta[property="og:url"]', url)
+    setMetaContent('meta[property="og:locale"]', seoPage.locale)
+    setMetaContent(
+      'meta[property="og:locale:alternate"]',
+      seoPage.language === 'vi' ? 'en_US' : 'vi_VN',
+    )
+    setMetaContent('meta[property="og:image"]', getAbsoluteUrl(SOCIAL_IMAGE_PATH))
     setMetaContent('meta[name="twitter:title"]', seoPage.title)
     setMetaContent('meta[name="twitter:description"]', seoPage.description)
+    setMetaContent('meta[name="twitter:image"]', getAbsoluteUrl(SOCIAL_IMAGE_PATH))
     setCanonicalUrl(url)
-  }, [seoPage])
+    setDocumentLanguageAlternates(seoPage)
+    setStructuredData(seoPage)
+  }, [isNotFound, seoPage])
 
   useEffect(() => {
-    const pagePath = mode ? `/mode/${mode}` : '/'
-    if (pageViewRef.current === `${pagePath}:${language}`) {
+    const pagePath = isNotFound
+      ? currentPath
+      : (seoPage?.path ?? (mode ? `/mode/${mode}` : '/'))
+    const pageLanguage = seoPage?.language ?? language
+    if (pageViewRef.current === `${pagePath}:${pageLanguage}`) {
       return
     }
 
-    const pageTitle = mode
-      ? `Perfect Pitch - ${getModeCopy(language, mode).label}`
-      : 'Perfect Pitch'
+    const pageTitle = isNotFound
+      ? 'Page Not Found | Perfect Pitch'
+      : seoPage
+      ? seoPage.title
+      : mode
+        ? `Perfect Pitch - ${getModeCopy(language, mode).label}`
+        : 'Perfect Pitch'
 
-    trackPageView(pagePath, pageTitle, language)
-    pageViewRef.current = `${pagePath}:${language}`
-  }, [language, mode])
+    trackPageView(pagePath, pageTitle, pageLanguage)
+    pageViewRef.current = `${pagePath}:${pageLanguage}`
+  }, [currentPath, isNotFound, language, mode, seoPage])
 
   useEffect(() => {
     document.documentElement.scrollTop = 0
@@ -943,6 +950,7 @@ export function PerfectPitchApp({
     const correctChoice = question.choices.find(
       (choice) => choice.id === question.correctChoiceId,
     )
+    const nextAnsweredCount = stats.answered + 1
 
     setEvaluation(result)
     setStats((current) => {
@@ -984,6 +992,22 @@ export function PerfectPitchApp({
       replayed_before_answer: hasPlayedCurrent,
       language,
     })
+    if (nextAnsweredCount === 1) {
+      trackEvent('first_answer', {
+        mode: question.mode,
+        difficulty: question.difficulty,
+        result: result.status,
+        language,
+      })
+    }
+    if (nextAnsweredCount === 5 || nextAnsweredCount === 10) {
+      trackEvent(`answer_${nextAnsweredCount}`, {
+        mode: question.mode,
+        difficulty: question.difficulty,
+        correct_answers: stats.correct + (result.status === 'correct' ? 1 : 0),
+        language,
+      })
+    }
   }
 
   const goToNextQuestion = () => {
@@ -1007,6 +1031,9 @@ export function PerfectPitchApp({
   const goBackToModes = () => {
     clearPlaybackUnlockTimeout()
     audioEngineRef.current?.stop()
+    if (window.location.search) {
+      window.history.replaceState({}, '', '/')
+    }
     setMode(null)
     setQuestion(null)
     setEvaluation(null)
@@ -1069,6 +1096,10 @@ export function PerfectPitchApp({
   }
 
   const sessionStats = formatSessionStats(language, stats, accuracy)
+
+  if (isNotFound) {
+    return <NotFoundPage />
+  }
 
   if (seoPage) {
     return <SeoContentPage page={seoPage} />
@@ -1326,14 +1357,22 @@ export function PerfectPitchApp({
       </div>
       {isPetShopOpen &&
         createPortal(
-          <PetShop
-            collection={petCollection}
-            language={language}
-            notice={petShopNotice}
-            onBuy={buyPet}
-            onClose={closePetShop}
-            onSelect={choosePet}
-          />,
+          <Suspense
+            fallback={
+              <div aria-live="polite" className="pet-shop-loading" role="status">
+                {language === 'vi' ? 'Đang mở cửa hàng…' : 'Opening pet shop…'}
+              </div>
+            }
+          >
+            <PetShop
+              collection={petCollection}
+              language={language}
+              notice={petShopNotice}
+              onBuy={buyPet}
+              onClose={closePetShop}
+              onSelect={choosePet}
+            />
+          </Suspense>,
           document.body,
         )}
     </main>

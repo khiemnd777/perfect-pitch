@@ -3,12 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Nunito:wght@400;600;700;800;900&amp;display=swap"
+    />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#21170f" />
-    <title>Perfect Pitch | Ear Training with Real Piano Sounds</title>
+    <title>Perfect Pitch | Free Ear Training with Real Piano Sounds</title>
     <meta
       name="description"
-      content="Perfect Pitch is an ear training web app for notes, intervals, melodies, arpeggios, and chords with instant feedback and sample-based piano sounds."
+      content="Practice notes, intervals, melodies, arpeggios, chords, scales, and seventh chords online with real piano sounds and instant feedback."
     />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://andy.knasoftware.com/" />
@@ -18,34 +24,51 @@
     <meta property="og:locale" content="en_US" />
     <meta property="og:locale:alternate" content="vi_VN" />
     <meta property="og:url" content="https://andy.knasoftware.com/" />
-    <meta property="og:title" content="Perfect Pitch | Ear Training with Real Piano Sounds" />
+    <meta property="og:title" content="Perfect Pitch | Free Ear Training with Real Piano Sounds" />
     <meta
       property="og:description"
-      content="Train notes, intervals, melodies, arpeggios, and chords with instant feedback after every answer."
+      content="Practice eight ear-training modes for free with real piano sounds and instant feedback."
     />
+    <meta property="og:image" content="https://andy.knasoftware.com/branding/perfect-pitch-app-icon.png" />
+    <meta property="og:image:alt" content="Perfect Pitch ear training app icon" />
 
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Perfect Pitch | Ear Training with Real Piano Sounds" />
+    <meta name="twitter:title" content="Perfect Pitch | Free Ear Training with Real Piano Sounds" />
     <meta
       name="twitter:description"
-      content="An ear training web app with 6 listening modes, real piano sounds, and instant feedback."
+      content="A free ear training web app with 8 listening modes, real piano sounds, and instant feedback."
     />
-    <script type="application/ld+json">
+    <meta name="twitter:image" content="https://andy.knasoftware.com/branding/perfect-pitch-app-icon.png" />
+    <script id="seo-structured-data" type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "Perfect Pitch",
-        "alternateName": "Ear training app",
-        "url": "https://andy.knasoftware.com/",
-        "applicationCategory": "EducationalApplication",
-        "operatingSystem": "Any",
-        "inLanguage": ["vi", "en"],
-        "description": "Ear training web app for notes, intervals, melodies, arpeggios, and chords with instant feedback and sample-based piano sounds.",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        }
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://andy.knasoftware.com/#website",
+            "name": "Perfect Pitch",
+            "url": "https://andy.knasoftware.com/",
+            "inLanguage": ["en", "vi"]
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://andy.knasoftware.com/#webapp",
+            "name": "Perfect Pitch",
+            "alternateName": "Free online ear trainer",
+            "url": "https://andy.knasoftware.com/",
+            "applicationCategory": "EducationalApplication",
+            "operatingSystem": "Any",
+            "inLanguage": ["en", "vi"],
+            "description": "Practice notes, intervals, melodies, arpeggios, chords, scales, and seventh chords online with real piano sounds and instant feedback.",
+            "image": "https://andy.knasoftware.com/branding/perfect-pitch-app-icon.png",
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": 0,
+              "priceCurrency": "USD"
+            }
+          }
+        ]
       }
     </script>
   </head>

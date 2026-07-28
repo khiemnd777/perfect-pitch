@@ -200,11 +200,15 @@ export function PetShop({
                   <img
                     alt=""
                     className="pet-shop-card__preview-image"
+                    decoding="async"
                     draggable="false"
+                    height="512"
+                    loading="lazy"
                     src={
                       getPetAnimation(pet.id, PET_SHOP_PREVIEW_STAGE).frames[0]
                         .src
                     }
+                    width="512"
                   />
                 </div>
 
@@ -249,11 +253,14 @@ export function PetShop({
               <div className="pet-purchase-dialog__pet" aria-hidden="true">
                 <img
                   alt=""
+                  decoding="async"
                   draggable="false"
+                  height="512"
                   src={
                     getPetAnimation(pendingPet.id, PET_SHOP_PREVIEW_STAGE)
                       .frames[0].src
                   }
+                  width="512"
                 />
               </div>
               <div className="pet-purchase-dialog__copy">

@@ -1,9 +1,13 @@
 # Current Context
 
-Last updated: 2026-07-22
+Last updated: 2026-07-28
 
 ## Implemented
-- The full application now uses a centralized Claymorphism visual system across the home hero, balanced desktop 4×2 mode grid, companion dashboard, quiz shell, playback control, answer states, feedback, pet shop, purchase confirmation, footer, and crawlable SEO pages. The theme adds consistent raised/pressed depth, inner highlights, tactile hover/active behavior, accessible focus rings, and semantic success/error treatments without changing quiz, audio, progression, localization, or pet behavior. Browser QA passed at 1280px and 390px: home, game, immediate wrong/correct reveal, shop dialog, and an SEO landing page render without horizontal overflow or console warnings/errors. Lint, all 197 tests, and the production build pass.
+- The production SEO architecture is now manifest-driven. `src/seo/seoContent.ts` defines 10 English and 5 Vietnamese intent pages; `bun run build` generates unique, crawlable HTML for each route plus the homepage, `404.html`, and a 16-URL canonical sitemap. Each indexable route has unique title/description, canonical, Open Graph/Twitter metadata, visible H1/content/FAQ/internal links, matching JSON-LD, and reciprocal `en`/`vi` hreflang where a translation exists. SEO CTAs deep-link into the exact interactive mode and preserve the landing source for analytics.
+- Firebase Hosting no longer rewrites every path to a 200 SPA response. It now serves clean generated URLs, immutable hashed assets, long-lived audio caching, revalidated HTML, and the generated noindex 404 page. The Docker/Nginx image mirrors those semantics with `$uri.html`, trailing-slash redirects that preserve queries, and real 404 responses. Production-like HTTP QA passed for homepage, English and Vietnamese routes, redirects, unknown URLs, and cache headers.
+- Analytics now distinguishes SEO landing/CTA traffic and emits `first_answer`, `answer_5`, and `answer_10` milestones in addition to the existing quiz events when `VITE_GA_MEASUREMENT_ID` is configured. The pet shop is split into a lazy chunk, pet images declare dimensions and decoding/fetch priorities, and Google Fonts are discovered from the document head instead of a blocking CSS import.
+- SEO verification passes with 208 automated tests, lint, production build, deploy-script syntax checks, Docker Compose validation, a production Docker build, Caddy config validation, and JSON-LD/sitemap generator coverage. Chrome QA at a true 390×844 viewport reports `scrollWidth = clientWidth = 390` on the Vietnamese hub and confirms readable wrapped CTA, H1, and content.
+- The full application now uses a centralized Claymorphism visual system across the home hero, balanced desktop 4×2 mode grid, companion dashboard, quiz shell, playback control, answer states, feedback, pet shop, purchase confirmation, footer, and crawlable SEO pages. The theme adds consistent raised/pressed depth, inner highlights, tactile hover/active behavior, accessible focus rings, and semantic success/error treatments without changing quiz, audio, progression, localization, or pet behavior. Browser QA passed at 1280px and 390px: home, game, immediate wrong/correct reveal, shop dialog, and an SEO landing page render without horizontal overflow or console warnings/errors. Lint, all 208 tests, and the production build pass.
 - The quiz Question & Answer frame now separates the musical prompt, animated playback control, answer readiness state, indexed A-D choices, and result feedback into a clearer visual hierarchy. After the first playback, the tall audio prompt changes into a compact horizontal Replay strip so no empty upper area remains; the waveform still animates during replay. Correct and incorrect selections keep strong color/icon cues while unrelated choices recede; the bilingual labels and existing instant-grading, replay, auto-scroll, reward, and next-question behavior remain intact. Desktop and 390px browser QA confirmed the responsive one-column layout, readable Vietnamese copy, and no horizontal overflow.
 - Pet purchases now open an accessible bilingual confirmation dialog before spending any music notes. The dialog shows the selected pet, price, and post-purchase wallet balance; Cancel and `Escape` leave the wallet unchanged, while Buy now completes the existing purchase flow. Desktop and 390px browser QA confirmed focus starts on the safe Cancel action, the mobile dialog stays within the viewport without horizontal overflow, successful purchases update ownership and wallet state, and no console errors are emitted.
 - Companion sprites now prioritize full-pet visibility: square-card stage scales were recalibrated, sprite/body paint clipping was removed, and active raster frames may render beyond their logical box instead of cutting off ears, wings, crowns, or animation poses. Tap reactions render as a top-layer absolute speech bubble above and clear of the pet, with a downward pointer aimed at the portrait; it paints above the wallet/shop row without intercepting pointer input. The pet and its copy stay at their original, unshifted baselines while the bubble toggles independently, so their relative positions and the companion card dimensions do not change. Home, mobile, and compact game cards passed 1440px/390px browser QA with stable before/after dimensions, no overflow, and no console issues.
@@ -15,7 +19,7 @@ Last updated: 2026-07-22
 - Every correct answer adds 10 spendable notes to the shop wallet and 10 separate growth points to the selected pet. Purchases deduct only wallet notes, never evolution progress; every pet persists its own five-stage `0 / 50 / 200 / 500 / 900` journey, and a purchased egg becomes the active companion immediately.
 - Existing dinosaur saves migrate without losing progress: legacy points seed both dinosaur growth and the initial shop balance when no collection save exists, while the legacy key stays synchronized for compatibility.
 - The shop dialog is keyboard-dismissible, locks background scrolling, and renders through a body portal so it remains fixed after page scrolling. Browser QA passed at 1280px and 390px with no horizontal overflow, confirmed access from home and quiz screens, and found no console errors.
-- Firebase project `perfect-pitch-knasoftware` now hosts the production Vite build on the Spark plan. `firebase.json` serves `dist` and rewrites client-side routes to `index.html`; `.firebaserc` binds the repo to the dedicated project.
+- Firebase project `perfect-pitch-knasoftware` hosts the production Vite build on the Spark plan. `firebase.json` serves generated clean HTML routes and a real `404.html`; `.firebaserc` binds the repo to the dedicated project.
 - Production canonical, Open Graph, structured-data, robots, sitemap, and runtime SEO URLs now target `https://andy.knasoftware.com/`.
 - Firebase Hosting custom domain `andy.knasoftware.com` is active with HTTPS. The custom domain and `perfect-pitch-knasoftware.web.app` serve the same current Firebase release.
 - Ear-training content now spans 8 modes and 5 levels. New `scale` rounds cover major/minor through modal, whole-tone, and blues colors; new `seventh` rounds cover four-note seventh qualities and inversions.
@@ -36,9 +40,9 @@ Last updated: 2026-07-22
 - Session stats now persist in local storage across page refreshes, using the existing app storage pattern; the in-game stats card also includes a reset button that clears the persisted score back to zero without affecting mode progression.
 - Google Analytics 4 can now be enabled by setting `VITE_GA_MEASUREMENT_ID` in deploy secrets; the app emits page views plus events for mode selection, play/replay, answers, next-question, return-home, and audio errors, and the production deploy now forwards that env var into the Docker build on the VPS.
 - `index.html` now includes English-first production SEO/social metadata for `https://andy.knasoftware.com/`: descriptive page title, meta description, canonical URL, robots, Open Graph, Twitter summary tags, WebApplication JSON-LD structured data, and a no-JavaScript crawlable fallback summary.
-- `public/robots.txt` allows crawlers and points to `https://andy.knasoftware.com/sitemap.xml`; `public/sitemap.xml` lists the canonical production homepage plus 6 SEO content routes.
-- The app now renders English-first SEO content pages for `/ear-training`, `/perfect-pitch-training`, `/interval-ear-training`, `/chord-ear-training`, `/piano-ear-training`, and `/what-is-perfect-pitch`, with crawlable headings, explanatory text, FAQ content, and internal `<a href>` links.
-- The home screen renders immediately without a piano preload gate; `Tone.js` and the piano audio engine are lazy-loaded only after the first Play click, reducing the initial production JS bundle from about 455 KB to about 223 KB and moving audio runtime code into a separate chunk.
+- `public/robots.txt` allows crawlers and points to `https://andy.knasoftware.com/sitemap.xml`; the sitemap is generated from the shared SEO manifest instead of being maintained by hand.
+- Crawlable content covers the main ear-training hub plus perfect pitch, notes, piano, intervals, chords, melodies, scales, seventh chords, kids, and explanatory intents in English, with five focused Vietnamese counterparts under `/vi/`.
+- The home screen renders immediately without a piano preload gate; `Tone.js` and the piano audio engine are lazy-loaded only after the first Play click. The current build keeps the roughly 341 KB audio runtime out of the initial route, and the pet shop now ships as its own roughly 5 KB lazy chunk.
 - The app now supports bilingual `en` / `vi` copy across shell UI, generated prompts/helper text, choice meta, and progression notices.
 - The main app shell renders the footer signature in both languages: `For Son. By Father`, with a GitHub link under the slogan pointing to the current repository.
 - English is the default language, and the selected language is persisted separately from gameplay progress in local storage.
@@ -55,11 +59,14 @@ Last updated: 2026-07-22
 - Local deploy setup is now driven by `scripts/deploy/bootstrap-github-secrets.sh`, which reads `.env.deploy`, prepares the deploy key if needed, and uploads repository secrets through `gh`.
 - `deploy/Caddyfile` now exists as the default local/runtime config so Docker Compose can be validated locally without depending on a generated file.
 - The local deploy bootstrap now supports password-only VPS access by generating a dedicated deploy SSH key, installing it on the server, and then storing that key in GitHub secrets for future zero-touch deploys.
-- The production VPS for `andy.dailyturning.com` is now reachable over the generated deploy key, and the app has been deployed live once successfully.
+- The legacy VPS deployment target at `andy.dailyturning.com` remains reachable over the generated deploy key, while the active canonical production site is the Firebase-hosted `andy.knasoftware.com` domain.
 - Caddy now runs with host networking and proxies to `127.0.0.1:8080` because ACME DNS resolution failed from the Docker bridge on this VPS while host-networked Caddy succeeded.
 
 ## Important Files
 - `src/app/App.tsx`: main flow, mode selection, playback actions, grading state, and session stats.
+- `src/seo/seoContent.ts`: canonical SEO route manifest, localized content, metadata, related links, deep links, hreflang, and structured data.
+- `scripts/generate-seo.ts`: production route HTML, 404, and sitemap generator.
+- `firebase.json` and `deploy/nginx.conf`: clean URL, status-code, and caching behavior for Firebase and Docker hosting.
 - `src/app/clayTheme.css`: centralized Claymorphism tokens, surface depth, interaction states, responsive overrides, and styling coverage for the app, shop, and SEO routes.
 - `src/app/languagePreference.ts`: local-storage load/save helpers for selected language.
 - `src/features/audio/audioEngine.ts`: Tone startup, sample preload, playback scheduling, replay, and cleanup.
@@ -85,12 +92,17 @@ Last updated: 2026-07-22
 - `scripts/deploy/remote-bootstrap.sh`: idempotent VPS bootstrap and deploy entrypoint.
 
 ## Known Gaps
+- The code is ready for SEO deployment, but the new release still needs to be published to Firebase Hosting before the live domain reflects these route/status/cache changes.
+- Google Search Console sitemap submission/URL inspection and GA4 production activation require external account actions. The build only sends analytics when `VITE_GA_MEASUREMENT_ID` is configured.
+- PageSpeed Insights was rate-limited during the audit, so post-deploy field/lab Core Web Vitals should be recorded after the release is live and has traffic.
 - All sixteen shop pets now match the dinosaur's raster animation depth, but they still reuse the dinosaur's generic interaction sound behavior; species-specific sounds remain a future audio enhancement.
 - There is no persisted agent memory workflow in the codebase beyond `AGENTS.md`. This file and `memory.md` are now the canonical lightweight memory layer.
 - Full perceptual audio verification with speakers still needs to be repeated in all 8 modes, including checking rawr volume against piano playback; automated flows and headless browser audio startup pass.
 - The production deploy path still depends on working GitHub repository secrets; live VPS reachability, Docker bootstrap, and HTTPS issuance have now been verified against real infrastructure.
 
 ## Recommended Next Focus
+- Deploy the generated `dist`, submit `https://andy.knasoftware.com/sitemap.xml` in Search Console, request indexing for the homepage and priority hubs, and verify that an arbitrary invalid production URL returns HTTP 404.
+- Configure GA4, then monitor organic landing sessions, SEO CTA clicks, first-answer rate, answer-5 rate, and answer-10 rate by landing page and training mode.
 - If touching deploy infra, verify first live deploy against a real VPS and domain before relying on automatic production releases.
 - If touching UX, verify mode switching, replay, next-question reset, progression messaging, score persistence/reset, and live EN/VI switching in all 8 modes.
 - If touching audio, verify first user gesture still unlocks playback and sample coverage remains correct across `C4-B5`.

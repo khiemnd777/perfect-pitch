@@ -102,7 +102,11 @@ function AnimatedPetVisual({
             index === activeFrame ? 'dino-sprite__frame--active' : ''
           }`}
           data-active={index === activeFrame}
+          decoding="async"
           draggable="false"
+          fetchPriority={index === 0 ? 'high' : 'low'}
+          height="512"
+          loading={index === 0 ? 'eager' : 'lazy'}
           src={frame.src}
           style={
             {
@@ -111,6 +115,7 @@ function AnimatedPetVisual({
               '--dino-frame-offset-y': `${frame.offsetY}%`,
             } as CSSProperties
           }
+          width="512"
         />
       ))}
     </span>
