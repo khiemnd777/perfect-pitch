@@ -114,7 +114,7 @@ bun run build
 firebase deploy --only hosting --project perfect-pitch-knasoftware
 ```
 
-Set `VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX` in the build environment to enable GA4 events. After deployment, verify both `https://andy.knasoftware.com` and the Firebase fallback domain.
+The public GA4 Measurement ID is stored in `.env.production`, so every production build—including the reference Docker image—enables analytics consistently. Override `VITE_GA_MEASUREMENT_ID` in the build environment only when intentionally targeting another GA4 web stream. After deployment, verify both `https://andy.knasoftware.com` and the Firebase fallback domain.
 
 ## SEO Release Checklist
 

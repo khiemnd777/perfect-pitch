@@ -10,7 +10,7 @@
 - Audio layer: `tone`.
 - Assets: local piano samples under `public/audio/piano/`.
 - Deployment: GitHub Actions validates `main`; Firebase Hosting project `perfect-pitch-knasoftware` is the only active production target. Docker/Caddy remain optional packaging tooling.
-- Hosted analytics can be enabled with Google Analytics 4 via the optional build-time env var `VITE_GA_MEASUREMENT_ID`.
+- Google Analytics 4 is enabled for production builds through the public Measurement ID in `.env.production`; `VITE_GA_MEASUREMENT_ID` can still be overridden intentionally at build time.
 
 ## Architecture
 - App wiring lives in `src/app`.

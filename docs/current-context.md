@@ -40,7 +40,7 @@ Last updated: 2026-07-29
 - Khi bấm `Play`/`Replay`, nút phát sẽ bị disable trong toàn bộ thời gian audio của câu hỏi đang chạy và tự bật lại khi phát xong, để tránh spam click chồng lệnh phát.
 - Sau khi chọn đáp án, UI tự cuộn mượt tới khối feedback kết quả để người chơi thấy ngay đúng/sai và đáp án đúng mà không cần cuộn tay trên màn hình dài/mobile.
 - Session stats now persist in local storage across page refreshes, using the existing app storage pattern; the in-game stats card also includes a reset button that clears the persisted score back to zero without affecting mode progression.
-- Google Analytics 4 can be enabled by setting `VITE_GA_MEASUREMENT_ID` in the production build environment; the app emits page views plus events for mode selection, play/replay, answers, next-question, return-home, and audio errors.
+- Google Analytics 4 is enabled for every production build through the public Measurement ID in `.env.production`; the app emits page views plus events for mode selection, play/replay, answers, next-question, return-home, and audio errors.
 - `index.html` now includes English-first production SEO/social metadata for `https://andy.knasoftware.com/`: descriptive page title, meta description, canonical URL, robots, Open Graph, Twitter summary tags, WebApplication JSON-LD structured data, and a no-JavaScript crawlable fallback summary.
 - `public/robots.txt` allows crawlers and points to `https://andy.knasoftware.com/sitemap.xml`; the sitemap is generated from the shared SEO manifest instead of being maintained by hand.
 - Crawlable content covers the main ear-training hub plus perfect pitch, notes, piano, intervals, chords, melodies, scales, seventh chords, kids, and explanatory intents in English, with five focused Vietnamese counterparts under `/vi/`.
@@ -93,7 +93,7 @@ Last updated: 2026-07-29
 - `scripts/deploy/remote-bootstrap.sh`: idempotent VPS bootstrap and deploy entrypoint.
 
 ## Known Gaps
-- Google Search Console sitemap submission/URL inspection and GA4 production activation require external account actions. The build only sends analytics when `VITE_GA_MEASUREMENT_ID` is configured.
+- Google Search Console ownership for the URL-prefix property `https://andy.knasoftware.com/` is verified with the hosted HTML file, and `sitemap.xml` was submitted successfully on 2026-07-29 with 16 discovered pages. The homepage is indexed; priority crawl requests were also accepted for `/ear-training`, `/perfect-pitch-training`, and `/vi/luyen-cam-am`. Search Console and GA4 need time to accumulate enough production data before performance conclusions are reliable.
 - PageSpeed Insights was rate-limited during the audit, so post-deploy field/lab Core Web Vitals should be recorded after the release is live and has traffic.
 - All sixteen shop pets now match the dinosaur's raster animation depth, but they still reuse the dinosaur's generic interaction sound behavior; species-specific sounds remain a future audio enhancement.
 - There is no persisted agent memory workflow in the codebase beyond `AGENTS.md`. This file and `memory.md` are now the canonical lightweight memory layer.

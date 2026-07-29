@@ -20,6 +20,7 @@ lerna-debug.log*
 # Local env
 .env
 .env.*
+!.env.production
 *.local
 
 # Bun

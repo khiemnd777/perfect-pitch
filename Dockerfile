@@ -2,13 +2,11 @@ FROM oven/bun:1 AS build
 
 WORKDIR /app
 
-ARG VITE_GA_MEASUREMENT_ID=""
-ENV VITE_GA_MEASUREMENT_ID=$VITE_GA_MEASUREMENT_ID
-
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
 COPY index.html tsconfig.json tsconfig.app.json tsconfig.node.json vite.config.ts ./
+COPY .env.production ./
 COPY public ./public
 COPY src ./src
 COPY scripts/generate-seo.ts ./scripts/generate-seo.ts
