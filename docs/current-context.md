@@ -1,8 +1,9 @@
 # Current Context
 
-Last updated: 2026-07-28
+Last updated: 2026-07-29
 
 ## Implemented
+- SEO release `2dc5c72` was deployed to Firebase Hosting project `perfect-pitch-knasoftware` on 2026-07-29. Live verification on `andy.knasoftware.com` confirmed unique homepage/EN/VI HTML, canonical and reciprocal hreflang metadata, query-preserving trailing-slash redirects, immutable hashed assets, and a real noindex 404. Firebase clean-URL HTML now uses an explicit catch-all revalidation header so those routes do not fall back to Hosting's one-hour default cache.
 - The production SEO architecture is now manifest-driven. `src/seo/seoContent.ts` defines 10 English and 5 Vietnamese intent pages; `bun run build` generates unique, crawlable HTML for each route plus the homepage, `404.html`, and a 16-URL canonical sitemap. Each indexable route has unique title/description, canonical, Open Graph/Twitter metadata, visible H1/content/FAQ/internal links, matching JSON-LD, and reciprocal `en`/`vi` hreflang where a translation exists. SEO CTAs deep-link into the exact interactive mode and preserve the landing source for analytics.
 - Firebase Hosting no longer rewrites every path to a 200 SPA response. It now serves clean generated URLs, immutable hashed assets, long-lived audio caching, revalidated HTML, and the generated noindex 404 page. The Docker/Nginx image mirrors those semantics with `$uri.html`, trailing-slash redirects that preserve queries, and real 404 responses. Production-like HTTP QA passed for homepage, English and Vietnamese routes, redirects, unknown URLs, and cache headers.
 - Analytics now distinguishes SEO landing/CTA traffic and emits `first_answer`, `answer_5`, and `answer_10` milestones in addition to the existing quiz events when `VITE_GA_MEASUREMENT_ID` is configured. The pet shop is split into a lazy chunk, pet images declare dimensions and decoding/fetch priorities, and Google Fonts are discovered from the document head instead of a blocking CSS import.
@@ -92,7 +93,6 @@ Last updated: 2026-07-28
 - `scripts/deploy/remote-bootstrap.sh`: idempotent VPS bootstrap and deploy entrypoint.
 
 ## Known Gaps
-- The code is ready for SEO deployment, but the new release still needs to be published to Firebase Hosting before the live domain reflects these route/status/cache changes.
 - Google Search Console sitemap submission/URL inspection and GA4 production activation require external account actions. The build only sends analytics when `VITE_GA_MEASUREMENT_ID` is configured.
 - PageSpeed Insights was rate-limited during the audit, so post-deploy field/lab Core Web Vitals should be recorded after the release is live and has traffic.
 - All sixteen shop pets now match the dinosaur's raster animation depth, but they still reuse the dinosaur's generic interaction sound behavior; species-specific sounds remain a future audio enhancement.
