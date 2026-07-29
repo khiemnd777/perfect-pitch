@@ -4,6 +4,7 @@ Last updated: 2026-07-29
 
 ## Implemented
 - SEO release `2dc5c72` was deployed to Firebase Hosting project `perfect-pitch-knasoftware` on 2026-07-29. Live verification on `andy.knasoftware.com` confirmed unique homepage/EN/VI HTML, canonical and reciprocal hreflang metadata, query-preserving trailing-slash redirects, immutable hashed assets, and a real noindex 404. Firebase clean-URL HTML now uses an explicit catch-all revalidation header so those routes do not fall back to Hosting's one-hour default cache.
+- `andy.dailyturning.com` is retired. Its automatic GitHub Actions VPS deploy workflow was removed after it produced an irrelevant failed job; Firebase Hosting is now the only active production target. Docker/Caddy and VPS scripts remain optional reference tooling only.
 - The production SEO architecture is now manifest-driven. `src/seo/seoContent.ts` defines 10 English and 5 Vietnamese intent pages; `bun run build` generates unique, crawlable HTML for each route plus the homepage, `404.html`, and a 16-URL canonical sitemap. Each indexable route has unique title/description, canonical, Open Graph/Twitter metadata, visible H1/content/FAQ/internal links, matching JSON-LD, and reciprocal `en`/`vi` hreflang where a translation exists. SEO CTAs deep-link into the exact interactive mode and preserve the landing source for analytics.
 - Firebase Hosting no longer rewrites every path to a 200 SPA response. It now serves clean generated URLs, immutable hashed assets, long-lived audio caching, revalidated HTML, and the generated noindex 404 page. The Docker/Nginx image mirrors those semantics with `$uri.html`, trailing-slash redirects that preserve queries, and real 404 responses. Production-like HTTP QA passed for homepage, English and Vietnamese routes, redirects, unknown URLs, and cache headers.
 - Analytics now distinguishes SEO landing/CTA traffic and emits `first_answer`, `answer_5`, and `answer_10` milestones in addition to the existing quiz events when `VITE_GA_MEASUREMENT_ID` is configured. The pet shop is split into a lazy chunk, pet images declare dimensions and decoding/fetch priorities, and Google Fonts are discovered from the document head instead of a blocking CSS import.
@@ -39,7 +40,7 @@ Last updated: 2026-07-29
 - Khi bấm `Play`/`Replay`, nút phát sẽ bị disable trong toàn bộ thời gian audio của câu hỏi đang chạy và tự bật lại khi phát xong, để tránh spam click chồng lệnh phát.
 - Sau khi chọn đáp án, UI tự cuộn mượt tới khối feedback kết quả để người chơi thấy ngay đúng/sai và đáp án đúng mà không cần cuộn tay trên màn hình dài/mobile.
 - Session stats now persist in local storage across page refreshes, using the existing app storage pattern; the in-game stats card also includes a reset button that clears the persisted score back to zero without affecting mode progression.
-- Google Analytics 4 can now be enabled by setting `VITE_GA_MEASUREMENT_ID` in deploy secrets; the app emits page views plus events for mode selection, play/replay, answers, next-question, return-home, and audio errors, and the production deploy now forwards that env var into the Docker build on the VPS.
+- Google Analytics 4 can be enabled by setting `VITE_GA_MEASUREMENT_ID` in the production build environment; the app emits page views plus events for mode selection, play/replay, answers, next-question, return-home, and audio errors.
 - `index.html` now includes English-first production SEO/social metadata for `https://andy.knasoftware.com/`: descriptive page title, meta description, canonical URL, robots, Open Graph, Twitter summary tags, WebApplication JSON-LD structured data, and a no-JavaScript crawlable fallback summary.
 - `public/robots.txt` allows crawlers and points to `https://andy.knasoftware.com/sitemap.xml`; the sitemap is generated from the shared SEO manifest instead of being maintained by hand.
 - Crawlable content covers the main ear-training hub plus perfect pitch, notes, piano, intervals, chords, melodies, scales, seventh chords, kids, and explanatory intents in English, with five focused Vietnamese counterparts under `/vi/`.
@@ -56,12 +57,11 @@ Last updated: 2026-07-29
 - Every mode runs on fixed `easy` / `medium` / `hard` / `expert` / `master` levels with automatic progression: level-up is based on accumulated correct answers at the current level, while level-down reacts to two wrong answers in a row.
 - Per-mode difficulty progress is persisted in local storage and restored when the player returns.
 - CI now runs on GitHub Actions for pushes and pull requests, covering `bun install --frozen-lockfile`, lint, tests, production build, deploy script syntax, `docker compose config`, production image build, and default Caddy validation.
-- Production deploy now runs through a GitHub Actions workflow triggered by successful CI on `main`, shipping the repo context to the VPS and bootstrapping Docker + Caddy remotely.
-- Local deploy setup is now driven by `scripts/deploy/bootstrap-github-secrets.sh`, which reads `.env.deploy`, prepares the deploy key if needed, and uploads repository secrets through `gh`.
+- Firebase Hosting is the active release path. Local production releases build the static artifacts and deploy project `perfect-pitch-knasoftware`; CI continues to validate every push to `main`.
+- `scripts/deploy/bootstrap-github-secrets.sh` is retained only for a future explicitly approved VPS target.
 - `deploy/Caddyfile` now exists as the default local/runtime config so Docker Compose can be validated locally without depending on a generated file.
 - The local deploy bootstrap now supports password-only VPS access by generating a dedicated deploy SSH key, installing it on the server, and then storing that key in GitHub secrets for future zero-touch deploys.
-- The legacy VPS deployment target at `andy.dailyturning.com` remains reachable over the generated deploy key, while the active canonical production site is the Firebase-hosted `andy.knasoftware.com` domain.
-- Caddy now runs with host networking and proxies to `127.0.0.1:8080` because ACME DNS resolution failed from the Docker bridge on this VPS while host-networked Caddy succeeded.
+- The optional Caddy configuration still documents host-network proxying to `127.0.0.1:8080`, but it is not part of the active production path.
 
 ## Important Files
 - `src/app/App.tsx`: main flow, mode selection, playback actions, grading state, and session stats.
@@ -88,7 +88,7 @@ Last updated: 2026-07-29
 - `src/shared/gameTypes.ts`: shared domain types used across the app.
 - `src/shared/localization.ts`: shared English/Vietnamese copy, label formatters, and progression text helpers.
 - `.github/workflows/ci.yml`: validation workflow for pushes and pull requests.
-- `.github/workflows/deploy-production.yml`: production deploy workflow for `main`.
+- `.firebaserc` and `firebase.json`: active Firebase project binding, clean URL behavior, headers, and hosting release configuration.
 - `deploy/Caddyfile`: checked-in default Caddy config for local validation and container startup.
 - `scripts/deploy/remote-bootstrap.sh`: idempotent VPS bootstrap and deploy entrypoint.
 
@@ -98,12 +98,11 @@ Last updated: 2026-07-29
 - All sixteen shop pets now match the dinosaur's raster animation depth, but they still reuse the dinosaur's generic interaction sound behavior; species-specific sounds remain a future audio enhancement.
 - There is no persisted agent memory workflow in the codebase beyond `AGENTS.md`. This file and `memory.md` are now the canonical lightweight memory layer.
 - Full perceptual audio verification with speakers still needs to be repeated in all 8 modes, including checking rawr volume against piano playback; automated flows and headless browser audio startup pass.
-- The production deploy path still depends on working GitHub repository secrets; live VPS reachability, Docker bootstrap, and HTTPS issuance have now been verified against real infrastructure.
 
 ## Recommended Next Focus
-- Deploy the generated `dist`, submit `https://andy.knasoftware.com/sitemap.xml` in Search Console, request indexing for the homepage and priority hubs, and verify that an arbitrary invalid production URL returns HTTP 404.
+- Submit `https://andy.knasoftware.com/sitemap.xml` in Search Console and request indexing for the homepage and priority hubs.
 - Configure GA4, then monitor organic landing sessions, SEO CTA clicks, first-answer rate, answer-5 rate, and answer-10 rate by landing page and training mode.
-- If touching deploy infra, verify first live deploy against a real VPS and domain before relying on automatic production releases.
+- If touching deploy infrastructure, keep Firebase Hosting as the production target unless a replacement target is explicitly approved.
 - If touching UX, verify mode switching, replay, next-question reset, progression messaging, score persistence/reset, and live EN/VI switching in all 8 modes.
 - If touching audio, verify first user gesture still unlocks playback and sample coverage remains correct across `C4-B5`.
 

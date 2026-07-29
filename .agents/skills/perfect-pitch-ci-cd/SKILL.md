@@ -1,34 +1,34 @@
 ---
 name: perfect-pitch-ci-cd
-description: Use when changing Perfect Pitch CI, GitHub Actions workflows, Docker or Caddy deploy files, VPS bootstrap scripts, or local GitHub secret bootstrap for production deployment.
+description: Use when changing Perfect Pitch CI, Firebase Hosting deployment, GitHub Actions workflows, Docker or Caddy packaging files, or legacy VPS tooling.
 ---
 
 # Perfect Pitch CI/CD
 
 ## Scope
-- Use this skill for GitHub Actions validation and deploy workflows, Docker runtime files, Caddy config, VPS bootstrap logic, and local deploy-secret setup in this repo.
+- Use this skill for GitHub Actions validation, Firebase Hosting releases, Docker runtime files, Caddy config, and retained legacy VPS tooling in this repo.
 
 ## Source Of Truth
 - CI workflow: `.github/workflows/ci.yml`
-- Production deploy workflow: `.github/workflows/deploy-production.yml`
+- Production hosting config: `.firebaserc`, `firebase.json`
 - Runtime stack: `Dockerfile`, `compose.yml`, `deploy/Caddyfile.template`, `deploy/nginx.conf`
-- Local secret bootstrap: `scripts/deploy/bootstrap-github-secrets.sh`
-- Remote VPS bootstrap: `scripts/deploy/remote-bootstrap.sh`
+- Retained legacy VPS tooling: `scripts/deploy/bootstrap-github-secrets.sh`, `scripts/deploy/remote-bootstrap.sh`
 
 ## Deployment Contract
 - `main` is the production branch.
-- CI must pass before production deploy is allowed to run.
-- Production deploy ships repo context over SSH to the VPS and boots the app with `docker compose`.
-- The VPS is expected to be reachable by SSH and may start without Docker installed.
-- Public traffic is terminated by Caddy with automatic HTTPS for the configured domain.
-- Secrets stay out of git; GitHub repository secrets are the runtime source of deploy credentials and host config.
+- The active production target is Firebase Hosting project `perfect-pitch-knasoftware` on `andy.knasoftware.com`.
+- CI must pass before a production Firebase release is made.
+- Run `bun run build` before `firebase deploy --only hosting --project perfect-pitch-knasoftware` so generated SEO HTML, sitemap, and 404 artifacts are current.
+- Docker, Caddy, and VPS bootstrap files are retained as optional packaging/reference tooling. They must not be wired back to an automatic production workflow unless a new active VPS target is explicitly approved.
+- Secrets stay out of git.
 
 ## Rules
-- Keep the deploy flow idempotent; re-running the same workflow must converge safely on the target VPS.
-- Preserve zero-touch VPS setup: do not introduce steps that require manual login or package installation on the server.
+- Keep Firebase releases idempotent; redeploying the same build and hosting config must converge safely.
+- Do not restore the retired `andy.dailyturning.com` deployment workflow.
+- If legacy VPS tooling is intentionally reused for a new target, preserve zero-touch setup and keep scripts non-interactive.
 - Keep deploy scripts non-interactive.
 - Fail fast when required secrets or deploy inputs are missing.
-- If runtime ports, domain routing, or health checks change, update both the workflows and the remote bootstrap logic together.
+- If optional VPS runtime ports, domain routing, or health checks change, update Docker/Caddy and remote bootstrap logic together.
 - If the Docker build changes, verify the production image still serves the Vite app correctly behind Caddy.
 
 ## Validation
@@ -41,5 +41,6 @@ description: Use when changing Perfect Pitch CI, GitHub Actions workflows, Docke
 - Validate a rendered Caddy config with `caddy validate` in a container before changing deploy routing behavior.
 
 ## Operator Notes
-- DNS A record setup is an external prerequisite and must point the production domain to the VPS IP before first live deploy.
-- The local setup path for secrets should stay scriptable through `gh secret set`; do not move this flow into manual GitHub UI steps unless the task explicitly changes operating procedure.
+- `andy.dailyturning.com` is retired and must not be treated as a deployment target.
+- Verify both `andy.knasoftware.com` and `perfect-pitch-knasoftware.web.app` after a Firebase release.
+- The legacy secret bootstrap path should remain scriptable through `gh secret set` if it is ever reused for a newly approved VPS target.

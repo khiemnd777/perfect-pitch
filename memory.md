@@ -9,7 +9,7 @@
 - Runtime and tooling: `Bun`, `Vite`, `React 19`, `TypeScript`, `Vitest`, `ESLint`.
 - Audio layer: `tone`.
 - Assets: local piano samples under `public/audio/piano/`.
-- Deployment: `GitHub Actions`, `Docker`, `Caddy`, and Firebase Hosting (Spark plan).
+- Deployment: GitHub Actions validates `main`; Firebase Hosting project `perfect-pitch-knasoftware` is the only active production target. Docker/Caddy remain optional packaging tooling.
 - Hosted analytics can be enabled with Google Analytics 4 via the optional build-time env var `VITE_GA_MEASUREMENT_ID`.
 
 ## Architecture
@@ -66,13 +66,11 @@
 - `src/features/audio/audioEngine.ts` caches the current question for replay and uses layered `Tone.Sampler` instances mapped from local piano samples.
 - `src/features/question-bank/questionFactory.ts` supports deterministic generation across all 8 modes and 5 levels with an optional seed and bound language, including scale and seventh-chord questions.
 - `.github/workflows/ci.yml` runs lint, tests, production builds, deploy-script syntax checks, `docker compose config`, image builds, and default Caddy validation on pushes and pull requests.
-- `.github/workflows/deploy-production.yml` deploys successful `main` builds to a VPS by shipping the repo context over SSH, bootstrapping Docker if needed, and serving the app via Docker + Caddy.
+- The retired `andy.dailyturning.com` VPS workflow has been removed. Do not recreate an automatic VPS deploy unless a new active target is explicitly approved.
 - `deploy/Caddyfile` is a checked-in local/default HTTP reverse-proxy config, while `deploy/Caddyfile.template` is rendered with the production domain on the VPS before rollout.
 - `public/robots.txt` points crawlers to the production sitemap. The sitemap is generated from `src/seo/seoContent.ts` during `bun run build`; do not maintain a second hand-written sitemap under `public`.
 - Firebase Hosting uses clean URLs and the generated `404.html`; the Nginx production image resolves `$uri.html` and returns real 404 status codes for unknown paths. Hashed assets are immutable for one year, piano audio is cached for 30 days, and HTML revalidates.
-- `scripts/deploy/bootstrap-github-secrets.sh` reads deploy inputs from a repo-root `.env.deploy` file by default and can bootstrap from either an existing SSH key or a one-time VPS password by generating and installing a dedicated deploy key automatically.
-- `compose.yml` runs the public Caddy container in host-network mode and proxies to `127.0.0.1:8080`, which avoids broken ACME DNS resolution from the Docker bridge on the production VPS.
-- `scripts/deploy/bootstrap-github-secrets.sh` pushes deployment secrets to GitHub from the local machine via `gh secret set`.
+- Legacy VPS scripts, Compose, and Caddy files remain available as optional reference tooling but are not part of active production deployment.
 
 ## Working Commands
 - `bun run dev`

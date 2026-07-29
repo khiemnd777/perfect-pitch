@@ -94,45 +94,27 @@ Manual verification is also recommended for:
 - `memory.md`: durable project context.
 - `docs/current-context.md`: current implementation state and next focus areas.
 
-## CI/CD And VPS Deployment
+## CI/CD And Production Deployment
 
-This repo now includes GitHub Actions workflows for CI and production deploys, plus a zero-touch VPS bootstrap flow using Docker and Caddy.
+GitHub Actions validates every push and pull request. The active production site is deployed to Firebase Hosting project `perfect-pitch-knasoftware`; `andy.dailyturning.com` and its automatic VPS workflow are retired.
 
 ### What is included
 
 - `.github/workflows/ci.yml`: runs lint, tests, and production build on pull requests and pushes.
-- `.github/workflows/deploy-production.yml`: deploys automatically after CI succeeds on `main`.
+- `.firebaserc` and `firebase.json`: bind and configure the active Firebase Hosting project.
 - `Dockerfile`: multi-stage image build for the static Vite app.
-- `compose.yml`: production stack with the app container and a public Caddy reverse proxy.
-- `deploy/Caddyfile`: checked-in default Caddy config for local Docker validation and startup.
-- `scripts/deploy/remote-bootstrap.sh`: idempotent VPS bootstrap for Docker and Compose.
-- `scripts/deploy/bootstrap-github-secrets.sh`: local helper to base64-encode the SSH key and push deploy secrets to GitHub.
+- `compose.yml`, Caddy files, and VPS scripts: optional packaging/reference tooling; they are not active production deployment.
 
-### Required GitHub secrets
-
-- `VPS_HOST`
-- `VPS_PORT` default `22`
-- `VPS_USER` default `root`
-- `VPS_SSH_PRIVATE_KEY_B64`
-- `DEPLOY_DOMAIN`
-- `DEPLOY_APP_DIR` default `/opt/perfect-pitch`
-- `ACME_EMAIL` optional
-- `VITE_GA_MEASUREMENT_ID` optional Google Analytics 4 measurement id such as `G-XXXXXXXXXX`
-
-### Local setup for first deploy
-
-Create `.env.deploy` in the repo root from [deploy/bootstrap.env.example](/Users/khiemnguyen/Works/andy/pp/deploy/bootstrap.env.example:1), then run the helper script from your local machine after `gh auth login`:
+### Firebase production release
 
 ```bash
-cp deploy/bootstrap.env.example .env.deploy
-bash scripts/deploy/bootstrap-github-secrets.sh
+bun run lint
+bun run test:run
+bun run build
+firebase deploy --only hosting --project perfect-pitch-knasoftware
 ```
 
-If you want the whole flow to be one shell command with no separate `gh auth login`, set `GH_TOKEN` in `.env.deploy`. The script will authenticate `gh` automatically before uploading secrets.
-
-If you only have the VPS password, set `VPS_PASSWORD` in `.env.deploy` and leave `SSH_KEY_PATH` commented out. The helper will generate a dedicated deploy key, install it on the server, and then upload the GitHub secrets.
-
-To enable a hosted analytics dashboard without touching the VPS, create a Google Analytics 4 web data stream for your production domain and set `VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX` in `.env.deploy` before running `bash scripts/deploy/bootstrap-github-secrets.sh`. The production deploy now forwards that secret into the Docker build on the VPS, so live bundles will send page views plus quiz events such as mode selection, play/replay, next question, audio errors, and answer correctness to the GA UI.
+Set `VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX` in the build environment to enable GA4 events. After deployment, verify both `https://andy.knasoftware.com` and the Firebase fallback domain.
 
 ## SEO Release Checklist
 
@@ -143,5 +125,3 @@ After deploying a production build:
 - submit `https://andy.knasoftware.com/sitemap.xml` in Google Search Console
 - request indexing for the homepage, `/ear-training`, `/perfect-pitch-training`, and `/vi/luyen-cam-am`
 - verify the GA4 Realtime/DebugView events `seo_practice_landing`, `seo_cta_click`, `first_answer`, `answer_5`, and `answer_10`
-
-Before the first production deploy succeeds, point the domain A record to the VPS IP.
